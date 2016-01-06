@@ -1,0 +1,53 @@
+Create a repository
+git clone <repository>
+git init
+
+Track and stage a file
+git add <file>
+
+Unstage a file
+git reset HEAD <file>
+
+Commit changes
+git commit [-a] [-m]
+    -a: stage all tracked files automaticaly
+    -m: type message inline
+
+Remove a file from versioning and delete it
+git rm <file>
+
+Remove a file from versioning but don't delete it
+git rm --cached <file>
+
+Rename or move a versioned file
+git mv <file_from> <file_to>
+
+Change the last commit
+git commit --amend
+
+Erase modifications of a file
+git checkout <file>
+
+Create a branch
+git branch <branch>
+
+Switch branch
+git checkout <branch>
+
+Create and switch branch
+git checkout -b <branch>
+
+Delete branch
+git branch -d <branch>
+
+Merge branch A into B
+git checkout B
+git merge A
+
+In case of conflicts
+git mergetool
+
+Fetch (ie get data but don't merge) and push from remote/branch
+git fetch [remote]
+git push [remote] [branch]
+git pull = git fetch; git merge
