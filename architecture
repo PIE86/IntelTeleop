@@ -1,0 +1,11 @@
+Class Solver : interface to ACADO
+Class Viewer : interface to gepetto and viewer using corba
+Class EnvironmentParser : parser to read obstacles files
+Class Input : interface to joystick
+
+
+
+Class Simulator <- Class Solver
+                <- Class Viewer
+                <- EnvironmentParse
+                <- Input
