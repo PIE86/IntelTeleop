@@ -1,0 +1,22 @@
+prefix=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install
+exec_prefix=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install
+libdir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/lib
+bindir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/bin
+pkglibdir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/lib/ProjectSupaero_ACADO
+includedir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/include
+datarootdir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/share
+pkgdatarootdir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/share
+docdir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/share/doc/ProjectSupaero_ACADO
+doxygendocdir=/home/maxime/Documents/Study/Projets Ingenieur/Acado_Exs/ProjetSupaero/install/share/doc/ProjectSupaero_ACADO/doxygen-html
+
+Name: ProjectSupaero_ACADO
+Description: acado for Supaero project : MPC for drones
+URL: 
+Version: UNKNOWN-dirty
+Requires: acado
+Conflicts: 
+Libs: -L${libdir}
+Libs.private: 
+Cflags: -I${includedir}
+
+
