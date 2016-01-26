@@ -7,5 +7,5 @@ Class Input : interface to joystick
 
 Class Simulator <- Class Solver
                 <- Class Viewer
-                <- EnvironmentParse
+                <- EnvironmentParser
                 <- Input
