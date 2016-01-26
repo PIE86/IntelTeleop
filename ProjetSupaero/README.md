@@ -1,3 +1,5 @@
+Quelques commentaires sur les codes de calculation pas-à-pas:
+
 1. Ici, je n'ai fait qu'un seul pas de calcul de control optimal et un pas de simulation.
 2. Le lien entre les deux parties est fait par les fichiers de données
 3. Il reste encore quelques modifications pour finaliser le travail:
