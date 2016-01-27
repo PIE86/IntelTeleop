@@ -24,8 +24,8 @@ class EnvironmentParser
 {
     public:
 //      Constructors
-        XMLEnvironment();                               // Create an empty XMLDocument
-        XMLEnvironment(std::string const& name);        // Load the XMLDocument with the given name (ex: "SavedData.xml")
+        EnvironmentParser();                               // Create an empty XMLDocument
+        EnvironmentParser(std::string const& name);        // Load the XMLDocument with the given name (ex: "SavedData.xml")
 
 //      Functions
         void addCylinder(Epoint center1, Epoint center2, float radius); // Add a cylinder to the environment from center1 to center2 with the given radius
