@@ -1,14 +1,14 @@
+#include "mpcsolver.h"
 
-
-#include"Functions.h"
 
 int main()
 {
-	double t = 0;
-	double dt = 0.02;
+    MPCSolver solver;
+    double t = 0;
+    double dt = 0.02;
 
-	controlMPC();
-	systemEvol(t,dt);
+    solver.controlMPC();
+    solver.systemEvol(t,dt);
 
-	return 0;
+    return 0;
 }

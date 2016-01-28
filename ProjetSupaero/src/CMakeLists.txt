@@ -40,21 +40,3 @@ ADD_EXECUTABLE(ProjectSupaero ${SRCS})
 
 PKG_CONFIG_USE_DEPENDENCY(ProjectSupaero acado)
 INSTALL(TARGETS ProjectSupaero DESTINATION bin)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
