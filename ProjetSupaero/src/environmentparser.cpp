@@ -9,32 +9,28 @@ Last update: 27/01/2016
 
 // Macro to check XMLError validity
 #ifndef XMLCheckResult
-	#define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("Error: %i\n", a_eResult); }
+#define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("Error: %i\n", a_eResult); }
 #endif
 
 EnvironmentParser::EnvironmentParser(): nbElements(0){
-//  Create a root
+    // Create a root
     root = xmlDoc.NewElement("root");
     xmlDoc.InsertFirstChild(root);
 }
 
-// ******************************************************************************************************************************************************
-
-EnvironmentParser::EnvironmentParser(std::string const& name):nbElements(0){
-//  Load the file
-    tinyxml2::XMLError eResult = xmlDoc.LoadFile((char*) name.c_str());
+EnvironmentParser::EnvironmentParser(std::string &name):nbElements(0){
+    // Load the file
+    tinyxml2::XMLError eResult = xmlDoc.LoadFile(name.c_str());
     XMLCheckResult(eResult);
     root = xmlDoc.FirstChildElement();
 }
 
-// ******************************************************************************************************************************************************
-
 void EnvironmentParser::addCylinder(Epoint center1, Epoint center2, float radius) {
-//  Create a new element "cylinder"
+    // Create a new element "cylinder"
     tinyxml2::XMLElement *cylinder = xmlDoc.NewElement("cylinder");
     root->InsertEndChild(cylinder);
 
-//  Save its characteristics
+    // Save its characteristics
     cylinder->SetAttribute("radius", radius);
 
     tinyxml2::XMLElement *point1 = xmlDoc.NewElement("center1");
@@ -52,19 +48,17 @@ void EnvironmentParser::addCylinder(Epoint center1, Epoint center2, float radius
     nbElements++;
 }
 
-// ******************************************************************************************************************************************************
-
-void EnvironmentParser::save(char* const& name) {
-//  Specify the number of elements
+void EnvironmentParser::save(std::string name)
+{
+    //  Specify the number of elements
     root->SetAttribute("nbElements", nbElements);
 
-    tinyxml2::XMLError eResult = xmlDoc.SaveFile(name);
+    tinyxml2::XMLError eResult = xmlDoc.SaveFile(name.c_str());
     XMLCheckResult(eResult);
 }
 
-// ******************************************************************************************************************************************************
-
-std::vector<Ecylinder> EnvironmentParser::readData() {
+std::vector<Ecylinder> EnvironmentParser::readData()
+{
     int i(0);
     tinyxml2::XMLElement *element;
     std::vector<Ecylinder> cylinderList;
@@ -73,7 +67,8 @@ std::vector<Ecylinder> EnvironmentParser::readData() {
 
     root->QueryIntAttribute("nbElements", &nbElements);
 
-    for(i=0; i < nbElements; i++) {
+    for(i=0; i < nbElements; i++)
+    {
         pCylinder->QueryFloatAttribute("radius", &(cylinder.radius));
 
         element = pCylinder->FirstChildElement("center1");
@@ -94,8 +89,7 @@ std::vector<Ecylinder> EnvironmentParser::readData() {
     return cylinderList;
 }
 
-// ******************************************************************************************************************************************************
-
-int EnvironmentParser::getNbElements() {
+int EnvironmentParser::getNbElements()
+{
     return nbElements;
 }

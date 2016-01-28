@@ -207,7 +207,6 @@ void MPCSolver::controlMPC()
     for(int i=0;i<NU;i++)
         _commandVector[i] = U(i);
 
-    system("clear");
     std::cout << "Optimal control input calculation finished !" << std::endl;
 }
 
