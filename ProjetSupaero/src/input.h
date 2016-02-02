@@ -8,6 +8,8 @@ class Input
 {
 public:
     Input();
+
+    void test();
 };
 
 #endif // INPUT_H
