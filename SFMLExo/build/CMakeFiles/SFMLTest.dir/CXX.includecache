@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/maxime/Documents/Study/HorsCours/C++_Study/C_Plus_Exos/SFMLExo/SFMLTest.cpp
+iostream
+-
+SFML/Window.hpp
+-
+SFML/Graphics.hpp
+-
+SFML/System.hpp
+-
+

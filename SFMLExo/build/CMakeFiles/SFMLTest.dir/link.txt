@@ -1,0 +1,1 @@
+/usr/bin/c++       CMakeFiles/SFMLTest.dir/SFMLTest.cpp.o  -o SFMLTest -rdynamic -lsfml-system -lsfml-window -lsfml-graphics -lsfml-network -lsfml-audio 

@@ -1,0 +1,52 @@
+
+
+cmake_minimum_required (VERSION 2.8)
+project(SFMLTest)
+
+# The version number
+set (ExoCMake_VERSION_MAJOR 1)
+set (ExoCMake_VERSION_MINOR 0)
+
+
+# add the binary tree to the search path for include files
+# so that we will find ExoCMakeConfig.h
+include_directories("${PROJECT_BINARY_DIR}")
+
+# add the executable
+add_executable(SFMLTest SFMLTest.cpp)
+
+
+# Detect and add SFML
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+find_package(SFML 2.1 REQUIRED system window graphics network audio)
+target_link_libraries(SFMLTest ${SFML_LIBRARIES})
+
+# add the install targets
+install(TARGETS SFMLTest DESTINATION bin)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
