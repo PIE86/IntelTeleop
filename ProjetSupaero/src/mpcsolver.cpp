@@ -1,13 +1,8 @@
 #include "mpcsolver.h"
-#include <acado_toolkit.hpp>
-#include <acado_optimal_control.hpp>
-#include <acado_gnuplot.hpp>
 
 
-
-MPCSolver::MPCSolver()
+MPCSolver::MPCSolver() : _referenceVector{0.,0.,20.}
 {
-
 }
 
 
@@ -20,39 +15,12 @@ void MPCSolver::controlMPC()
 {
     using namespace ACADO;
 
-    // INTRODUCE THE VARIABLES:
-    // -------------------------
-    DifferentialState     x, y, z, vx, vy, vz, phi, theta, psi, p, q, r, u1, u2, u3, u4;
-    // x, y, z : position
-    // vx, vy, vz : linear velocity
-    // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
-    // p, q, r : angular velocity
-    // u1, u2, u3, u4 : velocity of the propellers
-    Control               vu1, vu2, vu3, vu4;
-    // vu1, vu2, vu3, vu4 : derivative of u1, u2, u3, u4
-    DifferentialEquation  f;
-
-    // Quad constants
-    const double c = 0.00001;
-    const double Cf = 0.00065;
-    const double d = 0.250;
-    const double Jx = 0.018;
-    const double Jy = 0.018;
-    const double Jz = 0.026;
-//    const double Im = 0.0001;
-    const double m = 0.9;
-    const double g = 9.81;
-//    const double Cx = 0.1;
-
     // Minimization Weights
     double coeffX = .00001;
     double coeffU = coeffX*0.0001;
     double coeffX2 = coeffX * 100.;
 //    double coeffX3 = coeffX * 0.00001;
 //    double coeffO = -coeffX * 0.1;
-
-    // final position (used in the cost function)
-    double xf = 0., yf = 0., zf = 20.;
 
     // length (in second) of the trajectory predicted in the MPC
     double T = 8.;
@@ -78,21 +46,14 @@ void MPCSolver::controlMPC()
     h << p << q << r;
 
     DMatrix Q(10,10);
-    Q(0,0) = coeffX;
-    Q(1,1) = coeffX;
-    Q(2,2) = coeffX;
-    Q(3,3) = coeffU;
-    Q(4,4) = coeffU;
-    Q(5,5) = coeffU;
-    Q(6,6) = coeffU;
-    Q(7,7) = coeffX2;
-    Q(8,8) = coeffX2;
-    Q(9,9) = coeffX2;
+    Q(0,0) = Q(1,1) = Q(2,2) = coeffX;
+    Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = coeffU;
+    Q(7,7) = Q(8,8) = Q(9,9) = coeffX2;
 
     DVector ref(10);
-    ref(0) = xf;
-    ref(1) = yf;
-    ref(2) = zf;
+    ref(0) = _referenceVector[0];
+    ref(1) = _referenceVector[1];
+    ref(2) = _referenceVector[2];
     ref(3) = 58.;
     ref(4) = 58.;
     ref(5) = 58.;
@@ -141,11 +102,7 @@ void MPCSolver::controlMPC()
     ocp.subjectTo( -100 <= vu4 <= 100 );
 
     // Constraint to avoid singularity
-    // In this example I used Yaw-Pitch-Roll convention to describe orientation of the quadrotor
-    // when using Euler Angles representation, you always have a singularity, and we need to
-    // avoid it otherwise the algorithm will crashed.
     ocp.subjectTo( -1. <= theta <= 1.);
-
 
     // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
     ocp.subjectTo( 16 <= ((x+3)*(x+3)+2*(z-5)*(z-5)) );
@@ -176,35 +133,35 @@ void MPCSolver::controlMPC()
     Controller controller(alg,zeroReference);
 
     DVector stateInit(16);
-    stateInit.setZero();
 
     // Read the initial state from _stateVector
     for(int j=0;j<16;j++)
         stateInit(j) = _stateVector[j];
 
     // Debug information output
-// 	std::cout << "stateInit:\n" << stateInit << std::endl;
+//    std::cout << "stateInit:\n" << stateInit << std::endl;
 
     // Computation of the optimal control calculated
     controller.init(0.0,stateInit);
     controller.step(0.0,stateInit);
 
     DVector U(4);
-    U.setZero();
-    controller.getU(U);
+    U.setZero(4);
+
+    // Debug information output
+    std::cout << "Number of control computed: " << controller.getNU() << std::endl;
+    std::cout << "u=" << U << std::endl;
+    std::cout << (ACADO::SUCCESSFUL_RETURN == controller.getU(U)) << std::endl;
+    // Debug information output
+    std::cout << "Number of control computed: " << controller.getNU() << std::endl;
+    std::cout << "u.size=" << U.size() << std::endl;
 
     DVector stateFin(16);
-    stateFin.setZero();
+    stateFin.setZero(16);
     controller.getP(stateFin);
-    // Dimension of control input
-    int NU = controller.getNU();
-
-// 	// Debug information output
-// 	std::cout << "Number of control computed: " << NU << std::endl;
-// 	std::cout << "u=" << U << std::endl;
 
     // Write the calculated control into _controlVector
-    for(int i=0;i<NU;i++)
+    for(unsigned int i=0; i<controller.getNU(); i++)
         _commandVector[i] = U(i);
 
     std::cout << "Optimal control input calculation finished !" << std::endl;
@@ -214,6 +171,16 @@ void MPCSolver::controlMPC()
 void MPCSolver::systemEvol(double t, double dt)
 {
     _stateVector = quadRungeKutta(t, _stateVector, _commandVector, dt);
+}
+
+void MPCSolver::setReferenceVector(const std::array<double, 3> &referenceVector)
+{
+    _referenceVector = referenceVector;
+}
+
+std::array<double, 16> MPCSolver::stateVector() const
+{
+    return _stateVector;
 }
 
 std::array<double,16> MPCSolver::quadRungeKutta(double t, std::array<double,16> x, std::array<double,4> u, double dt)
