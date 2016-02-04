@@ -109,10 +109,10 @@ void MPCSolver::controlMPC()
     ocp.subjectTo( 16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)) );
     ocp.subjectTo( 16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)) );
 
-
     // SETTING UP THE MPC CONTROLLER:
     // ------------------------------
     RealTimeAlgorithm alg(ocp, tmpc);
+
 
     // Usually, you do only one step of the optimisation algorithm (~Gauss-Newton here)
     // at each activation of the MPC, that way the delay between getting the state and
@@ -123,14 +123,13 @@ void MPCSolver::controlMPC()
     alg.set(INTEGRATOR_TYPE, INT_RK45);
     // alg.set(KKT_TOLERANCE,1e-3);
 
-
     // StaticReferenceTrajectory:
     // The class StaticReferenceTrajectory allows to define a
     // static reference trajectory (given beforehand)
     // that the ControlLaw aims to track
     // while computing its output.
-    StaticReferenceTrajectory zeroReference("TempData/ref.txt");
-    Controller controller(alg,zeroReference);
+//    StaticReferenceTrajectory zeroReference("TempData/ref.txt");
+    Controller controller(alg); //,zeroReference);
 
     DVector stateInit(16);
 
@@ -149,9 +148,7 @@ void MPCSolver::controlMPC()
     U.setZero(4);
 
     // Debug information output
-    std::cout << "Number of control computed: " << controller.getNU() << std::endl;
-    std::cout << "u=" << U << std::endl;
-    std::cout << (ACADO::SUCCESSFUL_RETURN == controller.getU(U)) << std::endl;
+    controller.getU(U);
     // Debug information output
     std::cout << "Number of control computed: " << controller.getNU() << std::endl;
     std::cout << "u.size=" << U.size() << std::endl;
