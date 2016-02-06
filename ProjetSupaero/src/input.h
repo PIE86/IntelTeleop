@@ -6,10 +6,16 @@
 
 class Input
 {
-public:
-    Input();
+private:
+	double* currState;
+	double* currComm;
+	double dt;
 
-    void test();
+
+public:
+	Input(double dt);
+	void test();
+	~Input();
 };
 
 #endif // INPUT_H

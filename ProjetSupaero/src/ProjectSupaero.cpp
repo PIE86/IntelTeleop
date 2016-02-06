@@ -1,4 +1,6 @@
-#include "mpcsolver.h"
+
+
+//#include "mpcsolver.h"
 #include "input.h"
 #include <iostream>
 
@@ -7,26 +9,28 @@ using std::cout; using std::endl;
 
 int main()
 {
-    Input input;
-    while (true)
-        input.test();
+	double dt = 0.2;
+	Input input(dt);
+	//while (true)
 
-//    MPCSolver solver;
-//    double t = 0;
-//    double dt = 0.02;
+	input.test();
 
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
+//	MPCSolver solver;
+//	double t = 0;
+//	double dt = 0.02;
+//
+//	solver.controlMPC();
+//	solver.systemEvol(t,dt);
+//	cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
+//	solver.controlMPC();
+//	solver.systemEvol(t,dt);
+//	cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
+//	solver.controlMPC();
+//	solver.systemEvol(t,dt);
+//	cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
+//	solver.controlMPC();
+//	solver.systemEvol(t,dt);
+//	cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
 
     return 0;
 }
