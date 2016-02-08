@@ -10,7 +10,11 @@
 class MPCSolver
 {
 public:
-    MPCSolver();
+    ///
+    /// \brief MPCSolver
+    /// \param T length (in second) of the trajectory predicted in the MPC
+    /// \param number of nodes used in the Optimal Control Problem
+    MPCSolver(double T, int nbNodes);
     void controlMPC();
     void systemEvol(double t, double dt);
 
@@ -26,7 +30,7 @@ private:
     std::array<double, 16> quadModel(double t, std::array<double,16> x, std::array<double,4> u);
 
 
-    // INTRODUCE THE VARIABLES:
+    // VARIABLES
     // -------------------------
     ACADO::DifferentialState     x, y, z, vx, vy, vz, phi, theta, psi, p, q, r, u1, u2, u3, u4;
     // x, y, z : position
@@ -36,7 +40,18 @@ private:
     // u1, u2, u3, u4 : velocity of the propellers
     ACADO::Control               vu1, vu2, vu3, vu4;
     // vu1, vu2, vu3, vu4 : derivative of u1, u2, u3, u4
-    ACADO::DifferentialEquation  f;
+    ACADO::DifferentialEquation  _f;
+
+    // OPTIMAL CONTROL PROBLEM
+    // -------------------------
+    double _tmpc;
+    // time (in second) between two activation of the MPC algorithm
+    ACADO::OCP _ocp;
+
+    //  COST FUNCTION
+    // -------------------------------
+    ACADO::Function _h;
+    ACADO::DMatrix _Q;
 
     // Quad constants
     const double c  = 0.00001;

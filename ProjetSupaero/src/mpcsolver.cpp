@@ -1,54 +1,79 @@
 #include "mpcsolver.h"
 
 
-MPCSolver::MPCSolver() : _referenceVector{0.,0.,20.}
+MPCSolver::MPCSolver(double T, int nbNodes) : _referenceVector{0.,0.,20.}, _tmpc(0.02), _ocp( 0.0, T, nbNodes ), _Q(10,10)
 {
+    // DYNAMIC EQUATION OF THE SYSTEM:
+    // ----------------------------------
+    _f << dot(x) == vx;
+    _f << dot(y) == vy;
+    _f << dot(z) == vz;
+    _f << dot(vx) == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m;
+    _f << dot(vy) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m;
+    _f << dot(vz) == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
+    _f << dot(phi) == -cos(phi)*tan(theta)*p+sin(phi)*tan(theta)*q+r;
+    _f << dot(theta) == sin(phi)*p+cos(phi)*q;
+    _f << dot(psi) == cos(phi)/cos(theta)*p-sin(phi)/cos(theta)*q;
+    _f << dot(p) == (d*Cf*(u1*u1-u2*u2)+(Jy-Jz)*q*r)/Jx;
+    _f << dot(q) == (d*Cf*(u4*u4-u3*u3)+(Jz-Jx)*p*r)/Jy;
+    _f << dot(r) == (c*(u1*u1+u2*u2-u3*u3-u4*u4)+(Jx-Jy)*p*q)/Jz;
+    _f << dot(u1) == vu1;
+    _f << dot(u2) == vu2;
+    _f << dot(u3) == vu3;
+    _f << dot(u4) == vu4;
+
+    // DEFINE CONSTRAINTS:
+    // -------------------------------
+    // Dynamic
+    _ocp.subjectTo( _f );
+
+    // State constraints
+    // Constraints on the velocity of each propeller
+    _ocp.subjectTo( 16 <= u1 <= 95 );
+    _ocp.subjectTo( 16 <= u2 <= 95 );
+    _ocp.subjectTo( 16 <= u3 <= 95 );
+    _ocp.subjectTo( 16 <= u4 <= 95 );
+
+    // Command constraints
+    // Constraints on the acceleration of each propeller
+    _ocp.subjectTo( -100 <= vu1 <= 100 );
+    _ocp.subjectTo( -100 <= vu2 <= 100 );
+    _ocp.subjectTo( -100 <= vu3 <= 100 );
+    _ocp.subjectTo( -100 <= vu4 <= 100 );
+
+    // Constraint to avoid singularity
+    _ocp.subjectTo( -1. <= theta <= 1.);
+
+    // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
+    _ocp.subjectTo( 16 <= ((x+3)*(x+3)+2*(z-5)*(z-5)) );
+    _ocp.subjectTo( 16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)) );
+    _ocp.subjectTo( 16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)) );
+
+    // COST FUNCTION:
+    // -------------------------------
+    _h << x << y << z;
+    _h << vu1 << vu2 << vu3 << vu4;
+    _h << p << q << r;
+
+    // Minimization Weights
+    double coeffX = 1e-5;
+    double coeffU = coeffX*1e-4;
+    double coeffX2 = coeffX*1e2;
+    //    double coeffX3 = coeffX * 1e-5;
+    //    double coeffO = -coeffX * 0.1;
+
+    _Q(0,0) = _Q(1,1) = _Q(2,2) = coeffX;
+    _Q(3,3) = _Q(4,4) = _Q(5,5) = _Q(6,6) = coeffU;
+    _Q(7,7) = _Q(8,8) = _Q(9,9) = coeffX2;
 }
 
 
-/* Optimal Controller part codes:
-    |-- Computation of optimal control one step further
-        from the current initial state
-    |-- The current initial state is read from an initial state file
-        while the optimal control input is written in another file*/
+// Optimal Controller part codes:
+//    |-- Computation of optimal control one step further
+//        from the current initial state
 void MPCSolver::controlMPC()
 {
     using namespace ACADO;
-
-    // Minimization Weights
-    double coeffX = .00001;
-    double coeffU = coeffX*0.0001;
-    double coeffX2 = coeffX * 100.;
-//    double coeffX3 = coeffX * 0.00001;
-//    double coeffO = -coeffX * 0.1;
-
-    // length (in second) of the trajectory predicted in the MPC
-    double T = 8.;
-    // time (in second) between two activation of the MPC algorithm
-    double tmpc = 0.02;
-    // number of nodes used in the Optimal Control Problem
-    // 20 nodes means that the algorithm will discretize the trajectory equally into 20 pieces
-    // If you increase the number of nodes,
-    // the solution will be more precise but calculation will take longer (~nb_nodes^2)
-    // In ACADO, the commands are piecewise constant functions, constant between each node.
-    int nb_nodes = 20;
-
-
-    // DEFINE A OPTIMAL CONTROL PROBLEM
-    // -------------------------------
-    OCP ocp( 0.0, T, nb_nodes );
-
-    // DEFINE THE COST FUNCTION
-    // -------------------------------
-    Function h;
-    h << x << y << z;
-    h << vu1 << vu2 << vu3 << vu4;
-    h << p << q << r;
-
-    DMatrix Q(10,10);
-    Q(0,0) = Q(1,1) = Q(2,2) = coeffX;
-    Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = coeffU;
-    Q(7,7) = Q(8,8) = Q(9,9) = coeffX2;
 
     DVector ref(10);
     ref(0) = _referenceVector[0];
@@ -62,57 +87,9 @@ void MPCSolver::controlMPC()
     ref(8) = 0.;
     ref(9) = 0.;
 
-    ocp.minimizeLSQ ( Q, h, ref);
+    _ocp.minimizeLSQ ( _Q, _h, ref);
 
-    // DEFINE THE DYNAMIC EQUATION OF THE SYSTEM:
-    // ----------------------------------
-    f << dot(x) == vx;
-    f << dot(y) == vy;
-    f << dot(z) == vz;
-    f << dot(vx) == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m;
-    f << dot(vy) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m;
-    f << dot(vz) == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
-    f << dot(phi) == -cos(phi)*tan(theta)*p+sin(phi)*tan(theta)*q+r;
-    f << dot(theta) == sin(phi)*p+cos(phi)*q;
-    f << dot(psi) == cos(phi)/cos(theta)*p-sin(phi)/cos(theta)*q;
-    f << dot(p) == (d*Cf*(u1*u1-u2*u2)+(Jy-Jz)*q*r)/Jx;
-    f << dot(q) == (d*Cf*(u4*u4-u3*u3)+(Jz-Jx)*p*r)/Jy;
-    f << dot(r) == (c*(u1*u1+u2*u2-u3*u3-u4*u4)+(Jx-Jy)*p*q)/Jz;
-    f << dot(u1) == vu1;
-    f << dot(u2) == vu2;
-    f << dot(u3) == vu3;
-    f << dot(u4) == vu4;
-
-    // ---------------------------- DEFINE CONSTRAINTS --------------------------------- //
-    // Dynamic
-    ocp.subjectTo( f );
-
-    // State constraints
-    // Constraints on the velocity of each propeller
-    ocp.subjectTo( 16 <= u1 <= 95 );
-    ocp.subjectTo( 16 <= u2 <= 95 );
-    ocp.subjectTo( 16 <= u3 <= 95 );
-    ocp.subjectTo( 16 <= u4 <= 95 );
-
-    // Command constraints
-    // Constraints on the acceleration of each propeller
-    ocp.subjectTo( -100 <= vu1 <= 100 );
-    ocp.subjectTo( -100 <= vu2 <= 100 );
-    ocp.subjectTo( -100 <= vu3 <= 100 );
-    ocp.subjectTo( -100 <= vu4 <= 100 );
-
-    // Constraint to avoid singularity
-    ocp.subjectTo( -1. <= theta <= 1.);
-
-    // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
-    ocp.subjectTo( 16 <= ((x+3)*(x+3)+2*(z-5)*(z-5)) );
-    ocp.subjectTo( 16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)) );
-    ocp.subjectTo( 16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)) );
-
-    // SETTING UP THE MPC CONTROLLER:
-    // ------------------------------
-    RealTimeAlgorithm alg(ocp, tmpc);
-
+    RealTimeAlgorithm alg(_ocp, _tmpc);
 
     // Usually, you do only one step of the optimisation algorithm (~Gauss-Newton here)
     // at each activation of the MPC, that way the delay between getting the state and
@@ -122,23 +99,21 @@ void MPCSolver::controlMPC()
     // alg.set(GLOBALIZATION_STRATEGY, GS_LINESEARCH);
     alg.set(INTEGRATOR_TYPE, INT_RK45);
     // alg.set(KKT_TOLERANCE,1e-3);
+    alg.set(PRINT_COPYRIGHT, false);
 
     // StaticReferenceTrajectory:
-    // The class StaticReferenceTrajectory allows to define a
-    // static reference trajectory (given beforehand)
-    // that the ControlLaw aims to track
-    // while computing its output.
-//    StaticReferenceTrajectory zeroReference("TempData/ref.txt");
+    // The class StaticReferenceTrajectory allows to define a static reference trajectory (given beforehand)
+    // that the ControlLaw aims to track while computing its output.
+    //    StaticReferenceTrajectory zeroReference("TempData/ref.txt");
     Controller controller(alg); //,zeroReference);
 
     DVector stateInit(16);
-
     // Read the initial state from _stateVector
     for(int j=0;j<16;j++)
         stateInit(j) = _stateVector[j];
 
     // Debug information output
-//    std::cout << "stateInit:\n" << stateInit << std::endl;
+    //    std::cout << "stateInit:\n" << stateInit << std::endl;
 
     // Computation of the optimal control calculated
     controller.init(0.0,stateInit);
@@ -150,12 +125,13 @@ void MPCSolver::controlMPC()
     // Debug information output
     controller.getU(U);
     // Debug information output
-    std::cout << "Number of control computed: " << controller.getNU() << std::endl;
-    std::cout << "u.size=" << U.size() << std::endl;
+//    std::cout << "Number of control computed: " << controller.getNU() << std::endl;
+//    std::cout << "U" << U << std::endl;
 
-    DVector stateFin(16);
-    stateFin.setZero(16);
-    controller.getP(stateFin);
+//    DVector stateFin(16);
+//    stateFin.setZero(16);
+//    controller.getP(stateFin);
+
 
     // Write the calculated control into _controlVector
     for(unsigned int i=0; i<controller.getNU(); i++)
@@ -231,17 +207,17 @@ std::array<double,16> MPCSolver::quadModel(double, std::array<double,16> x, std:
     const double Jx = 0.018;
     const double Jy = 0.018;
     const double Jz = 0.026;
-//    const double Im = 0.0001;
+    //    const double Im = 0.0001;
     const double m = 0.9;
     const double g = 9.81;
-//    const double Cx = 0.1;
+    //    const double Cx = 0.1;
 
     // Minimization Weights
-//    double coeffX = .00001;
-//    double coeffU = coeffX*0.0001;
-//    double coeffX2 = coeffX * 100.;
-//    double coeffX3 = coeffX * 0.00001;
-//    double coeffO = -coeffX * 0.1;
+    //    double coeffX = .00001;
+    //    double coeffU = coeffX*0.0001;
+    //    double coeffX2 = coeffX * 100.;
+    //    double coeffX3 = coeffX * 0.00001;
+    //    double coeffO = -coeffX * 0.1;
 
 
     std::array<double,16> dx;
