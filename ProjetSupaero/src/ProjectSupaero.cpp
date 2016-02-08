@@ -1,4 +1,6 @@
-#include "mpcsolver.h"
+
+
+//#include "mpcsolver.h"
 #include "input.h"
 #include <iostream>
 
