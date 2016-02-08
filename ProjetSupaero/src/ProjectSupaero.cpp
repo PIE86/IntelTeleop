@@ -1,27 +1,25 @@
-#include "mpcsolver.h"
-#include <iostream>
+#ifndef MAIN
+#define MAIN
 
-using std::cout; using std::endl;
+#include <gepetto/viewer/corba/client.hh>
+#include "viewer.h"
+#include <pthread.h>
 
+int main( ){
 
-int main()
-{
-    MPCSolver solver;
-    double t = 0;
-    double dt = 0.02;
+	Viewer viewer;
 
-    solver.controlMPC();
-    solver.systemEvol(t,dt);
-    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
-//    solver.controlMPC();
-//    solver.systemEvol(t,dt);
-//    cout << solver.stateVector()[0] << " " << solver.stateVector()[1] << " " << solver.stateVector()[2] << endl;
+    viewer.createDrone();
 
+	for(float i=0;i<50;i++)
+	{
+		float x=1.0;
+		float y=1.0;
+		float z=1.0+i/20;
+		viewer.moveDrone(x,y,z);
+	}
     return 0;
 }
+
+
+#endif
