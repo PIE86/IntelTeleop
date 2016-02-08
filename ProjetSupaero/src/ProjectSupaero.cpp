@@ -9,7 +9,10 @@ int main()
 {
     Input input;
     while (true)
+    {
         input.test();
+        sf::sleep(sf::milliseconds(100));
+    }
 
 //    MPCSolver solver;
 //    double t = 0;
