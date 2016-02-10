@@ -3,27 +3,7 @@
 
 MPCSolver::MPCSolver() : _referenceVector{0.,0.,20.}
 {
-
 }
-
-// Affecter la consigne
-void MPCSolver::setConsigne(std::array<double,3> consigne)
-{
-	for(int i=0;i<3;i++)
-	{
-		this->_consigne.at(i) = consigne[i];
-	}
-	std::cout << "###############################" << std::endl;
-	std::cout << "Consigne transmis:" << std::endl;
-	std::cout << "Vitesse demandee:" << std::endl;
-	for(int i=0;i<3;i++)
-	{
-		std::cout << this->_consigne.at(i) << "\t";
-	}
-	std::cout << std::endl;
-	std::cout << "###############################" << std::endl;
-}
-
 
 
 /* Optimal Controller part codes:
@@ -190,96 +170,109 @@ void MPCSolver::controlMPC()
 
 void MPCSolver::systemEvol(double t, double dt)
 {
-	_stateVector = quadRungeKutta(t, _stateVector, _commandVector, dt);
+    _stateVector = quadRungeKutta(t, _stateVector, _commandVector, dt);
 }
 
 void MPCSolver::setReferenceVector(const std::array<double, 3> &referenceVector)
 {
-	_referenceVector = referenceVector;
+    _referenceVector = referenceVector;
 }
 
 std::array<double, 16> MPCSolver::stateVector() const
 {
-	return _stateVector;
+    return _stateVector;
 }
 
 std::array<double,16> MPCSolver::quadRungeKutta(double t, std::array<double,16> x, std::array<double,4> u, double dt)
 {
-	// Construction of the slopes K
-	std::array<double,16> k[4];
+    // Construction of the slopes K
+    std::array<double,16> k[4];
 
-	// Intermediate variables
-	// for the calculation of the slopes
-	std::array<double,16> x1[3];
+    // Intermediate variables
+    // for the calculation of the slopes
+    std::array<double,16> x1[3];
 
-	double t1,t2,t3;
-	t1 = t + dt/2;
-	t2 = t1;
-	t3 = t + dt;
+    double t1,t2,t3;
+    t1 = t + dt/2;
+    t2 = t1;
+    t3 = t + dt;
 
-	// Calculation of k
-	k[0] = quadModel(t,x,u);
+    // Calculation of k
+    k[0] = quadModel(t,x,u);
 
-	for(unsigned int i=0; i<x1[0].size(); i++)
-	x1[0][i] = x[i] + dt/2*k[0][i];
+    for(unsigned int i=0; i<x1[0].size(); i++)
+        x1[0][i] = x[i] + dt/2*k[0][i];
 
-	k[1] = quadModel(t1,x1[0],u);
+    k[1] = quadModel(t1,x1[0],u);
 
-	for(unsigned int i=0; i<x1[1].size(); i++)
-	x1[1][i] = x[i] + dt/2*k[1][i];
+    for(unsigned int i=0; i<x1[1].size(); i++)
+        x1[1][i] = x[i] + dt/2*k[1][i];
 
-	k[2] = quadModel(t2,x1[1],u);
+    k[2] = quadModel(t2,x1[1],u);
 
-	for(unsigned int i=0; i<x1[2].size(); i++)
-	x1[2][i] = x[i] + dt*k[2][i];
+    for(unsigned int i=0; i<x1[2].size(); i++)
+        x1[2][i] = x[i] + dt*k[2][i];
 
-	k[3] = quadModel(t3,x1[2],u);
+    k[3] = quadModel(t3,x1[2],u);
 
 
-	// The result -- next step position
-	std::array<double,16> res;
-	for(unsigned int i=0; i<res.size(); i++)
-	res[i] = x[i] + dt/6*(k[0][i] + 2*k[1][i] + 2*k[2][i] + k[3][i]);
+    // The result -- next step position
+    std::array<double,16> res;
+    for(unsigned int i=0; i<res.size(); i++)
+        res[i] = x[i] + dt/6*(k[0][i] + 2*k[1][i] + 2*k[2][i] + k[3][i]);
 
-	return res;
+    return res;
 }
 
 
 std::array<double,16> MPCSolver::quadModel(double, std::array<double,16> x, std::array<double,4> u)
 {
-	// Minimization Weights
-	double coeffX = .00001;
-	double coeffU = coeffX*0.0001;
-	double coeffX2 = coeffX * 100.;
-	double coeffX3 = coeffX * 0.00001;
-	double coeffO = -coeffX * 0.1;
+    // Quad constants
+    const double c = 0.00001;
+    const double Cf = 0.00065;
+    const double d = 0.250;
+    const double Jx = 0.018;
+    const double Jy = 0.018;
+    const double Jz = 0.026;
+//    const double Im = 0.0001;
+    const double m = 0.9;
+    const double g = 9.81;
+//    const double Cx = 0.1;
 
-	std::array<double,16> dx;
-	// auxilary variable
-	double normU2 = u[0]*u[0]+u[1]*u[1]+u[2]*u[2]+u[3]*u[3];
-
-	// Differential equations of the quadrotor
-	dx[0] = x[3];//dot_x
-	dx[1] = x[4];//dot_y
-	dx[2] = x[5];//dot_z
-
-	dx[3] = Cf*normU2*sin(x[7])/m;//dot_vx
-	dx[4] = -Cf*normU2*sin(x[8])*cos(x[7])/m;//dot_vy
-	dx[5] = Cf*normU2*cos(x[8])*cos(x[7])/m - g;//dot_vz
-
-	dx[6] = -cos(x[6])*tan(x[7])*x[9]+sin(x[6])*tan(x[7])*x[10]+x[11];//dot_phi
-	dx[7] = sin(x[6])*x[9]+cos(x[6])*x[10];//dot_theta
-	dx[8] = cos(x[6])/cos(x[7])*x[9]-sin(x[6])/cos(x[7])*x[10];//dot_psi
-
-	dx[9] = (d*Cf*(u[0]*u[0]-u[1]*u[1])+(Jy-Jz)*x[10]*x[11])/Jx;//dot_p
-	dx[10] = (d*Cf*(u[3]*u[3]-u[2]*u[2])+(Jz-Jx)*x[9]*x[11])/Jy;//dot_q
-	dx[11] = (c*(u[0]*u[0]+u[1]*u[1]-u[2]*u[2]-u[3]*u[3])+(Jx-Jy)*u[9]*u[10])/Jz;//dot_r
+    // Minimization Weights
+//    double coeffX = .00001;
+//    double coeffU = coeffX*0.0001;
+//    double coeffX2 = coeffX * 100.;
+//    double coeffX3 = coeffX * 0.00001;
+//    double coeffO = -coeffX * 0.1;
 
 
-	dx[12] = u[0];//dot_u1
-	dx[13] = u[1];//dot_u2
-	dx[14] = u[2];//dot_u3
-	dx[15] = u[3];//dot_u4
+    std::array<double,16> dx;
+    // auxilary variable
+    double normU2 = u[0]*u[0]+u[1]*u[1]+u[2]*u[2]+u[3]*u[3];
 
-	return dx;
+    // Differential equations of the quadrotor
+    dx[0] = x[3];//dot_x
+    dx[1] = x[4];//dot_y
+    dx[2] = x[5];//dot_z
+
+    dx[3] = Cf*normU2*sin(x[7])/m;//dot_vx
+    dx[4] = -Cf*normU2*sin(x[8])*cos(x[7])/m;//dot_vy
+    dx[5] = Cf*normU2*cos(x[8])*cos(x[7])/m - g;//dot_vz
+
+    dx[6] = -cos(x[6])*tan(x[7])*x[9]+sin(x[6])*tan(x[7])*x[10]+x[11];//dot_phi
+    dx[7] = sin(x[6])*x[9]+cos(x[6])*x[10];//dot_theta
+    dx[8] = cos(x[6])/cos(x[7])*x[9]-sin(x[6])/cos(x[7])*x[10];//dot_psi
+
+    dx[9] = (d*Cf*(u[0]*u[0]-u[1]*u[1])+(Jy-Jz)*x[10]*x[11])/Jx;//dot_p
+    dx[10] = (d*Cf*(u[3]*u[3]-u[2]*u[2])+(Jz-Jx)*x[9]*x[11])/Jy;//dot_q
+    dx[11] = (c*(u[0]*u[0]+u[1]*u[1]-u[2]*u[2]-u[3]*u[3])+(Jx-Jy)*u[9]*u[10])/Jz;//dot_r
+
+
+    dx[12] = u[0];//dot_u1
+    dx[13] = u[1];//dot_u2
+    dx[14] = u[2];//dot_u3
+    dx[15] = u[3];//dot_u4
+
+    return dx;
 }

@@ -1,6 +1,6 @@
 
 
-#include "mpcsolver.h"
+//#include "mpcsolver.h"
 #include "input.h"
 #include <iostream>
 
@@ -10,7 +10,7 @@ using std::cout; using std::endl;
 int main()
 {
 	MPCSolver mpcSolver;
-	Input input(& mpcSolver);
+	Input input(mpcSolver);
 	while(true)
 		input.test();
 
