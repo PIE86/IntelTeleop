@@ -1,0 +1,22 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=/usr/local/lib
+bindir=/usr/local/bin
+pkglibdir=/usr/local/lib/ProjectSupaero_ACADO
+includedir=/usr/local/include
+datarootdir=/usr/local/share
+pkgdatarootdir=/usr/local/share
+docdir=/usr/local/share/doc/ProjectSupaero_ACADO
+doxygendocdir=/usr/local/share/doc/ProjectSupaero_ACADO/doxygen-html
+
+Name: ProjectSupaero_ACADO
+Description: acado for Supaero project : MPC for drones
+URL: 
+Version: UNKNOWN-dirty
+Requires: gepetto-viewer-corba, tinyxml2
+Conflicts: 
+Libs: -L${libdir}
+Libs.private: 
+Cflags: -I${includedir}
+
+
