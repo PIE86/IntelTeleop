@@ -13,7 +13,6 @@ int main()
 {
     USING_NAMESPACE_ACADO
 
-
     // INTRODUCE THE VARIABLES:
     // -------------------------
     DifferentialState x,y,z, vx,vy,vz, phi,theta,psi, p,q,r, u1,u2,u3,u4;
@@ -69,7 +68,7 @@ int main()
     // DEFINE LEAST SQUARE FUNCTION:
     // -----------------------------
     Function h;
-    h << x << y << z;
+    h << vx << vy << vz;
     h << vu1 << vu2 << vu3 << vu4;
     h << p << q << r;
 
@@ -80,10 +79,10 @@ int main()
     Q(7,7) = Q(8,8) = Q(9,9) = 1e-3;
 
     // Reference
-    double ref[10] = {0., 0., 20., 0., 0., 0., 0., 0., 0., 0.};
+    double ref[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
     DVector refVec(10, ref);
     // Reference 2, to see if we can change reference once the solver is started
-    double ref2[10] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
+    double ref2[10] = {1., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
     DVector refVec2(10, ref2);
 
 
@@ -110,14 +109,14 @@ int main()
     ocp.subjectTo(-1. <= theta <= 1.);
 
     // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
-//    _ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-5)*(z-5)));
-//    _ocp.subjectTo(16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)));
-//    _ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)));
+//    ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-5)*(z-5)));
+//    ocp.subjectTo(16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)));
+//    ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)));
 
 
     // SET UP THE MPC CONTROLLER:
     // ------------------------------
-    RealTimeAlgorithm alg(ocp,0.025);
+    RealTimeAlgorithm alg(ocp);
     alg.set(INTEGRATOR_TYPE, INT_RK78);
     alg.set(MAX_NUM_ITERATIONS,1);
     alg.set(PRINT_COPYRIGHT, false);
@@ -128,6 +127,7 @@ int main()
     // ----------------------------------------------------------
     DVector X(16), U(4);
     X.setZero(16);
+    X(12) = X(13) = X(14) = X(15) = 58.;
     U.setZero(4);
     controller.init(0., X);
     process.init(0., X, U);
@@ -135,28 +135,42 @@ int main()
     VariablesGrid Y, graph;
     Y.setZero();
 
-//    VariablesGrid newRef(refVec2, Grid{0., 5., 2});
+    VariablesGrid newRef(refVec2, Grid{0., 5., 2});
 
-    double t=0;
-    for (int i=0; i<300; i++, t+=.025)
+    double t = 0;
+    double dt = .05;
+    for (int i=0; i<300; i++, t+=dt)
     {
-//        if (i==100)
-//        {
-//            alg.setReference(newRef);
-//        }
+        if (i==150)
+        {
+            alg.setReference(newRef);
+        }
         process.getY(Y);
         X = Y.getLastVector();
         controller.step(t, X);
         controller.getU(U);
-        process.step(t,t+0.025,U);
+        process.step(t,t+dt,U);
 
         graph.addVector(X,t);
     }
 
     GnuplotWindow window;
     window.addSubplot(graph(0), "x");
-    window.addSubplot(graph(1), "y");
+//    window.addSubplot(graph(1), "y");
     window.addSubplot(graph(2), "z");
+    window.addSubplot(graph(3), "vx");
+//    window.addSubplot(graph(4), "vy");
+    window.addSubplot(graph(5), "vz");
+//    window.addSubplot(graph(6), "phi");
+//    window.addSubplot(graph(7), "theta");
+//    window.addSubplot(graph(8), "psi");
+//    window.addSubplot(graph(9), "p");
+//    window.addSubplot(graph(10), "q");
+//    window.addSubplot(graph(11), "r");
+    window.addSubplot(graph(12), "u1");
+    window.addSubplot(graph(13), "u2");
+    window.addSubplot(graph(14), "u3");
+    window.addSubplot(graph(15), "u4");
     window.plot();
 
     return 0;
