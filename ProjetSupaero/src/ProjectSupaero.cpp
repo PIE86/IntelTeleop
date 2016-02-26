@@ -6,6 +6,8 @@
 #include <acado_optimal_control.hpp>
 #include <acado_gnuplot.hpp>
 
+#include "input.h"
+
 using std::cout; using std::endl;
 
 
@@ -60,7 +62,6 @@ int main()
 
     // SET UP THE (SIMULATED) PROCESS:
     // -----------------------------------
-    OutputFcn identity;
     DynamicSystem dynamicSystem(f,OutputFcn{});
     Process process(dynamicSystem,INT_RK45);
 
@@ -79,11 +80,8 @@ int main()
     Q(7,7) = Q(8,8) = Q(9,9) = 1e-3;
 
     // Reference
-    double ref[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
-    DVector refVec(10, ref);
-    // Reference 2, to see if we can change reference once the solver is started
-    double ref2[10] = {1., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
-    DVector refVec2(10, ref2);
+    DVector refVec(10);
+    refVec.setZero(10);
 
 
     // DEFINE AN OPTIMAL CONTROL PROBLEM:
@@ -135,16 +133,21 @@ int main()
     VariablesGrid Y, graph;
     Y.setZero();
 
-    VariablesGrid newRef(refVec2, Grid{0., 5., 2});
+    Input input;
+//    VariablesGrid newRef(refVec2, Grid{0., 5., 2});
 
     double t = 0;
     double dt = .05;
     for (int i=0; i<300; i++, t+=dt)
     {
-        if (i==150)
-        {
-            alg.setReference(newRef);
-        }
+        // setting reference from input
+        std::array<double,3> refInput = input.getReference();
+        double refT[10] = {refInput[0], refInput[1], refInput[2], 0., 0., 0., 0., 0., 0., 0.};
+        DVector refVec(10, refT);
+        VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
+        alg.setReference(referenceVG);
+
+        // MPC step
         process.getY(Y);
         X = Y.getLastVector();
         controller.step(t, X);
@@ -156,10 +159,10 @@ int main()
 
     GnuplotWindow window;
     window.addSubplot(graph(0), "x");
-//    window.addSubplot(graph(1), "y");
+    window.addSubplot(graph(1), "y");
     window.addSubplot(graph(2), "z");
     window.addSubplot(graph(3), "vx");
-//    window.addSubplot(graph(4), "vy");
+    window.addSubplot(graph(4), "vy");
     window.addSubplot(graph(5), "vz");
 //    window.addSubplot(graph(6), "phi");
 //    window.addSubplot(graph(7), "theta");
@@ -167,10 +170,10 @@ int main()
 //    window.addSubplot(graph(9), "p");
 //    window.addSubplot(graph(10), "q");
 //    window.addSubplot(graph(11), "r");
-    window.addSubplot(graph(12), "u1");
-    window.addSubplot(graph(13), "u2");
-    window.addSubplot(graph(14), "u3");
-    window.addSubplot(graph(15), "u4");
+//    window.addSubplot(graph(12), "u1");
+//    window.addSubplot(graph(13), "u2");
+//    window.addSubplot(graph(14), "u3");
+//    window.addSubplot(graph(15), "u4");
     window.plot();
 
     return 0;
