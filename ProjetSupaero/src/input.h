@@ -2,18 +2,14 @@
 #define INPUT_H
 
 #include <SFML/Window.hpp>
-#include "mpcsolver.h"
+#include <array>
 
 
 class Input
 {
-private:
-	MPCSolver* mpcSolver;
-	
 public:
-	Input(MPCSolver* mpcSolver);
-	MPCSolver* getMPCSolver();
-	void test();
+    Input();
+    std::array<double,3> getReference();
 };
 
 #endif // INPUT_H
