@@ -2,29 +2,26 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 INCLUDE(cmake/base.cmake)
 INCLUDE(cmake/cpack.cmake)
-INCLUDE(cmake/FindSFML.cmake)
+# INCLUDE(cmake/FindSFML.cmake)
 
 SET(PROJECT_NAME ProjectSupaero_ACADO)
-SET(EXECUTABLE_NAME ProjectSupaero)
+# SET(EXECUTABLE_NAME ProjectSupaero)
 SET(PROJECT_DESCRIPTION "acado for Supaero project : MPC for drones")
 SET(PROJECT_URL "")
 SET(PROJECT_VERSION "")
 
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -ltinyxml2 -g")
+SET(CMAKE_CXX_FLAGS "-std=c++11")
 
 PROJECT(${PROJECT_NAME})
 SETUP_PROJECT()
-AUX_SOURCE_DIRECTORY(src SRCS)
-ADD_EXECUTABLE(${EXECUTABLE_NAME} ${SRCS})
-
+# ----------------------------------------------------
+# --- DEPENDANCIES -----------------------------------
+# ----------------------------------------------------
 ADD_REQUIRED_DEPENDENCY("acado")
-ADD_REQUIRED_DEPENDENCY("sfml-window sfml-system" >= 2.1)
 
-PKG_CONFIG_USE_DEPENDENCY(${EXECUTABLE_NAME} acado)
-INSTALL(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
-
+ADD_SUBDIRECTORY(src)
 
 SETUP_PROJECT_FINALIZE()
 SETUP_PROJECT_CPACK()
