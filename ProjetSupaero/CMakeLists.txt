@@ -11,7 +11,7 @@ SET(PROJECT_VERSION "")
 
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -lsfml-system -lsfml-window -ltinyxml2 -g")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -lsfml-system -lsfml-window -ltinyxml2 -lgepetto-viewer-corba -lomniORB4 -lomnithread -lgepetto-viewer -losg -losgDB -losgFX -losgGA -losgParticle -losgSim -losgText -losgUtil -losgTerrain -losgManipulator -losgViewer -losgWidget -losgShadow -losgAnimation -losgVolume -lOpenThreads -lurdfdom_sensor -lurdfdom_model_state -lurdfdom_model -lurdfdom_world -lconsole_bridge -g")
 
 PROJECT(${PROJECT_NAME})
 SETUP_PROJECT()
@@ -23,7 +23,7 @@ ADD_REQUIRED_DEPENDENCY("sfml-window" >=2.1)
 ADD_REQUIRED_DEPENDENCY("sfml-system" >=2.1)
 ADD_REQUIRED_DEPENDENCY("gepetto-viewer-corba")
 ADD_REQUIRED_DEPENDENCY("tinyxml2")
-ADD_REQUIRED_DEPENDENCY("eigenpy")
+ADD_REQUIRED_DEPENDENCY("eigen3")
 
 PKG_CONFIG_USE_DEPENDENCY(${EXECUTABLE_NAME} acado)
 INSTALL(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
