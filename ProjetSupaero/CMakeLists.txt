@@ -4,20 +4,22 @@ INCLUDE(cmake/base.cmake)
 INCLUDE(cmake/cpack.cmake)
 
 SET(PROJECT_NAME ProjectSupaero_ACADO)
-SET(EXECUTABLE_NAME ProjectSupaero)
 SET(PROJECT_DESCRIPTION "acado for Supaero project : MPC for drones")
 SET(PROJECT_URL "")
 SET(PROJECT_VERSION "")
 
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -lsfml-system -lsfml-window -ltinyxml2 -g")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -g")
 
-PROJECT(${PROJECT_NAME})
 SETUP_PROJECT()
+SET(${PROJECT_NAME}_HEADERS
+  include/environmentparser.h
+  include/viewer.h
+  include/input.h
+  include/mpcsolver.h
+)
 
-AUX_SOURCE_DIRECTORY(src SRCS)
-ADD_EXECUTABLE(${EXECUTABLE_NAME} ${SRCS})
 ADD_REQUIRED_DEPENDENCY("acado")
 ADD_REQUIRED_DEPENDENCY("sfml-window" >=2.1)
 ADD_REQUIRED_DEPENDENCY("sfml-system" >=2.1)
@@ -25,8 +27,8 @@ ADD_REQUIRED_DEPENDENCY("gepetto-viewer-corba")
 ADD_REQUIRED_DEPENDENCY("tinyxml2")
 ADD_REQUIRED_DEPENDENCY("eigenpy")
 
-PKG_CONFIG_USE_DEPENDENCY(${EXECUTABLE_NAME} acado)
-INSTALL(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
+ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(tests)
 
 SETUP_PROJECT_FINALIZE()
 SETUP_PROJECT_CPACK()

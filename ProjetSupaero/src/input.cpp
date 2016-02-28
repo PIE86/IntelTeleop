@@ -1,6 +1,7 @@
-#include"input.h"
-#include<iostream>
-#include<SFML/Window.hpp>
+#include "input.h"
+
+#include <iostream>
+#include <SFML/Window.hpp>
 
 
 

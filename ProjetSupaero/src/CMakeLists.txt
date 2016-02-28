@@ -1,0 +1,35 @@
+#
+# Copyright (c) 2015 CNRS
+# Authors: Mathieu Geisert - Florian Valenza
+#
+#
+
+SET(LIBRARY_NAME ${PROJECT_NAME})
+
+
+# Source files - Add here your source files
+SET(${LIBRARY_NAME}_SOURCES
+  environmentparser.cpp
+  mpcsolver.cpp
+  viewer.cpp
+  input.cpp
+)
+
+
+SET(${LIBRARY_NAME}_FILES
+	${${LIBRARY_NAME}_SOURCES}
+	${${LIBRARY_NAME}_HEADERS}
+	)
+
+
+ADD_LIBRARY(${LIBRARY_NAME} SHARED ${${LIBRARY_NAME}_SOURCES})
+
+PKG_CONFIG_USE_DEPENDENCY(${LIBRARY_NAME} gepetto-viewer-corba)
+PKG_CONFIG_USE_DEPENDENCY(${LIBRARY_NAME} tinyxml2)
+PKG_CONFIG_USE_DEPENDENCY(${LIBRARY_NAME} acado)
+PKG_CONFIG_USE_DEPENDENCY(${LIBRARY_NAME} sfml-system)
+PKG_CONFIG_USE_DEPENDENCY(${LIBRARY_NAME} sfml-window)
+PKG_CONFIG_USE_DEPENDENCY(${LIBRARY_NAME} eigenpy)
+
+
+INSTALL(TARGETS ${LIBRARY_NAME} DESTINATION lib)
