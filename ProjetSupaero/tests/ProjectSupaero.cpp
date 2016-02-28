@@ -7,13 +7,14 @@
 #include <acado_gnuplot.hpp>
 
 #include "input.h"
+#include "viewer.h"
 
 using std::cout; using std::endl;
 
 
 int main()
 {
-    USING_NAMESPACE_ACADO
+    USING_NAMESPACE_ACADO;
 
     // INTRODUCE THE VARIABLES:
     // -------------------------
@@ -133,8 +134,20 @@ int main()
     VariablesGrid Y, graph;
     Y.setZero();
 
+    // END OF ACADO SOLVER SETUP
+    // -------------------------
+
+    // Get input from keyboard
     Input input;
-//    VariablesGrid newRef(refVec2, Grid{0., 5., 2});
+
+//    std::cout << system("pwd") << std::endl;
+//    std::cout << system("ls ../data") << std::endl;
+
+    // Gepetto viewer over corba
+    Viewer viewer;
+    viewer.createEnvironment();
+
+    viewer.createDrone("/home/baudouin/Documents/travail/4A/PIE/PIE-drone/ProjetSupaero/data/quadrotor_base.stl");
 
     double t = 0;
     double dt = .05;
@@ -150,6 +163,9 @@ int main()
         // MPC step
         process.getY(Y);
         X = Y.getLastVector();
+
+        viewer.moveDrone((float)X(0), (float)X(1), (float)X(2), (float)X(6), (float)X(7), (float)X(8));
+
         controller.step(t, X);
         controller.getU(U);
         process.step(t,t+dt,U);
@@ -158,18 +174,18 @@ int main()
     }
 
     GnuplotWindow window;
-    window.addSubplot(graph(0), "x");
-    window.addSubplot(graph(1), "y");
-    window.addSubplot(graph(2), "z");
-    window.addSubplot(graph(3), "vx");
-    window.addSubplot(graph(4), "vy");
-    window.addSubplot(graph(5), "vz");
-//    window.addSubplot(graph(6), "phi");
-//    window.addSubplot(graph(7), "theta");
-//    window.addSubplot(graph(8), "psi");
-//    window.addSubplot(graph(9), "p");
-//    window.addSubplot(graph(10), "q");
-//    window.addSubplot(graph(11), "r");
+//    window.addSubplot(graph(0), "x");
+//    window.addSubplot(graph(1), "y");
+//    window.addSubplot(graph(2), "z");
+//    window.addSubplot(graph(3), "vx");
+//    window.addSubplot(graph(4), "vy");
+//    window.addSubplot(graph(5), "vz");
+    window.addSubplot(graph(6), "phi");
+    window.addSubplot(graph(7), "theta");
+    window.addSubplot(graph(8), "psi");
+    window.addSubplot(graph(9), "p");
+    window.addSubplot(graph(10), "q");
+    window.addSubplot(graph(11), "r");
 //    window.addSubplot(graph(12), "u1");
 //    window.addSubplot(graph(13), "u2");
 //    window.addSubplot(graph(14), "u3");
