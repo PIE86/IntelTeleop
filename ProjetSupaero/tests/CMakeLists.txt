@@ -16,5 +16,5 @@ MACRO(ADD_TEST_CFLAGS target flag)
   SET_PROPERTY(TARGET ${target} APPEND_STRING PROPERTY COMPILE_FLAGS " ${flag}")
 ENDMACRO(ADD_TEST_CFLAGS)
 
-ADD_EXEC(ProjectSupaero "acado;sfml-window;sfml-system;gepetto-viewer-corba;tinyxml2;eigenpy")
+ADD_EXEC(ProjectSupaero "acado;sfml-window;sfml-system;gepetto-viewer-corba;tinyxml2;eigen3")
 ADD_TEST_CFLAGS(ProjectSupaero '-DPIE_SOURCE_DIR=\\\"${${PROJECT_NAME}_SOURCE_DIR}\\\"')
