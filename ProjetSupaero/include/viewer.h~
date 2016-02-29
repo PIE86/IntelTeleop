@@ -3,7 +3,6 @@
 
 #include "gepetto/viewer/corba/client.hh"
 #include <string>
-#include "environmentparser.h"
 
 using namespace graphics;
 using namespace corbaServer;

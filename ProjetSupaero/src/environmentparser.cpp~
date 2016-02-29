@@ -18,7 +18,7 @@ EnvironmentParser::EnvironmentParser(): nbElements(0){
     xmlDoc.InsertFirstChild(root);
 }
 
-EnvironmentParser::EnvironmentParser(std::string &name): nbElements(0){
+EnvironmentParser::EnvironmentParser(std::string &name)nbElements(0){
     // Load the file
     tinyxml2::XMLError eResult = xmlDoc.LoadFile(name.c_str());
     XMLCheckResult(eResult);

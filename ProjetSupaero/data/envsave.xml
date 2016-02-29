@@ -1,6 +1,6 @@
 <root nbElements="1">
-    <cylinder radius="3">
-        <center1 x="1" y="1" z="4"/>
+    <cylinder radius="3.2">
+        <center1 x="1" y="1" z="12"/>
         <center2 x="1" y="-5" z="1"/>
     </cylinder>
 </root>
