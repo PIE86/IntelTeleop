@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <string>
 #include <time.h>
 
 #include <acado_toolkit.hpp>
@@ -8,6 +10,7 @@
 
 #include "input.h"
 #include "viewer.h"
+#include "environmentparser.h"
 
 using std::cout; using std::endl;
 
@@ -107,15 +110,24 @@ int main()
     // Constraint to avoid singularity
     ocp.subjectTo(-1. <= theta <= 1.);
 
-    // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
-    ocp.subjectTo(1 <= (x*x+(z-5)*(z-5)));
-//    ocp.subjectTo(16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)));
-//    ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)));
-
-    // adding roof, floor and walls
+    // adding roof, floor and walls constraints
     ocp.subjectTo(-9 <= x <= 9);
     ocp.subjectTo(-9 <= y <= 9);
     ocp.subjectTo(0 <= z <= 9);
+
+    // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
+    ocp.subjectTo(1 <= (x*x+(z-5)*(z-5)));
+
+    // Loading cylindrical obstacles from XML
+    EnvironmentParser parser(PIE_SOURCE_DIR"/data/envsave.xml");
+    auto cylinders = parser.readData();
+    for (Ecylinder c : cylinders)
+    {
+        ocp.subjectTo(pow(c.radius,2) <=
+                      ( pow((y-c.y1)*(c.z2-c.z1)-(c.y2-c.y1)*(z-c.z1),2) + pow((z-c.z1)*(c.x2-c.x1)-(c.z2-c.z1)*(x-c.x1),2) + pow((x-c.x1)*(c.y2-c.y1)-(c.x2-c.x1)*(y-c.y1),2) ) /
+                      ( pow(c.x2-c.x1,2) + pow(c.y2-c.y1,2) + pow(c.z2-c.z1,2) )
+                      );
+    }
 
 
     // SET UP THE MPC CONTROLLER:
@@ -131,6 +143,7 @@ int main()
     // ----------------------------------------------------------
     DVector X(16), U(4);
     X.setZero(16);
+    X(2) = 1.;
     X(12) = X(13) = X(14) = X(15) = 58.;
     U.setZero(4);
     controller.init(0., X);
@@ -148,8 +161,7 @@ int main()
 
     // Gepetto viewer over corba
     Viewer viewer;
-    //viewer.createEnvironment();
-
+    viewer.createEnvironment(cylinders);
     viewer.createDrone(PIE_SOURCE_DIR"/data/quadrotor_base.stl");
 
     double t = 0;
@@ -157,7 +169,7 @@ int main()
     while(true)
     {
         // setting reference from input
-        std::array<double,6> refInput = input.getReference();
+        auto refInput = input.getReference();
         double refT[10] = {refInput[0], refInput[1], refInput[2], 0., 0., 0., 0., 0., 0., 0.};
         DVector refVec(10, refT);
         VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
@@ -167,6 +179,7 @@ int main()
         process.getY(Y);
         X = Y.getLastVector();
 
+        // viewer takes roll-pitch-yaw but drone equations are in yaw-pitch-roll
         viewer.moveDrone(X(0), X(1), X(2), X(8), X(7), X(6));
 
         controller.step(t, X);

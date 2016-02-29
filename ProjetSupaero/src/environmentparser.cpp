@@ -12,20 +12,23 @@ Last update: 27/01/2016
 #define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("Error: %i\n", a_eResult); }
 #endif
 
-EnvironmentParser::EnvironmentParser(): nbElements(0){
+EnvironmentParser::EnvironmentParser(): nbElements(0)
+{
     // Create a root
     root = xmlDoc.NewElement("root");
     xmlDoc.InsertFirstChild(root);
 }
 
-EnvironmentParser::EnvironmentParser(std::string &name): nbElements(0){
+EnvironmentParser::EnvironmentParser(const std::string &name): nbElements(0)
+{
     // Load the file
     tinyxml2::XMLError eResult = xmlDoc.LoadFile(name.c_str());
     XMLCheckResult(eResult);
     root = xmlDoc.FirstChildElement();
 }
 
-void EnvironmentParser::addCylinder(Epoint center1, Epoint center2, float radius) {
+void EnvironmentParser::addCylinder(Epoint center1, Epoint center2, float radius)
+{
     // Create a new element "cylinder"
     tinyxml2::XMLElement *cylinder = xmlDoc.NewElement("cylinder");
     root->InsertEndChild(cylinder);

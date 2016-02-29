@@ -27,9 +27,9 @@ int main()
     std::cout << "Translation Test" << std::endl;
     for (int i = 0;i<200;i++)
     {
-        x = 0. + i/200.;
-        y = 0. - i/120.;
-        z = 1. + i/140.;
+        x = 0.f + (float)i/200.f;
+        y = 0.f - (float)i/120.f;
+        z = 1.f + (float)i/140.f;
 
         viewer.moveDrone(x,y,z,roll,pitch,yaw);
         usleep(50000);
@@ -40,12 +40,12 @@ int main()
     std::cout << "Yaw Test" << std::endl;
     for(int i = 0;i<100;i++)
     {
-        yaw = 0.02;
+        yaw = 0.02f;
 
         viewer.moveDrone(x,y,z,roll,pitch,yaw);
         usleep(50000);
     }
-    yaw = 0.0;
+    yaw = 0.0f;
     usleep(3000000);
 
 
@@ -53,12 +53,12 @@ int main()
     std::cout << "Pitch Test" << std::endl;
     for(int i = 0;i<100;i++)
     {
-        pitch = 0.02;
+        pitch = 0.02f;
 
         viewer.moveDrone(x,y,z,roll,pitch,yaw);
         usleep(50000);
     }
-    pitch = 0.0;
+    pitch = 0.0f;
     usleep(3000000);
 
 
@@ -66,7 +66,7 @@ int main()
     std::cout << "Roll Test" << std::endl;
     for (int i=0; i<100; i++)
     {
-        roll = 0.02;
+        roll = 0.02f;
 
         viewer.moveDrone(x,y,z,roll,pitch,yaw);
         usleep(50000);
