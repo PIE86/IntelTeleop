@@ -37,11 +37,14 @@ int main( ){
 	*/
 	while(true)
 	{
-		std::array<double,3> list_inputs=input.getReference();
+		std::array<double,6> list_inputs=input.getReference();
 		//std::cout << list_inputs[0] << std::endl;
 		x=x+list_inputs[0]/200;
 		y=y+list_inputs[1]/200;
 		z=z+list_inputs[2]/200;
+		roll=list_inputs[3]/200;
+		pitch=list_inputs[4]/200;
+		yaw=list_inputs[5]/200;
 		viewer.moveDrone(x,y,z,roll,pitch,yaw);
 
 		usleep(50000);

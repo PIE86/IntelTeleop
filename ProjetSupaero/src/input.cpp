@@ -10,9 +10,9 @@ Input::Input()
 }
 
 
-std::array<double,3> Input::getReference()
+std::array<double,6> Input::getReference()
 {
-    std::array<double,3> consigne = {0,0,0};
+    std::array<double,6> consigne = {0,0,0,0,0,0};
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
     {
@@ -43,6 +43,40 @@ std::array<double,3> Input::getReference()
     {
         //std::cout << "downward ";
         consigne[2] += -2;
+    }
+
+	// Roll
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
+    {
+        //std::cout << "left ";
+        consigne[3] += -2;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::X))
+    {
+        //std::cout << "upward ";
+        consigne[3] += 2;
+    }
+	// Pitch
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C))
+    {
+        //std::cout << "downward ";
+        consigne[4] += -2;
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::V))
+    {
+        //std::cout << "left ";
+        consigne[4] += +2;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B))
+    {
+        //std::cout << "upward ";
+        consigne[5] += -2;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::N))
+    {
+        //std::cout << "downward ";
+        consigne[5] += +2;
     }
 
     return consigne;
