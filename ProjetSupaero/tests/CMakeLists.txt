@@ -17,8 +17,8 @@ MACRO(ADD_TEST_CFLAGS target flag)
 ENDMACRO(ADD_TEST_CFLAGS)
 
 ADD_EXEC(ProjectSupaero "acado;sfml-window;sfml-system;gepetto-viewer-corba;tinyxml2;eigen3")
-ADD_EXEC(test_viewer "gepetto-viewer-corba;tinyxml2;eigen3") 
-ADD_EXEC(test_viewer_environment "gepetto-viewer-corba;tinyxml2;eigen3") 
+ADD_EXEC(test_viewer "gepetto-viewer-corba;tinyxml2;eigen3")
+ADD_EXEC(test_viewer_environment "gepetto-viewer-corba;tinyxml2;eigen3")
 ADD_EXEC(sfml_viewer "acado;sfml-window;sfml-system;gepetto-viewer-corba;tinyxml2;eigen3")
 
 
