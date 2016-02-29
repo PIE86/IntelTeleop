@@ -29,10 +29,10 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 	for(Ecylinder cyl : cylinder_list) 
 	{
 		string n="/world/cylinder"+std::to_string(i);
-		const char* name=n;
-		client.addCylinder(name, 1.0, cyl.radius, yellow);
+		const char* name=n.c_str();
+		client.addCylinder(name, cyl.radius, sqrt(pow(cyl.x2-cyl.x1,2)+pow(cyl.y2-cyl.y1,2)+pow(cyl.z2-cyl.z1,2)),  yellow);
 		se3position.translation({(cyl.x1+cyl.x2)/2,(cyl.y1+cyl.y2)/2,(cyl.z1+cyl.z2)/2});
-		client.applyConfiguration("/world/cylinder", se3position) ;
+		client.applyConfiguration(name, se3position) ;
 		i=i+1;
     }
 	client.refresh();
