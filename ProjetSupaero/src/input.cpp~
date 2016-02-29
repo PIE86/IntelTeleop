@@ -16,32 +16,32 @@ std::array<double,3> Input::getReference()
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
     {
-        //std::cout << "forward ";
+        std::cout << "forward ";
         consigne[0] += 2;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
     {
-        //std::cout << "backward ";
+        std::cout << "backward ";
         consigne[0] += -2;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
     {
-        //std::cout << "right ";
+        std::cout << "right ";
         consigne[1] += 2;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
     {
-        //std::cout << "left ";
+        std::cout << "left ";
         consigne[1] += -2;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
     {
-        //std::cout << "upward ";
+        std::cout << "upward ";
         consigne[2] += 2;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
     {
-        //std::cout << "downward ";
+        std::cout << "downward ";
         consigne[2] += -2;
     }
 

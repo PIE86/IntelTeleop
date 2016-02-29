@@ -18,23 +18,16 @@ int main( ){
 	Epoint center1;
 	Epoint center2;
 
-	center1.x=1.0;
-	center1.y=1.0;
-	center1.z=1.20;
-	center2.x=1.0;
-	center2.y=-0.50;
+	center1.x=0.0;
+	center1.y=0.0;
+	center1.z=0.00;
+	center2.x=4.0;
+	center2.y=0.0;
 	center2.z=1.0;
 
-	e.addCylinder(center1,center2,3.2);
-
-
-	center1.x=1.0;
-	center1.y=1.00;
-	center1.z=1.20;
-	center2.x=5.0;
-	center2.y=-5.0;
-	center2.z=1.0;
 	e.addCylinder(center1,center2,1.2);
+
+
 
 	e.save(a);
 
@@ -42,7 +35,6 @@ int main( ){
 	// Chargement de l'environnement
 	EnvironmentParser g(a);
 	std::vector<Ecylinder> cylinder_list=g.readData();
-	cout << g.getNbElements() << endl;
 
 	viewer.createEnvironment(cylinder_list);
 
