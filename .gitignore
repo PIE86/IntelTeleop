@@ -15,3 +15,4 @@ ProjetSupaero/cmake_install.cmake
 ProjetSupaero/config.h
 ProjetSupaero/config.log
 ProjetSupaero/src/bak
+ProjetSupaero/data/*
