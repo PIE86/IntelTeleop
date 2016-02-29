@@ -56,7 +56,7 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 
 		
 		// Rotation en y
-		float phi=atan2(x,z);
+		float phi=M_PI/2-atan2(z,sqrt(pow(x,2)+pow(y,2)) );
 		Matrix3f m_y(3,3);
 		m_y(0,0)=cos(phi);
 		m_y(0,1)=0;
@@ -70,9 +70,9 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 		m_y(2,1)=0;
 		m_y(2,2)=cos(phi);
 
-		
+		/*
 		// Rotation en x
-		float psi=atan2(z,y);
+		float psi=atan2();
 		Matrix3f m_x(3,3);
 		m_x(0,0)=1.0;
 		m_x(0,1)=0;
@@ -85,9 +85,9 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 		m_x(2,0)=0.0;
 		m_x(2,1)=sin(psi);
 		m_x(2,2)=cos(psi);
+		*/
 
-
-		se3position.rotation(m_z*m_x);
+		se3position.rotation(m_y*m_z);
 		client.applyConfiguration(name, se3position) ;
 		i=i+1;
     }

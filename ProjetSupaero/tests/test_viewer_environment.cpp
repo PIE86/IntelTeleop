@@ -21,9 +21,9 @@ int main( ){
 	center1.x=0.0;
 	center1.y=0.0;
 	center1.z=0.00;
-	center2.x=4.0;
+	center2.x=15.0;
 	center2.y=0.0;
-	center2.z=1.0;
+	center2.z=0.0;
 
 	e.addCylinder(center1,center2,1.2);
 
