@@ -145,7 +145,7 @@ int main()
 
     // Gepetto viewer over corba
     Viewer viewer;
-    viewer.createEnvironment();
+    //viewer.createEnvironment();
 
     viewer.createDrone("/home/baudouin/Documents/travail/4A/PIE/PIE-drone/ProjetSupaero/data/quadrotor_base.stl");
 

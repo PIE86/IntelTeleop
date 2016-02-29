@@ -8,7 +8,7 @@ class Input
 {
 public:
     Input();
-    std::array<double,3> getReference();
+    std::array<double,6> getReference();
 };
 
 #endif // INPUT_H
