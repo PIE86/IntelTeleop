@@ -11,13 +11,13 @@ using namespace std;
 
 typedef CORBA::ULong WindowID;
 
-class Viewer 
+class Viewer
 {
 	public:
 		Viewer();
 		void createEnvironment(std::vector<Ecylinder> cylinder_list);
 		void createDrone(const char*  t);
-		void moveDrone(float x, float y, float z, float roll, float pitch, float yaw);
+		void moveDrone(double x, double y, double z, double roll, double pitch, double yaw);
 
 	private:
 		ClientCpp client;

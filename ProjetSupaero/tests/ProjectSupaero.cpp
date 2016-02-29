@@ -99,18 +99,23 @@ int main()
 
     // Command constraints
     // Constraints on the acceleration of each propeller
-    ocp.subjectTo(-100 <= vu1 <= 100);
-    ocp.subjectTo(-100 <= vu2 <= 100);
-    ocp.subjectTo(-100 <= vu3 <= 100);
-    ocp.subjectTo(-100 <= vu4 <= 100);
+    ocp.subjectTo(-200 <= vu1 <= 200);
+    ocp.subjectTo(-200 <= vu2 <= 200);
+    ocp.subjectTo(-200 <= vu3 <= 200);
+    ocp.subjectTo(-200 <= vu4 <= 200);
 
     // Constraint to avoid singularity
     ocp.subjectTo(-1. <= theta <= 1.);
 
     // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
-//    ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-5)*(z-5)));
+    ocp.subjectTo(1 <= (x*x+(z-5)*(z-5)));
 //    ocp.subjectTo(16 <= ((x-3)*(x-3)+2*(z-9)*(z-9)));
 //    ocp.subjectTo(16 <= ((x+3)*(x+3)+2*(z-15)*(z-15)));
+
+    // adding roof, floor and walls
+    ocp.subjectTo(-9 <= x <= 9);
+    ocp.subjectTo(-9 <= y <= 9);
+    ocp.subjectTo(0 <= z <= 9);
 
 
     // SET UP THE MPC CONTROLLER:
@@ -131,7 +136,8 @@ int main()
     controller.init(0., X);
     process.init(0., X, U);
 
-    VariablesGrid Y, graph;
+//    VariablesGrid graph;
+    VariablesGrid Y;
     Y.setZero();
 
     // END OF ACADO SOLVER SETUP
@@ -140,21 +146,18 @@ int main()
     // Get input from keyboard
     Input input;
 
-//    std::cout << system("pwd") << std::endl;
-//    std::cout << system("ls ../data") << std::endl;
-
     // Gepetto viewer over corba
     Viewer viewer;
     //viewer.createEnvironment();
 
-    viewer.createDrone("/home/baudouin/Documents/travail/4A/PIE/PIE-drone/ProjetSupaero/data/quadrotor_base.stl");
+    viewer.createDrone(PIE_SOURCE_DIR"/data/quadrotor_base.stl");
 
     double t = 0;
     double dt = .05;
-    for (int i=0; i<300; i++, t+=dt)
+    while(true)
     {
         // setting reference from input
-        std::array<double,3> refInput = input.getReference();
+        std::array<double,6> refInput = input.getReference();
         double refT[10] = {refInput[0], refInput[1], refInput[2], 0., 0., 0., 0., 0., 0., 0.};
         DVector refVec(10, refT);
         VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
@@ -164,33 +167,35 @@ int main()
         process.getY(Y);
         X = Y.getLastVector();
 
-        viewer.moveDrone((float)X(0), (float)X(1), (float)X(2), (float)X(8), (float)X(7), (float)X(6));
+        viewer.moveDrone(X(0), X(1), X(2), X(8), X(7), X(6));
 
         controller.step(t, X);
         controller.getU(U);
         process.step(t,t+dt,U);
 
-        graph.addVector(X,t);
+//        graph.addVector(X,t);
+
+        t += dt;
     }
 
-    GnuplotWindow window;
+//    GnuplotWindow window;
 //    window.addSubplot(graph(0), "x");
 //    window.addSubplot(graph(1), "y");
 //    window.addSubplot(graph(2), "z");
 //    window.addSubplot(graph(3), "vx");
 //    window.addSubplot(graph(4), "vy");
 //    window.addSubplot(graph(5), "vz");
-    window.addSubplot(graph(6), "phi");
-    window.addSubplot(graph(7), "theta");
-    window.addSubplot(graph(8), "psi");
-    window.addSubplot(graph(9), "p");
-    window.addSubplot(graph(10), "q");
-    window.addSubplot(graph(11), "r");
+//    window.addSubplot(graph(6), "phi");
+//    window.addSubplot(graph(7), "theta");
+//    window.addSubplot(graph(8), "psi");
+//    window.addSubplot(graph(9), "p");
+//    window.addSubplot(graph(10), "q");
+//    window.addSubplot(graph(11), "r");
 //    window.addSubplot(graph(12), "u1");
 //    window.addSubplot(graph(13), "u2");
 //    window.addSubplot(graph(14), "u3");
 //    window.addSubplot(graph(15), "u4");
-    window.plot();
+//    window.plot();
 
     return 0;
 }

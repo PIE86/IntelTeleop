@@ -17,35 +17,35 @@ std::array<double,6> Input::getReference()
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
     {
         //std::cout << "forward ";
-        consigne[0] += 2;
+        consigne[0] += 4;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
     {
         //std::cout << "backward ";
-        consigne[0] += -2;
+        consigne[0] += -4;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
     {
         //std::cout << "right ";
-        consigne[1] += 2;
+        consigne[1] += -4;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
     {
         //std::cout << "left ";
-        consigne[1] += -2;
+        consigne[1] += 4;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
     {
         //std::cout << "upward ";
-        consigne[2] += 2;
+        consigne[2] += 4;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
     {
         //std::cout << "downward ";
-        consigne[2] += -2;
+        consigne[2] += -4;
     }
 
-	// Roll
+    // Roll
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
     {
         //std::cout << "left ";
@@ -56,7 +56,7 @@ std::array<double,6> Input::getReference()
         //std::cout << "upward ";
         consigne[3] += 2;
     }
-	// Pitch
+    // Pitch
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C))
     {
         //std::cout << "downward ";
