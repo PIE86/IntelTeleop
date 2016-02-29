@@ -91,7 +91,7 @@ void Viewer::moveDrone(float x, float y, float z, float roll, float pitch, float
     m_yaw(2,2) = 1;
 
     //cout << m_yaw << endl;
-    se3Drone.rotation() = se3Drone.rotation() * m_yaw * m_pitch * m_roll;
+    se3Drone.rotation() = m_yaw * m_pitch * m_roll;
     client.applyConfiguration("/world/drone", se3Drone) ;
     client.refresh();
 }

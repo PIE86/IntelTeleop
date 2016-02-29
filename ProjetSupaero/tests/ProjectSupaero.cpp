@@ -164,7 +164,7 @@ int main()
         process.getY(Y);
         X = Y.getLastVector();
 
-        viewer.moveDrone((float)X(0), (float)X(1), (float)X(2), (float)X(6), (float)X(7), (float)X(8));
+        viewer.moveDrone((float)X(0), (float)X(1), (float)X(2), (float)X(8), (float)X(7), (float)X(6));
 
         controller.step(t, X);
         controller.getU(U);
