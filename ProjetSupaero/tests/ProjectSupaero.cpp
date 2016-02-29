@@ -14,6 +14,10 @@ using std::cout; using std::endl;
 
 int main()
 {
+    Viewer viewer;
+	const char*  dronename=PIE_SOURCE_DIR"/data/quadrotor_base.stl";
+    viewer.createDrone(dronename);
+
     USING_NAMESPACE_ACADO;
 
     // INTRODUCE THE VARIABLES:
@@ -143,18 +147,13 @@ int main()
 //    std::cout << system("pwd") << std::endl;
 //    std::cout << system("ls ../data") << std::endl;
 
-    // Gepetto viewer over corba
-    Viewer viewer;
-    //viewer.createEnvironment();
-
-    viewer.createDrone("/home/baudouin/Documents/travail/4A/PIE/PIE-drone/ProjetSupaero/data/quadrotor_base.stl");
 
     double t = 0;
     double dt = .05;
     for (int i=0; i<300; i++, t+=dt)
     {
         // setting reference from input
-        std::array<double,3> refInput = input.getReference();
+        std::array<double,6> refInput = input.getReference();
         double refT[10] = {refInput[0], refInput[1], refInput[2], 0., 0., 0., 0., 0., 0., 0.};
         DVector refVec(10, refT);
         VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
