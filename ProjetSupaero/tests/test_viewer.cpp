@@ -14,25 +14,27 @@ int main( ){
     viewer.createDrone(dronename);
 	
 
-	float x=0.0;
+	float x=1.0;
 	float y=0.0;
-	float z=0.0;
+	float z=1.0;
 	float roll=0.0;
 	float pitch=0.0;
 	float yaw=0.0;
+
+	usleep(2000000);
 
 	// Translation Test
 	std::cout << "Translation Test" << std::endl;
 	for(float i=0;i<200;i++)
 	{
-		x=1.0+i/200;
-		y=1.0-i/120;
+		x=0.0+i/200;
+		y=0.0-i/120;
 		z=1.0+i/140;
 		
 		viewer.moveDrone(x,y,z,roll,pitch,yaw);
+		usleep(50000);
 	}
 	usleep(5000000);
-
 
 	// Yaw Test
 	std::cout << "Yaw Test" << std::endl;
@@ -41,6 +43,7 @@ int main( ){
 		yaw=0.02;
 		
 		viewer.moveDrone(x,y,z,roll,pitch,yaw);
+		usleep(50000);
 	}
 	yaw=0.0;
 	usleep(3000000);
@@ -53,6 +56,7 @@ int main( ){
 		pitch=0.02;
 		
 		viewer.moveDrone(x,y,z,roll,pitch,yaw);
+		usleep(50000);
 	}
 	pitch=0.0;
 	usleep(3000000);
@@ -65,8 +69,8 @@ int main( ){
 		roll=0.02;
 		
 		viewer.moveDrone(x,y,z,roll,pitch,yaw);
+		usleep(50000);
 	}
-
 
     return 0;
 }

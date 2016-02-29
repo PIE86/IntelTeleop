@@ -17,7 +17,6 @@ Viewer::Viewer(): client()
 	client.addSceneToWindow("/world",w_id);
 
 	se3Drone=se3::SE3::Identity();
-	se3Drone.translation({0.0,0.0,1.0});
 }
 
 
@@ -31,7 +30,6 @@ void Viewer::createEnvironment()
 	se3position.translation({1.0,1.0,3.0});
 	client.applyConfiguration("/world/cylinder", se3position) ;
 	client.refresh();
-	usleep(50000);
 }
 
 void Viewer::createDrone(const char*  t)
@@ -44,10 +42,9 @@ void Viewer::createDrone(const char*  t)
 	}
 
 	se3::SE3 se3position=se3::SE3::Identity();
-	se3position.translation({1.0,1.0,1.0});
+	se3position.translation({0.0,0.0,1.0});
 	client.applyConfiguration("/world/drone", se3position) ;
 	client.refresh();
-	usleep(50000);
 }
 
 void Viewer::moveDrone(float x, float y, float z, float roll, float pitch, float yaw)
@@ -98,10 +95,8 @@ void Viewer::moveDrone(float x, float y, float z, float roll, float pitch, float
 	m_yaw(2,1)=0;
 	m_yaw(2,2)=1;
 
-	//cout << m_yaw << endl;
 	se3Drone.rotation()=se3Drone.rotation()*m_yaw*m_pitch*m_roll;
 	client.applyConfiguration("/world/drone", se3Drone) ;
 	client.refresh();
-	usleep(50000);
 }
 
