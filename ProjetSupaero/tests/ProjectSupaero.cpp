@@ -17,10 +17,6 @@ using std::cout; using std::endl;
 
 int main()
 {
-    Viewer viewer;
-	const char*  dronename=PIE_SOURCE_DIR"/data/quadrotor_base.stl";
-    viewer.createDrone(dronename);
-
     USING_NAMESPACE_ACADO;
 
     // INTRODUCE THE VARIABLES:
@@ -162,9 +158,6 @@ int main()
 
     // Get input from keyboard
     Input input;
-
-//    std::cout << system("pwd") << std::endl;
-//    std::cout << system("ls ../data") << std::endl;
 
     // Gepetto viewer over corba
     Viewer viewer;
