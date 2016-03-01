@@ -2,7 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <time.h>
+#include <ctime>
 
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
@@ -90,7 +90,7 @@ int main()
 
     // DEFINE AN OPTIMAL CONTROL PROBLEM:
     // ----------------------------------
-    OCP ocp(0., 1., 20);
+    OCP ocp(0., 1., 3);
 
     ocp.minimizeLSQ(Q, h, refVec);
 
@@ -113,17 +113,14 @@ int main()
     // adding roof, floor and walls constraints
     ocp.subjectTo(-9 <= x <= 9);
     ocp.subjectTo(-9 <= y <= 9);
-    ocp.subjectTo(0 <= z <= 9);
-
-    // Example of Eliptic obstacle constraints (here, cylinders with eliptic basis)
-    ocp.subjectTo(1 <= (x*x+(z-5)*(z-5)));
+    ocp.subjectTo(1 <= z <= 9);
 
     // Loading cylindrical obstacles from XML
     EnvironmentParser parser(PIE_SOURCE_DIR"/data/envsave.xml");
     auto cylinders = parser.readData();
     for (Ecylinder c : cylinders)
     {
-        ocp.subjectTo(pow(c.radius,2) <=
+        ocp.subjectTo(pow(c.radius + 1,2) <=
                       ( pow((y-c.y1)*(c.z2-c.z1)-(c.y2-c.y1)*(z-c.z1),2) + pow((z-c.z1)*(c.x2-c.x1)-(c.z2-c.z1)*(x-c.x1),2) + pow((x-c.x1)*(c.y2-c.y1)-(c.x2-c.x1)*(y-c.y1),2) ) /
                       ( pow(c.x2-c.x1,2) + pow(c.y2-c.y1,2) + pow(c.z2-c.z1,2) )
                       );
@@ -165,7 +162,10 @@ int main()
     viewer.createDrone(PIE_SOURCE_DIR"/data/quadrotor_base.stl");
 
     double t = 0;
-    double dt = .05;
+
+    std::clock_t previousTime;
+    previousTime = std::clock();
+
     while(true)
     {
         // setting reference from input
@@ -184,12 +184,16 @@ int main()
 
         controller.step(t, X);
         controller.getU(U);
+
+        std::clock_t currentTime = std::clock();
+        double dt = (double)(currentTime - previousTime) / (double)CLOCKS_PER_SEC;
         process.step(t,t+dt,U);
+        t += dt;
+        previousTime = currentTime;
 
 //        graph.addVector(X,t);
-
-        t += dt;
     }
+
 
 //    GnuplotWindow window;
 //    window.addSubplot(graph(0), "x");
