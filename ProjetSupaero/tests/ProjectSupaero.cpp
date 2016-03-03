@@ -175,16 +175,20 @@ int main()
         VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
         alg.setReference(referenceVG);
 
-        // MPC step
+        // get state vector
         process.getY(Y);
         X = Y.getLastVector();
 
         // viewer takes roll-pitch-yaw but drone equations are in yaw-pitch-roll
         viewer.moveDrone(X(0), X(1), X(2), X(8), X(7), X(6));
+        viewer.setArrow((refInput[0]>0) - (refInput[0]<0), (refInput[1]>0) - (refInput[1]<0), (refInput[2]>0) - (refInput[2]<0));
 
+        // MPC step
+        // compute the command
         controller.step(t, X);
         controller.getU(U);
 
+        // simulate the drone
         std::clock_t currentTime = std::clock();
         double dt = (double)(currentTime - previousTime) / (double)CLOCKS_PER_SEC;
         process.step(t,t+dt,U);

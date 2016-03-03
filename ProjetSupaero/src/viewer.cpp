@@ -80,7 +80,6 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 
 void Viewer::createDrone(const char*  t)
 {
-
     bool a = client.addMesh("/world/drone", t) ;
     if(a == 0)
     {
@@ -89,7 +88,11 @@ void Viewer::createDrone(const char*  t)
 
     se3::SE3 se3position = se3::SE3::Identity();
     se3position.translation({0.,0.,1.});
-    client.applyConfiguration("/world/drone", se3position) ;
+    client.applyConfiguration("/world/drone", se3position);
+
+    float red[4] = {1.f,0.f,.0f,1.f};
+    client.addCylinder("/world/arrow", .1f, 4.f, red);
+
     client.refresh();
 }
 
@@ -143,5 +146,52 @@ void Viewer::moveDrone(double x, double y, double z, double roll, double pitch, 
     se3Drone.rotation() = m_yaw.cast<float>() * m_pitch.cast<float>() * m_roll.cast<float>();
     client.applyConfiguration("/world/drone", se3Drone);
     client.refresh();
+}
+
+void Viewer::setArrow(int vx, int vy, int vz)
+{
+    auto dronePos = se3Drone.translation();
+    se3::SE3 se3position = se3::SE3::Identity();
+
+    if (vx == 0 && vy == 0 && vz == 0)
+        se3position.translation({ 0.f,0.f,10000.f });
+    else
+    {
+        se3position.translation({ dronePos[0] + 2.5f*vx , dronePos[1] + 2.5f*vy, dronePos[2] + 2.5f*vz });
+
+        // Rotation en z
+        double theta = atan2(vy,vx);
+        Matrix3d m_z(3,3);
+        m_z(0,0) = cos(theta);
+        m_z(0,1) = -sin(theta);
+        m_z(0,2) = 0.;
+
+        m_z(1,0) = sin(theta);
+        m_z(1,1) = cos(theta);
+        m_z(1,2) = 0.;
+
+        m_z(2,0) = 0.;
+        m_z(2,1) = 0.;
+        m_z(2,2) = 1.;
+
+        // Rotation en y
+        double phi = -atan2(sqrt(pow(vx,2)+pow(vy,2)),vz);
+        Matrix3d m_y(3,3);
+        m_y(0,0) = cos(phi);
+        m_y(0,1) = 0.;
+        m_y(0,2) = -sin(phi);
+
+        m_y(1,0) = 0.;
+        m_y(1,1) = 1.;
+        m_y(1,2) = 0.;
+
+        m_y(2,0) = sin(phi);
+        m_y(2,1) = 0.;
+        m_y(2,2) = cos(phi);
+
+        se3position.rotation(m_z.cast<float>()*m_y.cast<float>());
+    }
+
+    client.applyConfiguration("/world/arrow", se3position) ;
 }
 
