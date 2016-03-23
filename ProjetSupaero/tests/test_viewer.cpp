@@ -24,76 +24,39 @@ along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "gepetto/viewer/corba/client.hh"
 #include "viewer.h"
+#include "input.h"
 
-// Demonstration d'affichage du drone dans le viewer et vérification des translations
-// et rotations.
+// Demonstration d'affichage de l'environnement a partir d'un fichier xml
 
-int main()
-{
+int main( ){
+
     Viewer viewer;
+    Input input;
 
     const char* dronename = PIE_SOURCE_DIR"/data/quadrotor_base.stl";
     viewer.createDrone(dronename);
 
+    double x = 1.0;
+    double y = 0.0;
+    double z = 1.0;
+    double roll = 0.0;
+    double pitch = 0.0;
+    double yaw = 0.0;
 
-    float x = 1.0;
-    float y = 0.0;
-    float z = 1.0;
-    float roll = 0.0;
-    float pitch = 0.0;
-    float yaw = 0.0;
-
-    usleep(2000000);
-
-    // Translation Test
-    std::cout << "Translation Test" << std::endl;
-    for (int i = 0;i<200;i++)
+    while(true)
     {
-        x = 0.f + (float)i/200.f;
-        y = 0.f - (float)i/120.f;
-        z = 1.f + (float)i/140.f;
-
+        std::array<double,6> list_inputs = input.getReference();
+        x += list_inputs[0]/10.;
+        y += list_inputs[1]/10.;
+        z += list_inputs[2]/10.;
+        roll += list_inputs[3]/10.;
+        pitch += list_inputs[4]/10.;
+        yaw += list_inputs[5]/10.;
         viewer.moveDrone(x,y,z,roll,pitch,yaw);
+        viewer.setArrow((list_inputs[0]>0) - (list_inputs[0]<0), (list_inputs[1]>0) - (list_inputs[1]<0), (list_inputs[2]>0) - (list_inputs[2]<0));
+
         usleep(50000);
     }
-    usleep(5000000);
-
-    // Yaw Test
-    std::cout << "Yaw Test" << std::endl;
-    for(int i = 0;i<100;i++)
-    {
-        yaw = 0.02f;
-
-        viewer.moveDrone(x,y,z,roll,pitch,yaw);
-        usleep(50000);
-    }
-    yaw = 0.0f;
-    usleep(3000000);
-
-
-    // Pitch Test
-    std::cout << "Pitch Test" << std::endl;
-    for(int i = 0;i<100;i++)
-    {
-        pitch = 0.02f;
-
-        viewer.moveDrone(x,y,z,roll,pitch,yaw);
-        usleep(50000);
-    }
-    pitch = 0.0f;
-    usleep(3000000);
-
-
-    // Roll Test
-    std::cout << "Roll Test" << std::endl;
-    for (int i=0; i<100; i++)
-    {
-        roll = 0.02f;
-
-        viewer.moveDrone(x,y,z,roll,pitch,yaw);
-        usleep(50000);
-    }
-
     return 0;
 }
 

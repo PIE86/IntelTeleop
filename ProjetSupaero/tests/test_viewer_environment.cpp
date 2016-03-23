@@ -33,7 +33,7 @@ int main( ){
     Viewer viewer;
 
 //    const char*  dronename=PIE_SOURCE_DIR"/data/quadrotor_base.stl";
-    std::string a=PIE_SOURCE_DIR"/data/envsave.xml";
+    std::string a=PIE_SOURCE_DIR"/data/envsavetest.xml";
 
     // Creation de l'environnement
     EnvironmentParser e;
@@ -45,7 +45,7 @@ int main( ){
     center1.z=0.f;
     center2.x=15.f;
     center2.y=0.f;
-    center2.z=0.f;
+    center2.z=15.f;
 
     e.addCylinder(center1,center2,1.2f);
     e.save(a);
