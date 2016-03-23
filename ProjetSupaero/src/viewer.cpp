@@ -28,7 +28,6 @@ along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 #include "environmentparser.h"
 
-using namespace std;
 typedef CORBA::ULong WindowID;
 using namespace Eigen;
 
@@ -36,7 +35,7 @@ Viewer::Viewer(): client()
 {
     // create a clent window and a world scene in it
     WindowID w_id = client.createWindow("window");
-    client.createSceneWithFloor("/world");
+    client.createScene("/world");
     client.addSceneToWindow("/world",w_id);
 
     // initialise drone position
@@ -45,57 +44,34 @@ Viewer::Viewer(): client()
 }
 
 
-void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
+void Viewer::createEnvironment(const std::vector<Ecylinder> &cylinder_list)
 {
+    // copy cylinders to memory
+    cylinders = cylinder_list;
+
     // initialise color and position
     float yellow[4] = {1.f,1.f,.1f,1.f};
     se3::SE3 se3position = se3::SE3::Identity();
     int i = 1;
 
-    // for each cylinder in the list, compute translation vector and rotation matrix, and create gepetoo objects.
-    for(Ecylinder cyl : cylinder_list)
+    // for each cylinder in the list, compute translation vector and rotation matrix, and create gepetto objects.
+    for(Ecylinder cyl : cylinders)
     {
         string n = "/world/cylinder"+std::to_string(i++);
         const char* name = n.c_str();
-        client.addCylinder(name, cyl.radius, sqrt(pow(cyl.x2-cyl.x1,2.f)+pow(cyl.y2-cyl.y1,2.f)+pow(cyl.z2-cyl.z1,2.f)), yellow);
 
+        float dx = cyl.x2-cyl.x1;
+        float dy = cyl.y2-cyl.y1;
+        float dz = cyl.z2-cyl.z1;
+
+        client.addCylinder(name, cyl.radius, sqrt(pow(dx,2.f)+pow(dy,2.f)+pow(dz,2.f)), yellow);
 
         se3position.translation({(cyl.x1+cyl.x2)/2.f,(cyl.y1+cyl.y2)/2.f,(cyl.z1+cyl.z2)/2.f});
 
-        double x = cyl.x2-cyl.x1;
-        double y = cyl.y2-cyl.y1;
-        double z = cyl.z2-cyl.z1;
-
-        // Rotation en z
-        double theta = atan2(y,x);
-        Matrix3d m_z(3,3);
-        m_z(0,0) = cos(theta);
-        m_z(0,1) = -sin(theta);
-        m_z(0,2) = 0.;
-
-        m_z(1,0) = sin(theta);
-        m_z(1,1) = cos(theta);
-        m_z(1,2) = 0.;
-
-        m_z(2,0) = 0.;
-        m_z(2,1) = 0.;
-        m_z(2,2) = 1.;
-
-
-        // Rotation en y
-        double phi = -atan2(sqrt(pow(x,2)+pow(y,2)),z);
-        Matrix3d m_y(3,3);
-        m_y(0,0) = cos(phi);
-        m_y(0,1) = 0.;
-        m_y(0,2) = -sin(phi);
-
-        m_y(1,0) = 0.;
-        m_y(1,1) = 1.;
-        m_y(1,2) = 0.;
-
-        m_y(2,0) = sin(phi);
-        m_y(2,1) = 0.;
-        m_y(2,2) = cos(phi);
+        double theta = atan2(dy,dx);
+        double phi = -atan2(sqrt(pow(dx,2)+pow(dy,2)),dz);
+        Matrix3d m_z = rotationMat(theta, Axis::Z);
+        Matrix3d m_y = rotationMat(phi, Axis::Y);
 
         se3position.rotation(m_z.cast<float>()*m_y.cast<float>());
         client.applyConfiguration(name, se3position) ;
@@ -124,53 +100,39 @@ void Viewer::createDrone(const char*  filename)
 
 void Viewer::moveDrone(double x, double y, double z, double roll, double pitch, double yaw)
 {
-    // first translate the drone
-    se3Drone.translation({(float)x,(float)y,(float)z});
+    // This member function does not move the drone but the world around it. Indeed, we want the camera to be centered on the drone
 
-    // compute rotation matrices
-    // Roll
-    Matrix3d m_roll(3,3);
-    m_roll(0,0) = 1.;
-    m_roll(0,1) = 0.;
-    m_roll(0,2) = 0.;
+    // first translate the cylinders
+    se3::SE3 se3position = se3::SE3::Identity();
 
-    m_roll(1,0) = 0.;
-    m_roll(1,1) = cos(roll);
-    m_roll(1,2) = -sin(roll);
+    // for each cylinder in the list, compute translation vector and rotation matrix, and move them
+    for(unsigned int i=0 ; i<cylinders.size(); i++)
+    {
+        Ecylinder cyl = cylinders[i];
+        string n = "/world/cylinder"+std::to_string(i+1);
 
-    m_roll(2,0) = 0.;
-    m_roll(2,1) = sin(roll);
-    m_roll(2,2) = cos(roll);
+        se3position.translation({(cyl.x1+cyl.x2)/2.f - (float)x,(cyl.y1+cyl.y2)/2.f - (float)y,(cyl.z1+cyl.z2)/2.f - (float)z});
 
-    // Pitch
-    Matrix3d m_pitch(3,3);
-    m_pitch(0,0) = cos(pitch);
-    m_pitch(0,1) = 0.;
-    m_pitch(0,2) = sin(pitch);
+        float dx = cyl.x2-cyl.x1;
+        float dy = cyl.y2-cyl.y1;
+        float dz = cyl.z2-cyl.z1;
 
-    m_pitch(1,0) = 0.;
-    m_pitch(1,1) = 1.;
-    m_pitch(1,2) = 0.;
+        double theta = atan2(dy,dx);
+        double phi = -atan2(sqrt(pow(dx,2)+pow(dy,2)),dz);
+        Matrix3d m_z = rotationMat(theta, Axis::Z);
+        Matrix3d m_y = rotationMat(phi, Axis::Y);
 
-    m_pitch(2,0) = -sin(pitch);
-    m_pitch(2,1) = 0.;
-    m_pitch(2,2) = cos(pitch);
+        se3position.rotation(m_z.cast<float>()*m_y.cast<float>());
 
-    // Yaw
-    Matrix3d m_yaw(3,3);
-    m_yaw(0,0) = cos(yaw);
-    m_yaw(0,1) = -sin(yaw);
-    m_yaw(0,2) = 0.;
+        client.applyConfiguration(n.c_str(), se3position);
+    }
 
-    m_yaw(1,0) = sin(yaw);
-    m_yaw(1,1) = cos(yaw);
-    m_yaw(1,2) = 0.;
+    // compute rotation matrices for the drone
+    Matrix3d m_roll = rotationMat(roll, Axis::X);
+    Matrix3d m_pitch = rotationMat(-pitch, Axis::Y);
+    Matrix3d m_yaw = rotationMat(yaw, Axis::Z);
 
-    m_yaw(2,0) = 0.;
-    m_yaw(2,1) = 0.;
-    m_yaw(2,2) = 1.;
-
-    // apply translation vector and rotation matrices
+    // apply rotation matrices to the drone
     se3Drone.rotation() = m_yaw.cast<float>() * m_pitch.cast<float>() * m_roll.cast<float>();
     client.applyConfiguration("/world/drone", se3Drone);
     client.refresh();
@@ -190,39 +152,71 @@ void Viewer::setArrow(int vx, int vy, int vz)
         se3position.translation({ dronePos[0] + 2.5f*(float)vx , dronePos[1] + 2.5f*(float)vy, dronePos[2] + 2.5f*(float)vz });
 
         // compute the rotation matrices
-        // Rotation en z
         double theta = atan2(vy,vx);
-        Matrix3d m_z(3,3);
-        m_z(0,0) = cos(theta);
-        m_z(0,1) = -sin(theta);
-        m_z(0,2) = 0.;
-
-        m_z(1,0) = sin(theta);
-        m_z(1,1) = cos(theta);
-        m_z(1,2) = 0.;
-
-        m_z(2,0) = 0.;
-        m_z(2,1) = 0.;
-        m_z(2,2) = 1.;
-
-        // Rotation en y
         double phi = -atan2(sqrt(pow(vx,2)+pow(vy,2)),vz);
-        Matrix3d m_y(3,3);
-        m_y(0,0) = cos(phi);
-        m_y(0,1) = 0.;
-        m_y(0,2) = -sin(phi);
-
-        m_y(1,0) = 0.;
-        m_y(1,1) = 1.;
-        m_y(1,2) = 0.;
-
-        m_y(2,0) = sin(phi);
-        m_y(2,1) = 0.;
-        m_y(2,2) = cos(phi);
+        Matrix3d m_z = rotationMat(theta, Axis::Z);
+        Matrix3d m_y = rotationMat(phi, Axis::Y);
 
         se3position.rotation(m_z.cast<float>()*m_y.cast<float>());
     }
     // apply translation and rotations
-    client.applyConfiguration("/world/arrow", se3position) ;
+    client.applyConfiguration("/world/arrow", se3position);
+    client.refresh();
+}
+
+Matrix3d Viewer::rotationMat(double angle, Axis axis)
+{
+    Matrix3d mat(3,3);
+    double c = cos(angle), s = sin(angle);
+
+    switch (axis)
+    {
+    case Axis::X:
+        mat(0,0) = 1.;
+        mat(0,1) = 0.;
+        mat(0,2) = 0.;
+
+        mat(1,0) = 0.;
+        mat(1,1) = c;
+        mat(1,2) = -s;
+
+        mat(2,0) = 0.;
+        mat(2,1) = s;
+        mat(2,2) = c;
+        break;
+
+    case Axis::Y:
+        mat(0,0) = c;
+        mat(0,1) = 0.;
+        mat(0,2) = -s;
+
+        mat(1,0) = 0.;
+        mat(1,1) = 1.;
+        mat(1,2) = 0.;
+
+        mat(2,0) = s;
+        mat(2,1) = 0.;
+        mat(2,2) = c;
+        break;
+
+    case Axis::Z:
+        mat(0,0) = c;
+        mat(0,1) = -s;
+        mat(0,2) = 0.;
+
+        mat(1,0) = s;
+        mat(1,1) = c;
+        mat(1,2) = 0.;
+
+        mat(2,0) = 0.;
+        mat(2,1) = 0.;
+        mat(2,2) = 1.;
+        break;
+
+    default:
+        break;
+    }
+
+    return mat;
 }
 

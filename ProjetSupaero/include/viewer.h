@@ -11,6 +11,12 @@ using namespace std;
 
 typedef CORBA::ULong WindowID;
 
+
+enum class Axis
+{
+	X,Y,Z
+};
+
 /**
  * @brief The Viewer class is an interface to the Gepetto server. It provides methods to initialise the client, drone
  * and cylinders. It also provides a method to move the drone and display an arrow next to the drone.
@@ -27,7 +33,7 @@ public:
 	 * @brief createEnvironment Create gepetto cylinders and draw them for each set of coordinates in cylinder_list
 	 * @param cylinder_list List of cylinders to create
 	 */
-	void createEnvironment(std::vector<Ecylinder> cylinder_list);
+	void createEnvironment(const std::vector<Ecylinder> &cylinder_list);
 
 	/**
 	 * @brief createDrone Create and initialise drone in gepetto
@@ -57,7 +63,15 @@ private:
 	ClientCpp client;
 	WindowID w_id;
 	se3::SE3 se3Drone;
+	std::vector<Ecylinder> cylinders;
 
+	/**
+	 * @brief rotationMat Builds a rotation matrix from an angle and an axis
+	 * @param angle Angle in radian
+	 * @param axis Axis of rotation. Can be either of Axis::X, Axis::Y, Axis::Z
+	 * @return the rotation matrix
+	 */
+	Eigen::Matrix3d rotationMat(double angle, Axis axis);
 };
 
 #endif

@@ -132,9 +132,9 @@ int main()
     ocp.subjectTo(-1. <= theta <= 1.);
 
     // Adding roof, floor and walls constraints
-    ocp.subjectTo(-9 <= x <= 9);
-    ocp.subjectTo(-9 <= y <= 9);
-    ocp.subjectTo(1 <= z <= 9);
+    ocp.subjectTo(-9.7 <= x <= 9.7);
+    ocp.subjectTo(-9.7 <= y <= 9.7);
+    ocp.subjectTo(.3 <= z <= 9.7);
 
     // Loading cylindrical obstacles from XML
     EnvironmentParser parser(PIE_SOURCE_DIR"/data/envsave.xml");
