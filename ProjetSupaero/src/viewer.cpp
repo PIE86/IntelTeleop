@@ -1,5 +1,26 @@
-#include "viewer.h"
+/**************************************************************************
+Copyright 2016 Yoan BAILLAU, Thibault BARBIÉ, Zhengxuan JIA,
+   Francisco PEDROSA-REIS, William RAKOTOMANGA, Baudouin ROULLIER
 
+This file is part of ProjectSupaero.
+
+ProjectSupaero is free software: you can redistribute it and/or modify
+it under the terms of the lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ProjectSupaero is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+lesser GNU General Public License for more details.
+
+You should have received a copy of the lesser GNU General Public License
+along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
+
+**************************************************************************/
+
+
+#include "viewer.h"
 #include <iostream>
 #include <unistd.h>
 #include <omniORB4/CORBA.h>
@@ -157,7 +178,7 @@ void Viewer::setArrow(int vx, int vy, int vz)
         se3position.translation({ 0.f,0.f,10000.f });
     else
     {
-        se3position.translation({ dronePos[0] + 2.5f*vx , dronePos[1] + 2.5f*vy, dronePos[2] + 2.5f*vz });
+        se3position.translation({ dronePos[0] + 2.5f*(float)vx , dronePos[1] + 2.5f*(float)vy, dronePos[2] + 2.5f*(float)vz });
 
         // Rotation en z
         double theta = atan2(vy,vx);
