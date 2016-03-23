@@ -31,4 +31,10 @@ The executable files are in build/tests/.
 
 Run `test_sfml` to check if SFML installation was successful. You should see a window with a green disc pop up.
 
-Run `test_viewer` to check if gepetto installation was successful. You should see a window with a drone that you can move around with arrow keys, A, R, W, X, C, V, B and N. The mouse controls the camera.
+Run `test_viewer` to check if gepetto installation was successful. You should see a window with a drone that you can move around with arrow keys, A, R, W, X, C, V, B and N. The red cylider shows the direction the drone is moving, for demonstration purposes. The mouse controls the camera.
+- in case of "terminate called after throwing an instance of 'CORBA::TRANSIENT'", make sure gepetto-viewer-server is running in background. You also have to restart gepetto-viewer-server every time you run one of the tests.
+- make sure that you have omniNames running in the background as well.
+
+Run `test_viewer_environment` to check if tinyXML installation was successful. You should see a window with a large slanted yellow cylinder.
+
+Run `ProjectSupaero` for the full program. You should be able to control the drone in the environment described in data/envsave.xml with arrow keys and A/R keys. The drone should avoid the obstacles. 
