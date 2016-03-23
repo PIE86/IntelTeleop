@@ -99,9 +99,9 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
     client.refresh();
 }
 
-void Viewer::createDrone(const char*  t)
+void Viewer::createDrone(const char*  filename)
 {
-    bool a = client.addMesh("/world/drone", t) ;
+    bool a = client.addMesh("/world/drone", filename) ;
     if(a == 0)
     {
         std::cout << "Erreur de chargement du modèle du drone"<< std::endl;

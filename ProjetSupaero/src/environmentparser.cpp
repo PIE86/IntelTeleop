@@ -20,11 +20,13 @@ along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************/
 
 #include "environmentparser.h"
+#include <iostream>
 
 // Macro to check XMLError validity
 #ifndef XMLCheckResult
-#define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("Error: %i\n", a_eResult); }
+#define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { std::cout << "Error: " <<  a_eResult << std::endl; }
 #endif
+
 
 EnvironmentParser::EnvironmentParser(): nbElements(0)
 {
@@ -32,6 +34,7 @@ EnvironmentParser::EnvironmentParser(): nbElements(0)
     root = xmlDoc.NewElement("root");
     xmlDoc.InsertFirstChild(root);
 }
+
 
 EnvironmentParser::EnvironmentParser(const std::string &name): nbElements(0)
 {

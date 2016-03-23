@@ -26,10 +26,17 @@ along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
 
 MPCSolver::MPCSolver()
 {
+    // initialise everything here
 }
 
 
 
 //void MPCSolver::controlMPC(double t, double dt)
 //{
+    /* do a loop here:
+     * - send keyboard commands to alg
+     * - get the drone's last state vector X
+     * - compute the motor commands U for the next step (controller.step(t, X))
+     * - simulate the drone with that command for dt seconds (process.step(t,t+dt,U))
+     */
 //}

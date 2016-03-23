@@ -59,10 +59,8 @@ int main()
     const double Jx = 0.018;
     const double Jy = 0.018;
     const double Jz = 0.026;
-//    const double Im = 0.0001;
     const double m  = 0.9;
     const double g  = 9.81;
-//    const double Cx = 0.1;
 
     // DEFINE A DIFFERENTIAL EQUATION:
     // -------------------------------
@@ -86,8 +84,8 @@ int main()
     f << dot(u4) == vu4;
 
 
-    // SET UP THE (SIMULATED) PROCESS:
-    // -----------------------------------
+    // SET UP THE SIMULATED PROCESS:
+    // -----------------------------
     DynamicSystem dynamicSystem(f,OutputFcn{});
     Process process(dynamicSystem,INT_RK45);
 
@@ -116,7 +114,8 @@ int main()
 
     ocp.minimizeLSQ(Q, h, refVec);
 
-    ocp.subjectTo(f);    // Constraints on the velocity of each propeller
+    // Constraints on the velocity of each propeller
+    ocp.subjectTo(f);
     ocp.subjectTo(16 <= u1 <= 95);
     ocp.subjectTo(16 <= u2 <= 95);
     ocp.subjectTo(16 <= u3 <= 95);
@@ -132,7 +131,7 @@ int main()
     // Constraint to avoid singularity
     ocp.subjectTo(-1. <= theta <= 1.);
 
-    // adding roof, floor and walls constraints
+    // Adding roof, floor and walls constraints
     ocp.subjectTo(-9 <= x <= 9);
     ocp.subjectTo(-9 <= y <= 9);
     ocp.subjectTo(1 <= z <= 9);
@@ -150,7 +149,7 @@ int main()
 
 
     // SET UP THE MPC CONTROLLER:
-    // ------------------------------
+    // --------------------------
     RealTimeAlgorithm alg(ocp);
     alg.set(INTEGRATOR_TYPE, INT_RK78);
     alg.set(MAX_NUM_ITERATIONS,1);
@@ -158,8 +157,8 @@ int main()
 
     Controller controller(alg);
 
-    // SETTING UP THE SIMULATION ENVIRONMENT,  RUN THE EXAMPLE...
-    // ----------------------------------------------------------
+    // SETTING UP THE SIMULATION ENVIRONMENT:
+    // --------------------------------------
     DVector X(16), U(4);
     X.setZero(16);
     X(2) = 1.;
@@ -175,7 +174,7 @@ int main()
     // END OF ACADO SOLVER SETUP
     // -------------------------
 
-    // Get input from keyboard
+    // Initialise input from keyboard
     Input input;
 
     // Gepetto viewer over corba
@@ -184,13 +183,12 @@ int main()
     viewer.createDrone(PIE_SOURCE_DIR"/data/quadrotor_base.stl");
 
     double t = 0;
-
     std::clock_t previousTime;
     previousTime = std::clock();
 
     while(true)
     {
-        // setting reference from input
+        // getting reference from input and passing it to the algorithm
         auto refInput = input.getReference();
         double refT[10] = {refInput[0], refInput[1], refInput[2], 0., 0., 0., 0., 0., 0., 0.};
         DVector refVec(10, refT);
@@ -201,6 +199,7 @@ int main()
         process.getY(Y);
         X = Y.getLastVector();
 
+        // move the drone and draw the arrow
         // viewer takes roll-pitch-yaw but drone equations are in yaw-pitch-roll
         viewer.moveDrone(X(0), X(1), X(2), X(8), X(7), X(6));
         viewer.setArrow((refInput[0]>0) - (refInput[0]<0), (refInput[1]>0) - (refInput[1]<0), (refInput[2]>0) - (refInput[2]<0));
@@ -212,15 +211,25 @@ int main()
 
         // simulate the drone
         std::clock_t currentTime = std::clock();
-        double dt = (double)(currentTime - previousTime) / (double)CLOCKS_PER_SEC /2.;
+        double dt = (double)(currentTime - previousTime) / (double)CLOCKS_PER_SEC;
         process.step(t,t+dt,U);
         t += dt;
+
+        // get the new state vector
+        process.getY(Y);
+        X = Y.getLastVector();
+
+        // move the drone to it's new position
+        // viewer takes roll-pitch-yaw but drone equations are in yaw-pitch-roll
+        viewer.moveDrone(X(0), X(1), X(2), X(8), X(7), X(6));
+
         previousTime = currentTime;
 
 //        graph.addVector(X,t);
     }
 
 
+    // draw every variable into a graph. Useful for debug
 //    GnuplotWindow window;
 //    window.addSubplot(graph(0), "x");
 //    window.addSubplot(graph(1), "y");

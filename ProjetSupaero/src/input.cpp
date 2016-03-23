@@ -33,72 +33,51 @@ Input::Input()
 
 std::array<double,6> Input::getReference()
 {
+    double transSpeed = 2;
+    double rotSpeed = 2;
     std::array<double,6> consigne = {0,0,0,0,0,0};
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-    {
-        //std::cout << "forward ";
-        consigne[0] += 2;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-    {
-        //std::cout << "backward ";
-        consigne[0] += -2;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-    {
-        //std::cout << "right ";
-        consigne[1] += -2;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-    {
-        //std::cout << "left ";
-        consigne[1] += 2;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
-    {
-        //std::cout << "upward ";
-        consigne[2] += 2;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
-    {
-        //std::cout << "downward ";
-        consigne[2] += -2;
-    }
+    // set each speed command if the corresponding key is pressed
 
-    // Roll
+    // translation commands
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+        consigne[0] += transSpeed;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+        consigne[0] += -transSpeed;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+        consigne[1] += -transSpeed;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+        consigne[1] += transSpeed;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+        consigne[2] += transSpeed;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        consigne[2] += -transSpeed;
+
+
+    // rotation commands (used only for testing purposes)
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
-    {
-        //std::cout << "left ";
-        consigne[3] += -2;
-    }
+        consigne[3] += -rotSpeed;
+
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::X))
-    {
-        //std::cout << "upward ";
-        consigne[3] += 2;
-    }
-    // Pitch
+        consigne[3] += rotSpeed;
+
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C))
-    {
-        //std::cout << "downward ";
-        consigne[4] += -2;
-    }
+        consigne[4] += -rotSpeed;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::V))
-    {
-        //std::cout << "left ";
-        consigne[4] += +2;
-    }
+        consigne[4] += rotSpeed;
+
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B))
-    {
-        //std::cout << "upward ";
-        consigne[5] += -2;
-    }
+        consigne[5] += -rotSpeed;
+
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::N))
-    {
-        //std::cout << "downward ";
-        consigne[5] += +2;
-    }
+        consigne[5] += rotSpeed;
+
 
     return consigne;
 }
