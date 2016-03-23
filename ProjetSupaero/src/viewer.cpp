@@ -34,10 +34,12 @@ using namespace Eigen;
 
 Viewer::Viewer(): client()
 {
+    // create a clent window and a world scene in it
     WindowID w_id = client.createWindow("window");
     client.createSceneWithFloor("/world");
     client.addSceneToWindow("/world",w_id);
 
+    // initialise drone position
     se3Drone = se3::SE3::Identity();
     se3Drone.translation({0.,0.,2.});
 }
@@ -45,12 +47,15 @@ Viewer::Viewer(): client()
 
 void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 {
+    // initialise color and position
     float yellow[4] = {1.f,1.f,.1f,1.f};
     se3::SE3 se3position = se3::SE3::Identity();
     int i = 1;
+
+    // for each cylinder in the list, compute translation vector and rotation matrix, and create gepetoo objects.
     for(Ecylinder cyl : cylinder_list)
     {
-        string n = "/world/cylinder"+std::to_string(i);
+        string n = "/world/cylinder"+std::to_string(i++);
         const char* name = n.c_str();
         client.addCylinder(name, cyl.radius, sqrt(pow(cyl.x2-cyl.x1,2.f)+pow(cyl.y2-cyl.y1,2.f)+pow(cyl.z2-cyl.z1,2.f)), yellow);
 
@@ -94,23 +99,23 @@ void Viewer::createEnvironment(std::vector<Ecylinder> cylinder_list)
 
         se3position.rotation(m_z.cast<float>()*m_y.cast<float>());
         client.applyConfiguration(name, se3position) ;
-        i++;
     }
     client.refresh();
 }
 
 void Viewer::createDrone(const char*  filename)
 {
+    // load drone mesh
     bool a = client.addMesh("/world/drone", filename) ;
     if(a == 0)
-    {
         std::cout << "Erreur de chargement du modèle du drone"<< std::endl;
-    }
 
+    // create gepetto object for the drone
     se3::SE3 se3position = se3::SE3::Identity();
     se3position.translation({0.,0.,1.});
     client.applyConfiguration("/world/drone", se3position);
 
+    // create cylinder for the arrow
     float red[4] = {1.f,0.f,.0f,1.f};
     client.addCylinder("/world/arrow", .1f, 4.f, red);
 
@@ -119,8 +124,10 @@ void Viewer::createDrone(const char*  filename)
 
 void Viewer::moveDrone(double x, double y, double z, double roll, double pitch, double yaw)
 {
+    // first translate the drone
     se3Drone.translation({(float)x,(float)y,(float)z});
 
+    // compute rotation matrices
     // Roll
     Matrix3d m_roll(3,3);
     m_roll(0,0) = 1.;
@@ -163,7 +170,7 @@ void Viewer::moveDrone(double x, double y, double z, double roll, double pitch, 
     m_yaw(2,1) = 0.;
     m_yaw(2,2) = 1.;
 
-    //cout << m_yaw << endl;
+    // apply translation vector and rotation matrices
     se3Drone.rotation() = m_yaw.cast<float>() * m_pitch.cast<float>() * m_roll.cast<float>();
     client.applyConfiguration("/world/drone", se3Drone);
     client.refresh();
@@ -174,12 +181,15 @@ void Viewer::setArrow(int vx, int vy, int vz)
     auto dronePos = se3Drone.translation();
     se3::SE3 se3position = se3::SE3::Identity();
 
+    // if there is no speed command, move the arrow far away
     if (vx == 0 && vy == 0 && vz == 0)
         se3position.translation({ 0.f,0.f,10000.f });
     else
     {
+        // translate the arrow next to the drone
         se3position.translation({ dronePos[0] + 2.5f*(float)vx , dronePos[1] + 2.5f*(float)vy, dronePos[2] + 2.5f*(float)vz });
 
+        // compute the rotation matrices
         // Rotation en z
         double theta = atan2(vy,vx);
         Matrix3d m_z(3,3);
@@ -212,7 +222,7 @@ void Viewer::setArrow(int vx, int vy, int vz)
 
         se3position.rotation(m_z.cast<float>()*m_y.cast<float>());
     }
-
+    // apply translation and rotations
     client.applyConfiguration("/world/arrow", se3position) ;
 }
 
