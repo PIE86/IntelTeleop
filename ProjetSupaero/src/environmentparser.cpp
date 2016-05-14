@@ -39,7 +39,7 @@ EnvironmentParser::EnvironmentParser(): nbElements(0)
 EnvironmentParser::EnvironmentParser(const std::string &name): nbElements(0)
 {
     // Load the file
-    tinyxml2::XMLError eResult = xmlDoc.LoadFile(name.c_str());
+    bool eResult = xmlDoc.LoadFile(name.c_str());
     XMLCheckResult(eResult);
     root = xmlDoc.FirstChildElement();
 }
@@ -73,7 +73,7 @@ void EnvironmentParser::save(std::string name)
     //  Specify the number of elements
     root->SetAttribute("nbElements", nbElements);
 
-    tinyxml2::XMLError eResult = xmlDoc.SaveFile(name.c_str());
+    bool eResult = xmlDoc.SaveFile(name.c_str());
     XMLCheckResult(eResult);
 }
 
