@@ -43,13 +43,13 @@ int main()
 
     // INTRODUCE THE VARIABLES:
     // -------------------------
-    DifferentialState x,y,z, vx,vy,vz, phi,theta,psi, p,q,r, u1,u2,u3,u4;
+    DifferentialState x,y,z, vx,vy,vz, phi,theta,psi, p,q,r;// u1,u2,u3,u4;
     // x, y, z : position
     // vx, vy, vz : linear velocity
     // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
     // p, q, r : angular velocity
     // u1, u2, u3, u4 : velocity of the propellers
-    Control vu1,vu2,vu3,vu4;
+    Control u1,u2,u3,u4;
     // vu1, vu2, vu3, vu4 : derivative of u1, u2, u3, u4
 
     // Quad constants
@@ -78,11 +78,11 @@ int main()
     f << dot(p) == (d*Cf*(u1*u1-u2*u2)+(Jy-Jz)*q*r)/Jx;
     f << dot(q) == (d*Cf*(u4*u4-u3*u3)+(Jz-Jx)*p*r)/Jy;
     f << dot(r) == (c*(u1*u1+u2*u2-u3*u3-u4*u4)+(Jx-Jy)*p*q)/Jz;
-    f << dot(u1) == vu1;
+/*    f << dot(u1) == vu1;
     f << dot(u2) == vu2;
     f << dot(u3) == vu3;
     f << dot(u4) == vu4;
-
+*/
 
     // SET UP THE SIMULATED PROCESS:
     // -----------------------------
@@ -94,14 +94,15 @@ int main()
     // -----------------------------
     Function h;
     h << vx << vy << vz;
-    h << vu1 << vu2 << vu3 << vu4;
+//    h << vu1 << vu2 << vu3 << vu4;
+    h << u1 << u2 << u3 << u4;
     h << p << q << r;
 
     // LSQ coefficient matrix
     DMatrix Q(10,10);
     Q(0,0) = Q(1,1) = Q(2,2) = 1e-1;
     Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-9;
-    Q(7,7) = Q(8,8) = Q(9,9) = 1e-3;
+    Q(7,7) = Q(8,8) = Q(9,9) = 1e-1;
 
     // Reference
     DVector refVec(10);
@@ -110,7 +111,7 @@ int main()
 
     // DEFINE AN OPTIMAL CONTROL PROBLEM:
     // ----------------------------------
-    OCP ocp(0., 1., 6);
+    OCP ocp(0., 1., 4);
 
     ocp.minimizeLSQ(Q, h, refVec);
 
@@ -123,19 +124,19 @@ int main()
 
     // Command constraints
     // Constraints on the acceleration of each propeller
-    ocp.subjectTo(-200 <= vu1 <= 200);
+/*    ocp.subjectTo(-200 <= vu1 <= 200);
     ocp.subjectTo(-200 <= vu2 <= 200);
     ocp.subjectTo(-200 <= vu3 <= 200);
     ocp.subjectTo(-200 <= vu4 <= 200);
-
+*/
     // Constraint to avoid singularity
     ocp.subjectTo(-1. <= theta <= 1.);
 
     // Adding roof, floor and walls constraints
-    ocp.subjectTo(-9.7 <= x <= 9.7);
+/*    ocp.subjectTo(-9.7 <= x <= 9.7);
     ocp.subjectTo(-9.7 <= y <= 9.7);
     ocp.subjectTo(.3 <= z <= 9.7);
-
+*/
     // Loading cylindrical obstacles from XML
     EnvironmentParser parser(PIE_SOURCE_DIR"/data/envsave.xml");
     auto cylinders = parser.readData();
@@ -151,19 +152,20 @@ int main()
     // SET UP THE MPC CONTROLLER:
     // --------------------------
     RealTimeAlgorithm alg(ocp);
-    alg.set(INTEGRATOR_TYPE, INT_RK78);
+    alg.set(INTEGRATOR_TYPE, INT_RK45);
     alg.set(MAX_NUM_ITERATIONS,1);
     alg.set(PRINT_COPYRIGHT, false);
-
+    alg.set(DISCRETIZATION_TYPE, SINGLE_SHOOTING);
     Controller controller(alg);
 
     // SETTING UP THE SIMULATION ENVIRONMENT:
     // --------------------------------------
-    DVector X(16), U(4);
-    X.setZero(16);
-    X(2) = 1.;
-    X(12) = X(13) = X(14) = X(15) = 58.;
-    U.setZero(4);
+    DVector X(12), U(4), U0(4);
+    X.setZero();
+    X(2) = 4.;
+  //  X(12) = X(13) = X(14) = X(15) = 58.;
+    U.setZero();
+    U0.setZero();
     controller.init(0., X);
     process.init(0., X, U);
 
@@ -185,15 +187,35 @@ int main()
     double t = 0;
     std::clock_t previousTime;
     previousTime = std::clock();
+    auto refInput = input.getReference();
+    DVector LastRefVec(10);
+    LastRefVec.setZero();
 
     while(true)
     {
         // getting reference from input and passing it to the algorithm
-        auto refInput = input.getReference();
+        refInput = input.getReference();
+if (abs(refInput[0]-LastRefVec(0))>1.)
+{
+if (refInput[0]>LastRefVec(0)) { refInput[0] = LastRefVec(0)+1.;}
+else {refInput[0] = LastRefVec(0)-1.;}
+}
+if (abs(refInput[1]-LastRefVec(1))>1.)
+{
+if (refInput[1]>LastRefVec(1)) { refInput[1] = LastRefVec(1)+1.;}
+else {refInput[1] = LastRefVec(1)-1.;}
+}
+if (abs(refInput[0]-LastRefVec(0))>1.)
+{
+if (refInput[2]>LastRefVec(2)) { refInput[2] = LastRefVec(2)+1.;}
+else {refInput[2] = LastRefVec(2)-1.;}
+}
         double refT[10] = {refInput[0], refInput[1], refInput[2], 0., 0., 0., 0., 0., 0., 0.};
         DVector refVec(10, refT);
         VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
+        referenceVG.setVector(0, LastRefVec);
         alg.setReference(referenceVG);
+        LastRefVec = refVec;
 
         // get state vector
         process.getY(Y);
@@ -202,11 +224,18 @@ int main()
         // move the drone and draw the arrow
         // viewer takes roll-pitch-yaw but drone equations are in yaw-pitch-roll
         viewer.moveDrone(X(0), X(1), X(2), X(8), X(7), X(6));
-        viewer.setArrow((refInput[0]>0) - (refInput[0]<0), (refInput[1]>0) - (refInput[1]<0), (refInput[2]>0) - (refInput[2]<0));
+        //viewer.setArrow((refInput[0]>0) - (refInput[0]<0), (refInput[1]>0) - (refInput[1]<0), (refInput[2]>0) - (refInput[2]<0));
+        viewer.setArrow(refInput[0], refInput[1], refInput[2]);
 
         // MPC step
         // compute the command
-        controller.step(t, X);
+        bool success = controller.step(t, X);
+
+        if (success != 0)
+        {
+std::cout << "controller failed " << std::endl;
+          return 1;          
+        }
         controller.getU(U);
 
         // simulate the drone
