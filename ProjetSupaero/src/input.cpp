@@ -33,7 +33,7 @@ Input::Input()
 
 std::array<double,6> Input::getReference()
 {
- /*   double transSpeed = 2;
+    double transSpeed = 2;
     double rotSpeed = 2;
     std::array<double,6> consigne = {0,0,0,0,0,0};
 
@@ -77,7 +77,7 @@ std::array<double,6> Input::getReference()
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::N))
         consigne[5] += rotSpeed;
-*/
+/*
 double transSpeed = 2;
 double rotSpeed = 2;
 std::array<double,6> consigne = {0,0,0,0,0,0};
@@ -89,7 +89,7 @@ float r = sf::Joystick::getAxisPosition(0, sf::Joystick::R);
 consigne[0] = -x*transSpeed/100;
 consigne[1] = y*transSpeed/100;
 consigne[2] = -r*transSpeed/100;
-
+*/
 
 
     return consigne;
