@@ -26,17 +26,24 @@ along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-Input::Input()
+Input::Input(bool joystickOn):
+	joystickOn_(joystickOn)
+{
+}
+Input::Input():
+	joystickOn_(false)
 {
 }
 
-
 std::array<double,6> Input::getReference()
 {
+
     double transSpeed = 2;
     double rotSpeed = 2;
     std::array<double,6> consigne = {0,0,0,0,0,0};
 
+if (joystickOn_ == false)
+{
     // set each speed command if the corresponding key is pressed
 
     // translation commands
@@ -77,10 +84,9 @@ std::array<double,6> Input::getReference()
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::N))
         consigne[5] += rotSpeed;
-/*
-double transSpeed = 2;
-double rotSpeed = 2;
-std::array<double,6> consigne = {0,0,0,0,0,0};
+}
+else
+{
 sf::Joystick::update();
 float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X);
 float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y);
@@ -89,9 +95,7 @@ float r = sf::Joystick::getAxisPosition(0, sf::Joystick::R);
 consigne[0] = -x*transSpeed/100;
 consigne[1] = y*transSpeed/100;
 consigne[2] = -r*transSpeed/100;
-*/
-
-
+}
     return consigne;
 }
 

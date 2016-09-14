@@ -10,13 +10,16 @@
 class Input
 {
 public:
+	Input(bool joystickOn);
 	Input();
-
 	/**
 	 * @brief getReference Reads the keyboard inputs and interprets them as speed commands (3 translation speeds, 3 rotation speeds)
 	 * @return the speed commands in an std::array
 	 */
 	std::array<double,6> getReference();
+
+private: 
+	bool joystickOn_;
 };
 
 #endif // INPUT_H

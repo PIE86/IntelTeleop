@@ -177,7 +177,7 @@ int main()
     // -------------------------
 
     // Initialise input from keyboard
-    Input input(false);
+    Input input(true);
 
     // Gepetto viewer over corba
     Viewer viewer;
