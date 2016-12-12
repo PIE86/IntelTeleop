@@ -16,3 +16,7 @@ ProjetSupaero2016/config.h
 ProjetSupaero2016/config.log
 ProjetSupaero2016/src/bak
 ProjetSupaero2016/data/*
+
+ProjetSupaero2017/catkin_ws/build/
+ProjetSupaero2017/catkin_ws/devel/
+ProjetSupaero2017/catkin_ws/src/CMakeLists.txt
