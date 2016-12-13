@@ -4,8 +4,6 @@
 #include <sstream>
 #include <intel_teleop_msgs/DroneState.h>
 #include <intel_teleop_msgs/SpeedControl.h>
-#include <intel_teleop_msgs/MotorControl.h>
-#include <intel_teleop_msgs/UserInput.h>
 
 void estimated_state_feedback(const intel_teleop_msgs::DroneState estimation)
 {
