@@ -19,10 +19,10 @@ void node_loop()
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "optimal_control")
+  ros::init(argc, argv, "optimal_control");
   ros::NodeHandle n;
 
-  ros::Publisher current_position_topic = n.advertise<r2robotics_msgs::RobotPosition>("speed_control", 1000);
+  ros::Publisher speed_control_topic = n.advertise<intel_teleop_msgs::SpeedControl>("speed_control", 1000);
   ros::Subscriber encoder_feedback_topic = n.subscribe("estimated_state", 1000, estimated_state_feedback); 
 
   
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   int count = 0;
   while (ros::ok())
   {
-    node_loop()
+    node_loop();
     
     ros::spinOnce();
 
