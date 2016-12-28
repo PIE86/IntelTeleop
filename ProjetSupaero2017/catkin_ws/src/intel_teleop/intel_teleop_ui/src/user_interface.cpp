@@ -6,7 +6,7 @@
 
 void node_loop()
 {
-    ROS_INFO("%s", "optimal_control loop");
+    ROS_INFO("%s", "user_interface loop");
 }
 
 int main(int argc, char **argv)
@@ -15,7 +15,6 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
 
   ros::Publisher user_input_topic = n.advertise<intel_teleop_msgs::UserInput>("user_input", 1000);
-
   
   ros::Rate loop_rate(1);
 
