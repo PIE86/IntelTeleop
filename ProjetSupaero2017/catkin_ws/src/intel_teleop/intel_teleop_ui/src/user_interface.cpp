@@ -72,55 +72,7 @@ void get_keyboard_input()
         ROS_INFO("DOWN");
         input.z -= TRANS_STEP;
         break;
-    }
-    
-    
-}
-
-intel_teleop_msgs::UserInput compute_input(int input_char)
-{    
-    // Initialize user input message
-    
-    input.x = 0.0;
-    input.y = 0.0;
-    input.z = 0.0;
-    input.roll = 0.0;
-    input.pitch = 0.0;
-    input.yaw = 0.0;
-    
-    // ROS_INFO("%d pressed", input_char);
-    
-    // Compute user input
-        
-    switch(input_char)
-    {
-      case KEYCODE_FORWARD:
-        ROS_INFO("FORWARD");
-        input.x = TRANS_STEP;
-        break;
-      case KEYCODE_BACKWARD:
-        ROS_INFO("BACKWARD");
-        input.x = - TRANS_STEP;
-        break;
-      case KEYCODE_LEFT:
-        ROS_INFO("LEFT");
-        input.y = TRANS_STEP;
-        break;
-      case KEYCODE_RIGHT:
-        ROS_INFO("RIGHT");
-        input.y = - TRANS_STEP;
-        break;
-      case KEYCODE_UP:
-        ROS_INFO("UP");
-        input.z = TRANS_STEP;
-        break;
-      case KEYCODE_DOWN:
-        ROS_INFO("DOWN");
-        input.z = - TRANS_STEP;
-        break;
-    }
-    
-    return input;    
+    }    
 }
 
 
@@ -149,9 +101,9 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "user_interface");
 	ros::NodeHandle n;
-
+	
 	// Initialize user input message
-
+	
 	input.x = 0.0;
 	input.y = 0.0;
 	input.z = 0.0;
