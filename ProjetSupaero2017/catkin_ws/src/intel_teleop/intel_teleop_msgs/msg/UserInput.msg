@@ -1,6 +1,6 @@
-float32 x
-float32 y
-float32 z
-float32 roll
-float32 pitch
-float32 yaw
+float64 x
+float64 y
+float64 z
+float64 roll
+float64 pitch
+float64 yaw

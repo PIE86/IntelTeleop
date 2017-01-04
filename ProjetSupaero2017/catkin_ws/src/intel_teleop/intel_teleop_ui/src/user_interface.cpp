@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 	{
 		get_keyboard_input();
 
-		ROS_INFO("User input: [%f,%f,%f] ; [%f,%f,%f]", 
+		ROS_INFO("User input: [%lf,%lf,%lf] ; [%lf,%lf,%lf]", 
 			input.x, input.y, input.z, input.roll, input.pitch, input.yaw);
 
 		user_input_topic.publish(input);
