@@ -1,11 +1,24 @@
-/*** Dépendances non hector à installer via Ubuntu ***/
+/*** Instructions pour installer Hector Quadrotor 
+ ***
+ *** Une fois les dépendances et sources installées et compilées,
+ *** lancez un roscore et le démo avec la ligne suivante :
+ *** roslaunch hector_quadrotor_demo outdoor_flight_gazebo.launch
+ ***/
+
+
+/*** Dépendances non hector à installer via apt-get ***/
 
 sudo apt-get install ros-kinetic-ros-control
 sudo apt-get install ros-kinetic-gazebo-ros-control
 sudo apt-get install ros-kinetic-unique-identifier
 sudo apt-get install ros-kinetic-geographic-info
 
-/*** Sources hector à placer dans catkin_ws/src ***/
+sudo apt-get install ros-kinetic-laser-geometry
+sudo apt-get install ros-kinetic-tf-conversions
+sudo apt-get install ros-kinetic-tf2-geometry-msgs
+
+
+/*** Sources hector à placer dans catkin_ws/src et à compiler ***/
 
 git clone -b kinetic-devel https://github.com/tu-darmstadt-ros-pkg/hector_quadrotor
 git clone -b catkin https://github.com/tu-darmstadt-ros-pkg/hector_localization
