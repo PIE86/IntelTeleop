@@ -22,7 +22,6 @@ int main(int argc, char **argv)
   ros::Publisher estimated_state_topic = n.advertise<intel_teleop_msgs::DroneState>("estimated_state", 1000);
   ros::Subscriber real_state_topic = n.subscribe("real_state", 1000, real_state_feedback); 
 
-  
   ros::Rate loop_rate(1);
 
   loop_rate.sleep();
