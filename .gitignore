@@ -20,3 +20,9 @@ ProjetSupaero2016/data/*
 ProjetSupaero2017/catkin_ws/build/
 ProjetSupaero2017/catkin_ws/devel/
 ProjetSupaero2017/catkin_ws/src/CMakeLists.txt
+
+ProjetSupaero2017/catkin_ws/src/hector_quadrotor
+ProjetSupaero2017/catkin_ws/src/hector_slam
+ProjetSupaero2017/catkin_ws/src/hector_models
+ProjetSupaero2017/catkin_ws/src/hector_gazebo
+ProjetSupaero2017/catkin_ws/src/hector_localization
