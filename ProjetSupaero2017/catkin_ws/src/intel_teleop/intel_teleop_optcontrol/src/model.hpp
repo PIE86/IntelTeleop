@@ -1,11 +1,21 @@
-#define 	USING_NAMESPACE_ACADO   using namespace ACADO;
+#ifndef ACADO_TOOLKIT_FUNCTION_HPP
+#define ACADO_TOOLKIT_FUNCTION_HPP
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <ctime>
-#include <baro.hpp>
+#include <acado/matrix_vector/matrix_vector.hpp>
+
+#include <acado/symbolic_expression/acado_syntax.hpp>
+#include <acado/symbolic_expression/symbolic_expression.hpp>
+
+#include <acado/function/evaluation_point.hpp>
+#include <acado/function/t_evaluation_point.hpp>
+#include <acado/function/function_.hpp>
+#include <acado/function/c_function.hpp>
+#include <acado/function/differential_equation.hpp>
+#include <acado/function/transition.hpp>
+#include <acado/function/output_fcn.hpp>
+
+#endif  // ACADO_TOOLKIT_FUNCTION_HPP
+
 
 class Model{
 
@@ -43,20 +53,35 @@ private:
 	const double tau_br = 0.001;
 	const double tau_bbar = 0.001;
 	 
-	Matrix stateVariance(19,19);
-	Matrix outputVariance(7,7);
+	DMatrix stateVariance;
+	DMatrix outputVariance;
 	 
 	DifferentialEquation f;
 	OutputFcn ym;
-	
-	class Model();
-	class Model(Matrix const stateVariance, Matrix const outputVariance);
-	
-	
-	class ~Model();
-	
-	
 
+public:
+	
+	Model();
+
+	Model();
+	Model(DMatrix const _stateVariance, DMatrix const _outputVariance);
+
+
+	~Model();
+
+	DifferentialEquation getDiffEq() const;
+
+	OutputFcn getOutPutEq() const;
+
+	returnValue jacobianF(DMatrix &A, DMatrix &B);
+
+	returnValue jacobianYm(DMatrix &C,DMatrix &D);
+
+	DVector evaluateF(const EvaluationPoint &x,
+					   const int        &number);
+
+	DVector evaluateH(const EvaluationPoint &x,
+					   const int        &number);
 
 
 
