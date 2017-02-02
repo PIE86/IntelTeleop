@@ -26,7 +26,6 @@ along with ProjectSupaero.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <ctime>
 
-#include <baro.hpp>
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
 #include <acado_gnuplot.hpp>
@@ -94,8 +93,8 @@ int main()
 	f << dot(vz) == az;
 	f << 0 == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m -ax;
 	f << 0 == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m - ay;
-	f << 0 == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
-	f << dot(phi) == -cos(phi)*tan(theta)*p+sin(phi)*tan(theta)*q+r - az;
+	f << 0 == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g -az;
+	f << dot(phi) == -cos(phi)*tan(theta)*p+sin(phi)*tan(theta)*q+r;
 	f << dot(theta) == sin(phi)*p+cos(phi)*q;
 	f << dot(psi) == cos(phi)/cos(theta)*p-sin(phi)/cos(theta)*q;
 	f << dot(p) == (d*Cf*(u1*u1-u2*u2)+(Jy-Jz)*q*r)/Jx;
