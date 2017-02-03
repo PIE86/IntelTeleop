@@ -46,9 +46,9 @@ Model::Model(){
 	f << dot(p) == (d*Cf*(u1*u1-u2*u2)+(Jy-Jz)*q*r)/Jx;
 	f << dot(q) == (d*Cf*(u4*u4-u3*u3)+(Jz-Jx)*p*r)/Jy;
 	f << dot(r) == (c*(u1*u1+u2*u2-u3*u3-u4*u4)+(Jx-Jy)*p*q)/Jz;
-	f << 0 == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m -ax;
-	f << 0 == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m - ay;
-	f << 0 == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g - az;
+	f << ax == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m;
+	f << ay == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m;
+	f << az == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
 	
 	
 	

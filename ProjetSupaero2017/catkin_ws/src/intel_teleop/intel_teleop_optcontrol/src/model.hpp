@@ -19,7 +19,6 @@ public:
 	
 	Model();
 
-	Model();
 
 	~Model();
 
