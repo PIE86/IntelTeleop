@@ -1,0 +1,26 @@
+<!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+<launch>
+
+  <!-- world file -->
+  <include file="$(find hector_gazebo_worlds)/launch/rolling_landscape_120m.launch" />
+
+  <!-- hector quadrotor -->
+  <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor.launch" >
+    <arg name="model" value="$(find hector_quadrotor_description)/urdf/quadrotor_hokuyo_utm30lx.gazebo.xacro" />
+  </include>
+
+  <!-- parameters -->
+  <include file="$(find intel_teleop_demo)/launch/parameters_demo.launch" />
+
+  <!-- intel teleop nodes -->
+  <node name="" pkg="intel_teleop_" type="" />
+  <node name="" pkg="intel_teleop_controller" type="" />
+  <node name="" pkg="intel_teleop_estimator" type="" />
+  <node name="" pkg="intel_teleop_ground" type="" />
+  <node name="" pkg="intel_teleop_optcontrol" type="" />
+  <node name="" pkg="intel_teleop_ui" type="" />
+
+  <!-- start rviz visualization -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-f $(find hector_quadrotor_demo)/rviz_cfg/outdoor_flight.vcg" />
+
+</launch>
