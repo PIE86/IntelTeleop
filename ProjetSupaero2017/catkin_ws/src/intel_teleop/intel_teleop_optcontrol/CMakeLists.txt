@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   intel_teleop_msgs
 )
 
+add_definitions(-std=c++11)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -78,6 +80,12 @@ include_directories(include ${roscpp_INDLUDE_DIRS}
    ${catkin_INCLUDE_DIRS}
 )
 
-#add_executable(position_estimator src/position_estimator.cpp)
-#target_link_libraries(position_estimator ${catkin_LIBRARIES} ${roscpp_LIBRARIES})
-#add_dependencies(position_estimator ${roscpp_LIBRARIES} ${catkin_EXPORTED_TARGETS})
+add_library(baro src/baro.cpp)
+target_link_libraries(baro ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
+
+
+#add_executable(optimal_control src/optimal_control.cpp)
+#target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} baro)
+#add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
+
+
