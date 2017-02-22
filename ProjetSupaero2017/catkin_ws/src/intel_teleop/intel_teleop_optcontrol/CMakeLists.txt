@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   intel_teleop_msgs
 )
 
+find_library(ACADO_LIBRARY acado_toolkit /home/diane-pie/ACADOtoolkit/build/lib)
+
 add_definitions(-std=c++11)
 
 ## System dependencies are found with CMake's conventions
@@ -83,9 +85,11 @@ include_directories(include ${roscpp_INDLUDE_DIRS}
 add_library(baro src/baro.cpp)
 target_link_libraries(baro ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
 
+add_library(optcontrol src/optcontrol.cpp)
+target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_LIBRARY})
 
-#add_executable(optimal_control src/optimal_control.cpp)
-#target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} baro)
-#add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
+add_executable(optimal_control src/optimal_control.cpp)
+target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} baro optcontrol)
+add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
 
 
