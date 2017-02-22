@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   intel_teleop_msgs
 )
 
-find_library(ACADO_LIBRARY acado_toolkit /home/diane-pie/ACADOtoolkit/build/lib)
+find_library(ACADO_SHARED_LIBRARIES libacado_toolkit_s.so /home/diane-pie/ACADOtoolkit/build/lib)
 
 add_definitions(-std=c++11)
 
@@ -77,9 +77,17 @@ catkin_package(
 ## Build ##
 ###########
 
+set(ACADO_INCLUDE_DIRS
+   /home/diane-pie/ACADOtoolkit
+   /home/diane-pie/ACADOtoolkit/acado
+   /home/diane-pie/ACADOtoolkit/external_packages
+   /home/diane-pie/ACADOtoolkit/external_packages/qpOASES-3.2.0/include
+   /home/diane-pie/ACADOtoolkit/build)
 
-include_directories(include ${roscpp_INDLUDE_DIRS}
+include_directories(include
+   ${roscpp_INDLUDE_DIRS}
    ${catkin_INCLUDE_DIRS}
+   ${ACADO_INCLUDE_DIRS}
 )
 
 add_library(baro src/baro.cpp)

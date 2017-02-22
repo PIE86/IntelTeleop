@@ -1,13 +1,14 @@
-BEGIN_NAMESPACE_ACADO
+#include "optcontrol.hpp"
 
+BEGIN_NAMESPACE_ACADO
 
 	Optcontrol::Optcontrol(DMatrix& Q, const Model& model, Function& h, DVector& refVec,
 	double const t_in, double const t_fin, double const dt, const Dvector& X_0){
-		
+
 		Q = Q;
 		model = model;
 		h = h;
-		refVec = refVec;		
+		refVec = refVec;
 
 
 		DynamicSystem dynamicSystem(this.model.getDiffEq(),this.model.getOutputEq);
@@ -47,7 +48,7 @@ BEGIN_NAMESPACE_ACADO
 		alg.set(MAX_NUM_ITERATIONS,1);
 		alg.set(PRINT_COPYRIGHT, false);
 		alg.set(DISCRETIZATION_TYPE, MULTIPLE_SHOOTING);
-		
+
 		controller(alg);
 
 		// SETTING UP THE SIMULATION ENVIRONMENT:
@@ -59,57 +60,57 @@ BEGIN_NAMESPACE_ACADO
 
 
 	};
-		
-		
+
+
 	DMatrix Optcontrol::getMatrixQ() const{
 		return this->Q;
 		};
-		
+
 	void Optcontrol::setMatrixQ(DMatrix& Q){
 		Q = Q;
 		};
-		
-		
+
+
 	Model Optcontrol::getDifferentialEquation() cont {
 		return this->model;
 		};
-		
+
 	Function Optcontrol::getFunction() const{
 		return this->h;
 		};
-		
-		
+
+
 	void Optcontrol::setFunction(Function& h){
 		h =h
 		};
-		
+
 	DVector Optcontrol::getrefVec()const{
 		return this->refVec;
 		};
-		
+
 	void Optcontrol::setrefVec(Dvector& refVec){
 		refVec = refVec;
 		};
-	
-	
-		
+
+
+
 	DVector u Optcontrol::solveOptimalControl(Dvector& NewRefVec ){
-        
+
 		if (abs(NewRefVec[0] - this->refVec(0))>1.){
 			if (NewRefVec[0]> this->refVec(0)) { NewRefVec[0] = this->refVec(0)+1.;}
 			else {NewRefVec[0] = this.refVec(0)-1.;}
 		}
-		
+
 		if (abs(NewRefVec[1] - this->refVec(1))>1.){
 			if (NewRefVec[1] > this->refVec(1)) { NewRefVec[1] = this->refVec(1)+1.;}
 			else {NewRefVec[1] = this->refVec(1)-1.;}
 		}
-		
+
 		if (abs(NewRefVec[2]- this->refVec(2))>1.){
 			if (NewRefVec[2]> this->refVec(2)) { NewRefVec[2] = this->refVec(2)+1.;}
 			else {NewRefVec[2] = this->refVec(2)-1.;}
 		}
-		
+
         double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
         DVector refVec(10, refT);
         VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
@@ -118,7 +119,7 @@ BEGIN_NAMESPACE_ACADO
         this.setrefVec(refVec);
 
 		Dvector ActualX;
-		
+
         // get state vector
         process.getX(ActualX);
         X = ActualX.getLastVector();
@@ -129,12 +130,10 @@ BEGIN_NAMESPACE_ACADO
 
         if (success != 0){
 			std::cout << "controller failed " << std::endl;
-			return 1;          
+			return 1;
         }
         Dvector u(4); u.init(); u.setZero();
         controller.getU(u);
-        
+
         return u;
 		}
-
-
