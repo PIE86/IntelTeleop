@@ -1,16 +1,16 @@
-
+#include "baro.hpp"
 
 float getStandardPressure(float altitude /* meters */)   //return Pa
       {
         //Below 51km: Practical Meteorology by Roland Stull, pg 12
         //Above 51km: http://www.braeunig.us/space/atmmodel.htm
         //Validation data: https://www.avs.org/AVS/files/c7/c7edaedb-95b2-438f-adfb-36de54f87b9e.pdf
-    
+
         altitude = altitude / 1000.0f;  //convert meters to km
         float geopot_height = getGeopotential(altitude);
-        
+
         float t = getStandardTemperature(geopot_height);
-    
+
         if (geopot_height <= 11)
           return  101325 * pow(288.15f / t, -5.255877f);
         else if (geopot_height <= 20)
@@ -25,13 +25,13 @@ float getStandardPressure(float altitude /* meters */)   //return Pa
           return 66.93887f * pow(270.65f / t, -12.2011f);
         else if (geopot_height <= 84.85)
           return 3.956420f * pow(214.65f / t, -17.0816f);
-    
-        throw std::out_of_range("altitude must be less than 86km.");    
+
+        throw std::out_of_range("altitude must be less than 86km.");
       }
-    
+
       //geopot_height = earth_radius * altitude / (earth_radius + altitude) /// all in kilometers
       //temperature is in Kelvin = 273.15 + Celsius
-      float getStandardTemperature(float geopot_height) 
+      float getStandardTemperature(float geopot_height)
       {
         //standard atmospheric pressure
         //Below 51km: Practical Meteorology by Roland Stull, pg 12
@@ -42,19 +42,19 @@ float getStandardPressure(float altitude /* meters */)   //return Pa
           return 216.65f;
         else if (geopot_height <= 32)
           return 196.65f + geopot_height;
-        else if (geopot_height <= 47)       
+        else if (geopot_height <= 47)
           return 228.65f + 2.8 * (geopot_height - 32);
         else if (geopot_height <= 51)     //Mesosphere starts
           return 270.65f;
-        else if (geopot_height <= 71)       
+        else if (geopot_height <= 71)
           return 270.65f - 2.8 * (geopot_height - 51);
-        else if (geopot_height <= 84.85)    
-          return 214.65f - 2 * (geopot_height - 71);    
+        else if (geopot_height <= 84.85)
+          return 214.65f - 2 * (geopot_height - 71);
         //Thermospehere has high kinetic temperature (500c to 2000c) but temperature
         //as measured by thermometer would be very low because of almost vacuum
         throw std::out_of_range("geopot_height must be less than 84.85km.");
       }
-    
+
       float getGeopotential(float altitude_km)
       {
         constexpr float EARTH_RADIUS =  6356.766; //km
