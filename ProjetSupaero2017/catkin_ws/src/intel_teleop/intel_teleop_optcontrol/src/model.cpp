@@ -3,6 +3,16 @@
 
 Model::Model(bool const isPWD){
 
+// Introducing constants
+	const double c = 0.00001;
+	const double Cf = 0.00065;
+	const double d = 0.250;
+	const double Jx = 0.018;
+	const double Jy = 0.018;
+	const double Jz = 0.026;
+	const double m = 0.9;
+	const double g = 9.81;
+
 
 	// INTRODUCE THE VARIABLES:
 	// -------------------------
@@ -30,9 +40,9 @@ Model::Model(bool const isPWD){
 		f << dot(p) == (d*Cf*(u1*u1-u2*u2)+(Jy-Jz)*q*r)/Jx;
 		f << dot(q) == (d*Cf*(u4*u4-u3*u3)+(Jz-Jx)*p*r)/Jy;
 		f << dot(r) == (c*(u1*u1+u2*u2-u3*u3-u4*u4)+(Jx-Jy)*p*q)/Jz;
-		f << dot(vx) = ax ;
-		f << dot(vy) = ay ;
-		f << dot(vz) = az ;
+		f << dot(vx) == ax ;
+		f << dot(vy) == ay ;
+		f << dot(vz) == az ;
 		f << ax == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m;
 		f << ay == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m;
 		f << az == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
@@ -83,9 +93,9 @@ Model::Model(bool const isPWD){
 		f << dot(phi) == -cos(phi)*tan(theta)*u_p+sin(phi)*tan(theta)*u_q+u_r;
 		f << dot(theta) == sin(phi)*u_p+cos(phi)*u_q;
 		f << dot(psi) == cos(phi)/cos(theta)*u_p-sin(phi)/cos(theta)*u_q;
-		f << ax = dot(u_vx);
-		f << ay = dot(u_vy);
-		f << az = dot(u_vz);
+		f << ax == dot(u_vx);
+		f << ay == dot(u_vy);
+		f << az == dot(u_vz);
 
 		ym << cos(theta)*cos(psi)*(ax) + cos(theta)*sin(psi)*(ay)
 				-sin(theta)*(az+g);
@@ -95,9 +105,9 @@ Model::Model(bool const isPWD){
 		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax)
 			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay)
 			+ cos(phi)*cos(theta)*(az+g);
-		ym << p;
-		ym << q;
-		ym << r;
+		ym << u_p;
+		ym << u_q;
+		ym << u_r;
         // Cannot work, this function uses float, not differentialState.
 //	ym << getStandardPressure(z);
 
