@@ -142,8 +142,15 @@ BEGIN_NAMESPACE_ACADO
 
 	};
 		
-		
 	
+	Optcontrol::~Optcontrol();
+	
+	DMatrix Optcontrol::getMatrixQ() const {return this->Q;	};		
+	void Optcontrol::setMatrixQ(DMatrix& Q){Q = Q;};
+		
+	DVector Optcontrol::getrefVec() const {return this->refVec;};		
+	void Optcontrol::setrefVec(Dvector& refVec){refVec = refVec;};
+		
 		
 	DVector u Optcontrol::solveOptimalControl(Dvector& NewRefVec, Dvector& x_est, double& t){
         
@@ -200,19 +207,5 @@ BEGIN_NAMESPACE_ACADO
 		}
 
 
-	DMatrix Optcontrol::getMatrixQ() const{
-		return this->Q;
-		};
-		
-	void Optcontrol::setMatrixQ(DMatrix& Q){
-		Q = Q;
-		};
-		
-	DVector Optcontrol::getrefVec()const{
-		return this->refVec;
-		};
-		
-	void Optcontrol::setrefVec(Dvector& refVec){
-		refVec = refVec;
-		};
+
 

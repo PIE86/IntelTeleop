@@ -13,8 +13,8 @@ BEGIN_NAMESPACE_ACADO
 using namespace std
 
 
-Estimator_Acado::Estimator_Acado(const ModelEst &model_Est, unit n, VariablesGrid &x0){
-	m = model();
+Estimator_Acado::Estimator_Acado(const Model &model_Est, unit n, VariablesGrid &x0){
+	m = model_Est;
 	lastState = x0;
 	controls = new VariablesGrid();
 	measures = new VariablesGrid();

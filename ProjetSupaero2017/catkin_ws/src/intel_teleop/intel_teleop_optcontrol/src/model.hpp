@@ -12,7 +12,7 @@ private:
 
 public:
 	
-	Model(bool const isPWD);
+	Model(bool const isPWD = true);
 
 
 	~Model();

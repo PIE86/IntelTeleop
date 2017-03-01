@@ -16,15 +16,14 @@ class Optcontrol {
 	Optcontrol(bool isPWD = true, DMatrix& Q, DVector& refVec,
 	double const t_in, double const t_fin, double const dt, Dvector& X_0);
 	
-		
+	~Optcontrol();		
+			
 	DVector u solveOptimalControl(Dvector& NewRefVec, Dvector& x_est, double t);
 	
-	DMatrix getMatrixQ();
-	
+	DMatrix getMatrixQ();	
 	void setMatrixQ(DMatrix& Q);
 	
-	DVector getrefVec();
-	
+	DVector getrefVec();	
 	void setrefVec(Dvector& refVec);
 	
 		
