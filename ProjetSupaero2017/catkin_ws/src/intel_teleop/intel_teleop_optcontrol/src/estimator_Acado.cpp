@@ -2,10 +2,11 @@
 
 
 BEGIN_NAMESPACE_ACADO
+
 using namespace std
 
 
-Estimator_Acado::Estimator_Acado(const Model &model, unit n, VariablesGrid &x0){
+Estimator_Acado::Estimator_Acado(const ModelEst &model_Est, unit n, VariablesGrid &x0){
 	m = model();
 	lastState = x0;
 	controls = new VariablesGrid();
@@ -18,7 +19,7 @@ Estimator_Acado::Estimator_Acado(const Model &model, unit n, VariablesGrid &x0){
 
 Estimator_Acado::~Estimator_Acado();
 
-addMeasCon(Dvector& u_last, Dvector& y_last, double currentTime){	
+Estimator_Acado::addMeasCon(Dvector& u_last, Dvector& y_last, double currentTime){	
 	measures->addVector(y_last, currentTime);
 	controls->addVector(u_last, currentTime);	
 	}
@@ -30,7 +31,7 @@ VariablesGrid* getControls(){return controls}
 uint getN(){return N}
 
 
-bool estimate(const DMatrix& covMatrix, VariablesGrid &x_est){
+bool estimate(const DMatrix& covMatrix, Dvector &x_est, double& t){
 	if (measures->getDim()<n){
 		return false;
 	}
@@ -39,7 +40,7 @@ bool estimate(const DMatrix& covMatrix, VariablesGrid &x_est){
 	VariablesGrid measuresEst = measures->getTimeSubGrid((n_fin - n), n_fin-1);
 	
 	if (covMatrix.getNumCols != covMatrix.getNumRows){
-		cout << "Weight matrix is not squaed" << endl;
+		cout << "Weight matrix is not squared" << endl;
 		return false;
 		
 		}
@@ -49,29 +50,32 @@ bool estimate(const DMatrix& covMatrix, VariablesGrid &x_est){
 		return false;
 		}
 	
+
+	
+	DynamicSystem dynamicSystem(m.getDiffEq(), m.getOutPutEq()) ;
+	Process process(dynamicSystem , INT RK45 ) ;
+	VariablesGrid disturbance = estimator_Acado.getControls();
+	process.setProcessDisturbance ( disturbance) ;
+	
+		
+
 	OCP ocp(measures->getTimePoints);
 	ocp.minimazeLSQ(m.getOutPutEq(), measures);
-	
 	ocp.subjectTo(m.getDiffEq());
 	
 	ParameterEstimationAlgorithm stateEstAlg(ocp); 
-	
 	
 	stateEstAlg.init; 
 	stateEstAlg.solve();
 	
 	VariablesGrid xd_est_tot;
-	VariablesGrid xa_est_tot;
 	
-	getDifferentialStates(x_est_tot);
- 	getAlgebraicStates(xa_est_tot);
+	stateEstAlg.getDifferentialStates(x_est_tot);
+
  	
- 	x_est_tot.appendValues(xa_est_tot);
- 	
- 	double time_x_est = x_est_tot.getLastTime();
- 	DVector x_fin =  x_est_tot.getLastVector();
-	
-	x_est.init(); x_est.addVector(x_fin, time_x_est);
+ 	t = x_est_tot.getLastTime();
+	x_est =  x_est_tot.getLastVector();
+
 	
 	return true;
 	

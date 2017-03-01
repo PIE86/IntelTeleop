@@ -17,7 +17,7 @@ class Optcontrol {
 	double const t_in, double const t_fin, double const dt, Dvector& X_0);
 	
 		
-	DVector u solveOptimalControl(Dvector& NewRefVec, Dvector& U );
+	DVector u solveOptimalControl(Dvector& NewRefVec, Dvector& x_est, double t);
 	
 	DMatrix getMatrixQ();
 	

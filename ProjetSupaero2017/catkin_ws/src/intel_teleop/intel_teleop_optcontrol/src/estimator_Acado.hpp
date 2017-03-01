@@ -5,19 +5,19 @@ BEGIN_NAMESPACE_ACADO
 class Estimator_Acado{
 private:
 
-Model model;
+ModelEst modelEst;
 uint N; // Window for MPC
 VariablesGrid *measures, *controls, lastState;
 
 public:
 
-Estimator_Acado(const Model &model, unit n, VariablesGrid &x0);
+Estimator_Acado(const ModelEst &model_Est, unit n, VariablesGrid &x0);
 
 ~Estimator_Acado();
 
 void addMeasControl();
 
-bool estimate(const DMatrix& covMatrix, VariablesGrid &x_est);
+bool estimate(const DMatrix& covMatrix, Dvector &x_est, double &t);
 
 VariablesGrid* getMeasures() const;
 VariablesGrid* getControls() const;

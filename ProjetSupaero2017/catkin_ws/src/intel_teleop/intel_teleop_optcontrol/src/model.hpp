@@ -1,9 +1,4 @@
-#ifndef ACADO_TOOLKIT_FUNCTION_HPP
-#define ACADO_TOOLKIT_FUNCTION_HPP
-
-#endif  // ACADO_TOOLKIT_FUNCTION_HPP
-
-#inclde "baro.hpp"
+#include "baro.hpp"
 
 
 BEGIN_NAMESPACE_ACADO
@@ -17,7 +12,7 @@ private:
 
 public:
 	
-	Model();
+	Model(bool const isPWD);
 
 
 	~Model();

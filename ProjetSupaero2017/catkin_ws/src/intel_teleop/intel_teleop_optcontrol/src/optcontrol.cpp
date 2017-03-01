@@ -123,7 +123,7 @@ BEGIN_NAMESPACE_ACADO
 		
 	
 		
-	DVector u Optcontrol::solveOptimalControl(Dvector& NewRefVec ){
+	DVector u Optcontrol::solveOptimalControl(Dvector& NewRefVec, Dvector& x_est, double t){
         
 		if (abs(NewRefVec[0] - this->refVec(0))>1.){
 			if (NewRefVec[0]> this->refVec(0)) { NewRefVec[0] = this->refVec(0)+1.;}
@@ -147,6 +147,7 @@ BEGIN_NAMESPACE_ACADO
         alg.setReference(referenceVG);
         this.setrefVec(refVec);
 
+		/*
 		Dvector X;
 		VariablesGrid Y;
 		Y.setZero();
@@ -154,10 +155,11 @@ BEGIN_NAMESPACE_ACADO
         // get state vector
         process.getY(Y);
         X = Y.getLastVector();
+		*/
 
         // MPC step
         // compute the command
-        bool success = controller.step(t, X);
+        bool success = controller.step(t, x_actual);
 
         if (success != 0){
 			std::cout << "controller failed " << std::endl;
@@ -165,6 +167,12 @@ BEGIN_NAMESPACE_ACADO
         }
         Dvector u(4); u.init(); u.setZero();
         controller.getU(u);
+        
+        
+        std::clock_t t_new = std::clock();
+        double dt = (double)(t_new - t) / (double)CLOCKS_PER_SEC;
+        process.step(t,t+dt,u);
+        t += dt;
         
         return u;
 		}
