@@ -9,8 +9,8 @@
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
 
-Optcontrol::Optcontrol(bool isPWD, DMatrix &Q, DVector &refVec,
-                       const double t_in, const double t_fin, const double dt, const DVector &X_0) {
+Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
+                       const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD) {
 
     _Q = Q;
     _refVec = refVec;

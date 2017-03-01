@@ -13,8 +13,8 @@ private:
     std::unique_ptr< Process > _process;
 
 public:
-    Optcontrol(bool isPWD = true, DMatrix &Q, DVector &refVec,
-               const double t_in, const double t_fin, const double dt, DVector &X_0);
+    Optcontrol(DMatrix &Q, DVector &refVec,
+               const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD = true);
 
 
     DVector solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t );

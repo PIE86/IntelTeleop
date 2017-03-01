@@ -1,11 +1,23 @@
-BEGIN_NAMESPACE_ACADO
+#include "model.hpp"
+
+
 
 Model::Model(bool const isPWD){
 	
 	
 	// INTRODUCE THE VARIABLES:
 	// -------------------------
-	
+    // Introducing constants
+    const double c = 0.00001;
+    const double Cf = 0.00065;
+    const double d = 0.250;
+    const double Jx = 0.018;
+    const double Jy = 0.018;
+    const double Jz = 0.026;
+    const double m = 0.9;
+    const double g = 9.81;
+
+
 	if(isPWD){
 		DifferentialState x,y,z, vx,vy,vz, phi,theta,psi, p,q,r;
 		
@@ -92,9 +104,9 @@ Model::Model(bool const isPWD){
         ym << ax;
         ym << ay;
         ym << az+g;
-        ym << p;
-		ym << q;
-		ym << r;
+        ym << u_p;
+		ym << u_q;
+		ym << u_r;
         // Cannot work, this function uses float, not differentialState.
 //	ym << getStandardPressure(z);
 
