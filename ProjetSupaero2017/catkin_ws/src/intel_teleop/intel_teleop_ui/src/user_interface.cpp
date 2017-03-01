@@ -2,9 +2,10 @@
 #include "ros/ros.h"
 //#include "std_msgs/String.h"
 
-//#include <intel_teleop_msgs/UserInput.h>
+
 #include <sensor_msgs/Joy.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/Twist.h>
+#include <hector_uav_msgs/EnableMotors.h>
 #include <termios.h>
 #include <signal.h>
 
@@ -21,16 +22,23 @@
 
 // Tranlation and rotation step
 
-#define TRANS_STEP_KB 0.2
+#define TRANS_STEP_KB 0.5
 #define TRANS_STEP_JS 2.0
 #define ROT_STEP_JS 2.0
 
 
 static struct termios old_terminal, new_terminal;
 
+/*namespace hector_quadrotor
+{
+
+class Teleop
+{*/
+
 geometry_msgs::Twist input;
 ros::Publisher user_input_topic;
 ros::Subscriber joystick_topic;
+ros::ServiceClient motor_enable_service;
 bool js;
 int x_axis, y_axis, z_axis, yaw_axis;
 int motor_on_button, motor_off_button;
@@ -85,8 +93,8 @@ void get_keyboard_input()
     
     user_input_topic.publish(input);
     
-    ROS_INFO("User input: V = [%lf,%lf,%lf]", 
-			input.linear.x, input.linear.y, input.linear.z);
+    /*ROS_INFO("User input: V = [%lf,%lf,%lf]", 
+			input.linear.x, input.linear.y, input.linear.z);*/
 }
 
 
@@ -102,8 +110,8 @@ void joy_callback(const sensor_msgs::Joy joy)
     
     user_input_topic.publish(input);
     
-    ROS_INFO("User input: V = [%lf,%lf,%lf]", 
-			input.linear.x, input.linear.y, input.linear.z);
+    /*ROS_INFO("User input: V = [%lf,%lf,%lf]", 
+			input.linear.x, input.linear.y, input.linear.z);*/
 }
 
 
@@ -126,7 +134,7 @@ int main(int argc, char **argv)
 	
 	// Controller (keyboard or joystick)
 	
-	n.param<bool>("joystick", js, false);
+	n.param<bool>("joystick", js, true);
         
     n.param<int>("x_axis", x_axis, 4);
     n.param<int>("y_axis", y_axis, 3);
@@ -149,7 +157,12 @@ int main(int argc, char **argv)
 
 	if(js)
 	{
+		ROS_INFO("Command interface: joystick");
 		joystick_topic = n.subscribe("joy", 10, joy_callback);
+	}
+	else
+	{
+		ROS_INFO("Command interface: keyboard");
 	}
 
 	signal(SIGINT,quit);

@@ -6,16 +6,13 @@
   <arg name="joy_dev" default="/dev/input/js0" />
 
   <node name="intel_teleop_user_interface" pkg="intel_teleop_ui" type="intel_teleop_user_interface" output="screen" >
-    <rosparam subst_value="true">
-      joystick: $(arg joystick)
-      x_axis: 5
-      y_axis: 4
-      z_axis: 2
-      yaw_axis: 1
-
-      go_button: 3
-      stop_button: 2
-    </rosparam>
+    <param name="joystick" value="$(arg joystick)"/>
+    <param name="x_axis" value="4"/>
+    <param name="y_axis" value="3"/>
+    <param name="z_axis" value="1"/>
+    <param name="yaw_axis" value="0"/>
+    <param name="motor_on_button" value="3"/>
+    <param name="motor_off_button" value="2"/>
   </node>
 
   <group if="$(arg joystick)">
