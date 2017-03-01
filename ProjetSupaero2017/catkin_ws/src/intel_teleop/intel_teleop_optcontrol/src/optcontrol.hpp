@@ -1,6 +1,5 @@
 #include "model.hpp"
 
-
 class Optcontrol {
 
 private:
@@ -21,10 +20,6 @@ public:
     DMatrix getMatrixQ();
 
     void setMatrixQ(DMatrix &Q);
-
-    Function getFunction();
-
-    void setFunction(Function &h);
 
     DVector getrefVec();
 

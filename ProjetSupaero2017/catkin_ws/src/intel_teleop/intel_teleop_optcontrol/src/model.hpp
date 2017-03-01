@@ -13,8 +13,8 @@ private:
 	OutputFcn ym;
 
 public:
-
-	Model();
+	
+	Model(bool const isPWD);
 
 	DifferentialEquation getDiffEq() const;
 
