@@ -1,18 +1,23 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <ctime>
+
+#include <acado_toolkit.hpp>
+#include <acado_optimal_control.hpp>
+
 BEGIN_NAMESPACE_ACADO
 
 
-	Optcontrol::Optcontrol(bool const isPWD, DMatrix& Q, Function& h, DVector& refVec,
+	Optcontrol::Optcontrol(bool const isPWD, DMatrix& Q, DVector& refVec,
 	double const t_in, double const t_fin, double const dt, const Dvector& X_0){
 		
 		Q = Q;
-		h = h;
 		refVec = refVec;
 		
-		DifferentialEquation f;
-		OCP ocp;
-		ocp(t_in, dt, t_fin);
-		ocp.minimizeLSQ(this->Q, this->h, this->refVec);
-	
+		DifferentialEquation f;	
+
 			// Introducing constants
 		const double c  = 0.00001;
 		const double Cf = 0.00065;
@@ -58,6 +63,15 @@ BEGIN_NAMESPACE_ACADO
 		// Constraint to avoid singularity
 		ocp.subjectTo(-1. <= theta <= 1.);
 
+		h << vx << vy << vz;
+		h << u1 << u2 << u3 << u4;
+		h << p << q << r;
+		
+		if(Q.getCols != 10 || Q.getRows!= 10 ){
+			std::cout << "Weight matrix size is not suitable for this model" << std::endl;
+			}
+		
+
 		
 	}else{
 		
@@ -80,10 +94,18 @@ BEGIN_NAMESPACE_ACADO
 		ocp.subjectTo(-15 <= u_q <= 15);
 		ocp.subjectTo(-15 <= u_r <= 15);
 
+		h << u_vx << u_vy << u_vz
+		h << u_p << u_q << u_r;
+	
+		if(Q.getCols != 6 || Q.getRows!= 6 ){
+			std::cout << "Weight matrix size is not suitable for this model" << std::endl;
+			}
 		
 		}
 
-
+		OCP ocp;
+		ocp(t_in, dt, t_fin);
+		ocp.minimizeLSQ(this->Q, this->h, this->refVec);
 		ocp.subjectTo(f);		
 		
 		EnvironmentParser parser(PIE_SOURCE_DIR"/data/envsave.xml");
@@ -123,7 +145,7 @@ BEGIN_NAMESPACE_ACADO
 		
 	
 		
-	DVector u Optcontrol::solveOptimalControl(Dvector& NewRefVec, Dvector& x_est, double t){
+	DVector u Optcontrol::solveOptimalControl(Dvector& NewRefVec, Dvector& x_est, double& t){
         
 		if (abs(NewRefVec[0] - this->refVec(0))>1.){
 			if (NewRefVec[0]> this->refVec(0)) { NewRefVec[0] = this->refVec(0)+1.;}
@@ -141,11 +163,11 @@ BEGIN_NAMESPACE_ACADO
 		}
 		
         double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
-        DVector refVec(10, refT);
-        VariablesGrid referenceVG (refVec, Grid{t, t+1., 2});
-        referenceVG.setVector(0, LastRefVec);
+        DVector refVecN(10, refT);
+        VariablesGrid referenceVG (refVecN, Grid{t, t+1., 2});
+        referenceVG.setVector(0, this->refVec);
         alg.setReference(referenceVG);
-        this.setrefVec(refVec);
+        this.setrefVec(refVecN);
 
 		/*
 		Dvector X;
@@ -184,16 +206,6 @@ BEGIN_NAMESPACE_ACADO
 		
 	void Optcontrol::setMatrixQ(DMatrix& Q){
 		Q = Q;
-		};
-		
-		
-	Function Optcontrol::getFunction() const{
-		return this->h;
-		};
-		
-		
-	void Optcontrol::setFunction(Function& h){
-		h =h
 		};
 		
 	DVector Optcontrol::getrefVec()const{

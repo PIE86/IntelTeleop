@@ -13,7 +13,7 @@ class Optcontrol {
 	Process process;
 	
 	public:
-	Optcontrol(bool isPWD, DMatrix& Q, Function& h, DVector& refVec,
+	Optcontrol(bool isPWD = true, DMatrix& Q, DVector& refVec,
 	double const t_in, double const t_fin, double const dt, Dvector& X_0);
 	
 		
@@ -22,10 +22,6 @@ class Optcontrol {
 	DMatrix getMatrixQ();
 	
 	void setMatrixQ(DMatrix& Q);
-	
-	Function getFunction();
-	
-	void setFunction(Function& h);
 	
 	DVector getrefVec();
 	

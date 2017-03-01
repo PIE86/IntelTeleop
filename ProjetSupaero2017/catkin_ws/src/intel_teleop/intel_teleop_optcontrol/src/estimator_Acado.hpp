@@ -17,7 +17,7 @@ Estimator_Acado(const ModelEst &model_Est, unit n, VariablesGrid &x0);
 
 void addMeasControl();
 
-bool estimate(const DMatrix& covMatrix, Dvector &x_est, double &t);
+bool estimate(const DMatrix& weightMatrix, Dvector &x_est, double &t);
 
 VariablesGrid* getMeasures() const;
 VariablesGrid* getControls() const;

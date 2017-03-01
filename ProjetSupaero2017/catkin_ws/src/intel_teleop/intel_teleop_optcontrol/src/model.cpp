@@ -37,14 +37,14 @@ Model::Model(bool const isPWD){
 		f << az == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
 		
 		
-		ym << cos(theta)*cos(psi)*(ax-g) + cos(theta)*sin(psi)*(ay-g)
-				-sin(theta)*(az-g);
-		ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax-g)
-			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay-g) 
-			+ sin(phi)*cos(theta)*(az-g);
-		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax-g)
-			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay-g) 
-			+ cos(phi)*cos(theta)*(az-g);	
+		ym << cos(theta)*cos(psi)*(ax) + cos(theta)*sin(psi)*(ay)
+				-sin(theta)*(az+g);
+		ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax)
+			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay) 
+			+ sin(phi)*cos(theta)*(az+g);
+		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax)
+			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay) 
+			+ cos(phi)*cos(theta)*(az+g);	
 		ym << p;
 		ym << q;
 		ym << r;
@@ -77,14 +77,14 @@ Model::Model(bool const isPWD){
 		f << ay = dot(u_vy);
 		f << az = dot(u_vz);
 		
-		ym << cos(theta)*cos(psi)*(ax-g) + cos(theta)*sin(psi)*(ay-g)
-				-sin(theta)*(az-g);
-		ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax-g)
-			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay-g) 
-			+ sin(phi)*cos(theta)*(az-g);
-		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax-g)
-			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay-g) 
-			+ cos(phi)*cos(theta)*(az-g);	
+		ym << cos(theta)*cos(psi)*(ax) + cos(theta)*sin(psi)*(ay)
+				-sin(theta)*(az+g);
+		ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax)
+			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay) 
+			+ sin(phi)*cos(theta)*(az+g);
+		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax)
+			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay) 
+			+ cos(phi)*cos(theta)*(az+g);	
 		ym << p;
 		ym << q;
 		ym << r;

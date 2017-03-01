@@ -1,4 +1,11 @@
 #include "model.hpp"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <ctime>
+
+#include <acado_toolkit.hpp>
 
 
 BEGIN_NAMESPACE_ACADO
@@ -31,36 +38,44 @@ VariablesGrid* getControls(){return controls}
 uint getN(){return N}
 
 
-bool estimate(const DMatrix& covMatrix, Dvector &x_est, double& t){
-	if (measures->getDim()<n){
+bool estimate(const DMatrix& weightMatrix, Dvector &x_est, double& t){
+	
+	if (measures->getDim()<n || controls->getDim()<n){
+		cout << "Not enought measures samples to start estimation" << endl;
 		return false;
 	}
 	
-	uint n_fin= measures->getDim();
-	VariablesGrid measuresEst = measures->getTimeSubGrid((n_fin - n), n_fin-1);
+	if ( measures->getDim()!=controls->getDim()){
+		cout << "There are no as many mmasures as control samples" << endl;
+		return false;
+	}
 	
-	if (covMatrix.getNumCols != covMatrix.getNumRows){
+	if (weightMatrix.getNumCols != weightMatrix.getNumRows){
 		cout << "Weight matrix is not squared" << endl;
 		return false;
 		
 		}
 		
-	if (covMatrix.getNumCols != m.getOutPutEq.getDim){
+	if (weightMatrix.getNumCols != m.getOutPutEq.getDim){
 		cout << "Weight matrix has not the same dimension of the output function" << endl;
 		return false;
 		}
 	
-
+	uint n_fin= measures->getDim();
+	VariablesGrid measuresEst = measures->getTimeSubGrid((n_fin - n), n_fin-1);
+	VariablesGrid controlsEst = controls->getTimeSubGrid((n_fin - n), n_fin-1);
 	
-	DynamicSystem dynamicSystem(m.getDiffEq(), m.getOutPutEq()) ;
+	
+	
+	DynamicSystem dynamicSystem(weightMatrix, m.getDiffEq(), m.getOutPutEq()) ;
 	Process process(dynamicSystem , INT RK45 ) ;
-	VariablesGrid disturbance = estimator_Acado.getControls();
-	process.setProcessDisturbance ( disturbance) ;
+	VariablesGrid disturbance = controlsEst;
+	process.setProcessDisturbance(disturbance) ;
 	
 		
 
 	OCP ocp(measures->getTimePoints);
-	ocp.minimazeLSQ(m.getOutPutEq(), measures);
+	ocp.minimazeLSQ(m.getOutPutEq(), measuresEst);
 	ocp.subjectTo(m.getDiffEq());
 	
 	ParameterEstimationAlgorithm stateEstAlg(ocp); 
@@ -78,9 +93,7 @@ bool estimate(const DMatrix& covMatrix, Dvector &x_est, double& t){
 
 	
 	return true;
-	
-	
-	
+
 	}
 
 
