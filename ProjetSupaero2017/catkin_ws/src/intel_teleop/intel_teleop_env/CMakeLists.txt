@@ -77,13 +77,48 @@ include_directories(inlude
   ${catkin_INCLUDE_DIRS}
 )
 
+add_library(minvolellipse lib/MinVolEllipse.cpp lib/MinVolEllipse_emxutil.cpp lib/norm.cpp lib/diag.cpp lib/inv.cpp lib/rt_nonfinite.cpp)
+target_link_libraries(minvolellipse ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
 
-#add_library(minvolellipse lib/MinVolEllipse.cpp lib/MinVolEllipse_emxutil.cpp lib/norm.cpp lib/diag.cpp lib/inv.cpp lib/rt_nonfinite.cpp)
-#target_link_libraries(minvolellipse ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
-
+add_library(ellipsoidgen lib/rt_nonfinite.cpp lib/MinVolEllipse_terminate.cpp lib/MinVolEllipse_initialize.cpp lib/MinVolEllipse_emxAPI.cpp)
+target_link_libraries(ellipsoidgen ${roscpp_LIBRARIES} ${catkin_LIBRARIES} minvolellipse)
 
 ## Declare a C++ executable
-add_executable(environnement_generator src/environnement_generator.cpp)
-target_link_libraries(environnement_generator ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
-add_dependencies(environnement_generator ${catkin_EXPORTED_TARGETS} ${roscpp_LIBRARIES})
+add_executable(environment_generator src/environment_generator.cpp)
+target_link_libraries(environment_generator ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ellipsoidgen)
+add_dependencies(environment_generator ${catkin_EXPORTED_TARGETS} ${roscpp_LIBRARIES})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

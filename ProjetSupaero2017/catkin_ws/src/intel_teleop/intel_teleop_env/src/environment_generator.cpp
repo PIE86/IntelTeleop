@@ -1,17 +1,18 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-
 #include <sstream>
-#include "../lib/MinVolEllipse.h"
+
+#include "ellipsoid_gen.h"
+
 
 void node_loop()
 {
-    ROS_INFO("%s", "optimal_control loop");
+    ROS_INFO("%s", "environment generator loop ");
 }
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "ellipse_gen test");
+  ros::init(argc, argv, "environnement_generator");
   ros::NodeHandle n;
 
   ros::Rate loop_rate(1);
