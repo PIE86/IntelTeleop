@@ -18,6 +18,20 @@ sudo apt-get update
 sudo apt-get install ros-kinetic-desktop-full
 ```
 
+ACADO Toolkit is also required.
+
+```
+sudo apt-get install gcc g++ cmake git gnuplot doxygen graphviz
+
+git clone https://github.com/acado/acado.git -b stable ACADOtoolkit && cd ACADOtoolkit
+git reset --hard 88c441b6bedee039ef8cb81d34fcd9377fb6d138
+mkdir build && cd build
+cmake .. && make
+sudo make install
+```
+Le dossier ACADOtoolkit peut ensuite être supprimé.
+
+
 ### Downloading IntelTeleop
 
 Download the IntelTeleop project from our github where you want it to be:
