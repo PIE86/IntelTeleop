@@ -12,8 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   intel_teleop_msgs
 )
 
-SET( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-        ${CMAKE_CURRENT_LIST_DIR} )
 FIND_PACKAGE( ACADO REQUIRED )
 
 add_definitions(-std=c++11)
@@ -92,9 +90,9 @@ include_directories(include
 add_library(optcontrol src/optcontrol.cpp src/model.cpp)
 target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
 
-#add_executable(optimal_control src/optimal_control.cpp)
-#target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} baro optcontrol)
-#add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
+add_executable(optimal_control src/optimal_control.cpp)
+target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} optcontrol)
+add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
 
 
 
