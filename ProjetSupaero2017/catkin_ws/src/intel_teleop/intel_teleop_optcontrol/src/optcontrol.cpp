@@ -42,17 +42,17 @@ Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
 
 
         f << dot(x) == vx;
-        f << dot(y) == vy;
-        f << dot(z) == vz;
-        f << dot(phi) == -cos(phi) * tan(theta) * p + sin(phi) * tan(theta) * q + r;
-        f << dot(theta) == sin(phi) * p + cos(phi) * q;
-        f << dot(psi) == cos(phi) / cos(theta) * p - sin(phi) / cos(theta) * q;
-        f << dot(p) == (d * Cf * (u1 * u1 - u2 * u2) + (Jy - Jz) * q * r) / Jx;
-        f << dot(q) == (d * Cf * (u4 * u4 - u3 * u3) + (Jz - Jx) * p * r) / Jy;
-        f << dot(r) == (c * (u1 * u1 + u2 * u2 - u3 * u3 - u4 * u4) + (Jx - Jy) * p * q) / Jz;
-        f << dot(vx) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * sin(theta) / m;
-        f << dot(vy) == -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * sin(psi) * cos(theta) / m;
-        f << dot(vz) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m - g;
+		f << dot(y) == vy;
+		f << dot(z) == vz;
+		f << dot(phi) == p + sin(phi)*tan(theta)*q + cos(phi)*tan(theta)*r;
+		f << dot(theta) == cos(phi)*q - sin(phi)*r;
+		f << dot(psi) == sin(phi)/cos(theta)*q + cos(phi)/cos(theta)*r;
+		f << dot(p) == (d*Cf*(u4*u4-u2*u2)+(Jy-Jz)*q*r)/Jx;
+		f << dot(q) == (d*Cf*(u1*u1-u3*u3)+(Jz-Jx)*p*r)/Jy;
+		f << dot(r) == (c*(-u1*u1+u2*u2-u3*u3+u4*u4)+(Jx-Jy)*p*q)/Jz;
+		f << dot(vx) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*(cos(psi)*sin(theta)*cos(phi) + sin(psi)*sin(phi))/m;
+		f << dot(vy) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*(sin(psi)*sin(theta)*cos(phi) - cos(psi)*sin(phi))/m;
+		f << dot(vz) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m + g; // axe z vers le bas
 
 
 
@@ -85,11 +85,14 @@ Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
         Control u_vx, u_vy, u_vz, u_p, u_q, u_r; // Linear and angular velocity
 
         f << dot(x) == u_vx;
-        f << dot(y) == u_vy;
-        f << dot(z) == u_vz;
-        f << dot(phi) == -cos(phi) * tan(theta) * u_p + sin(phi) * tan(theta) * u_q + u_r;
-        f << dot(theta) == sin(phi) * u_p + cos(phi) * u_q;
-        f << dot(psi) == cos(phi) / cos(theta) * u_p - sin(phi) / cos(theta) * u_q;
+		f << dot(y) == u_vy;
+		f << dot(z) == u_vz;
+		f << dot(phi) == u_p + sin(phi)*tan(theta)*u_q + cos(phi)*tan(theta)*u_r;
+		f << dot(theta) == cos(phi)*u_q - sin(phi)*u_r;
+		f << dot(psi) == sin(phi)/cos(theta)*u_q + cos(phi)/cos(theta)*u_r;
+		f << ax == dot(u_vx);
+		f << ay == dot(u_vy);
+		f << az == dot(u_vz);
 
         ocp.subjectTo(-15 <= u_p <= 15);
         ocp.subjectTo(-15 <= u_q <= 15);
