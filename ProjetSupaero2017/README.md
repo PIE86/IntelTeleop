@@ -39,9 +39,9 @@ The script will setup your catkin workspace and will download the Hector Quadrot
 
 * You will have to source your catkin workspace with every new terminal. You can add it to your bashrc to make it automatic:
 
-'''
+```
 echo 'source ~/path/to/IntelTeleop/ProjectSupaero2017/catkin_ws/devel/setup.bash' >> ~/.bashrc
-'''
+```
 
 ## Running the demo
 
