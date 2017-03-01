@@ -9,106 +9,18 @@
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
 
+
+
 Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
-                       const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD) {
+                       const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD)
+    : _X_0{ X_0 }
+{
+    // Service pour ajouter cylindre
 
-    _Q = Q;
-    _refVec = refVec;
+// Service pour ajouter cube (avec sphère == ellipse autour)
 
-    DifferentialEquation f;
-
-    // Introducing constants
-    const double c = 0.00001;
-    const double Cf = 0.00065;
-    const double d = 0.250;
-    const double Jx = 0.018;
-    const double Jy = 0.018;
-    const double Jz = 0.026;
-    const double m = 0.9;
-    const double g = 9.81;
-
-    OCP ocp(t_in, t_fin, static_cast< int >((t_fin - t_in) / dt ));
-
-
-    if (isPWD) {
-        DifferentialState x, y, z, vx, vy, vz, phi, theta, psi, p, q, r;
-
-        // x, y, z : position
-        // vx, vy, vz : linear velocity
-        // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
-        // p, q, r : angular velocity
-        // u1, u2, u3, u4 : velocity of the propellers
-        Control u1, u2, u3, u4;
-
-
-        f << dot(x) == vx;
-		f << dot(y) == vy;
-		f << dot(z) == vz;
-		f << dot(phi) == p + sin(phi)*tan(theta)*q + cos(phi)*tan(theta)*r;
-		f << dot(theta) == cos(phi)*q - sin(phi)*r;
-		f << dot(psi) == sin(phi)/cos(theta)*q + cos(phi)/cos(theta)*r;
-		f << dot(p) == (d*Cf*(u4*u4-u2*u2)+(Jy-Jz)*q*r)/Jx;
-		f << dot(q) == (d*Cf*(u1*u1-u3*u3)+(Jz-Jx)*p*r)/Jy;
-		f << dot(r) == (c*(-u1*u1+u2*u2-u3*u3+u4*u4)+(Jx-Jy)*p*q)/Jz;
-		f << dot(vx) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*(cos(psi)*sin(theta)*cos(phi) + sin(psi)*sin(phi))/m;
-		f << dot(vy) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*(sin(psi)*sin(theta)*cos(phi) - cos(psi)*sin(phi))/m;
-		f << dot(vz) == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m + g; // axe z vers le bas
-
-
-
-        // Constraints on the velocity of each propeller
-        ocp.subjectTo(16 <= u1 <= 95);
-        ocp.subjectTo(16 <= u2 <= 95);
-        ocp.subjectTo(16 <= u3 <= 95);
-        ocp.subjectTo(16 <= u4 <= 95);
-
-        // Constraint to avoid singularity
-        ocp.subjectTo(-1. <= theta <= 1.);
-
-        _h << vx << vy << vz;
-        _h << u1 << u2 << u3 << u4;
-        _h << p << q << r;
-
-        if (_Q.getNumCols() != 10 || _Q.getNumRows() != 10) {
-            std::cout << "Weight matrix size is not suitable for this model" << std::endl;
-        }
-
-
-    } else {
-
-        DifferentialState x, y, z, phi, theta, psi;
-
-        // x, y, z : position
-        // vx, vy, vz : linear velocity
-        // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
-
-        Control u_vx, u_vy, u_vz, u_p, u_q, u_r; // Linear and angular velocity
-
-        f << dot(x) == u_vx;
-		f << dot(y) == u_vy;
-		f << dot(z) == u_vz;
-		f << dot(phi) == u_p + sin(phi)*tan(theta)*u_q + cos(phi)*tan(theta)*u_r;
-		f << dot(theta) == cos(phi)*u_q - sin(phi)*u_r;
-		f << dot(psi) == sin(phi)/cos(theta)*u_q + cos(phi)/cos(theta)*u_r;
-		f << ax == dot(u_vx);
-		f << ay == dot(u_vy);
-		f << az == dot(u_vz);
-
-        ocp.subjectTo(-15 <= u_p <= 15);
-        ocp.subjectTo(-15 <= u_q <= 15);
-        ocp.subjectTo(-15 <= u_r <= 15);
-
-        _h << u_vx << u_vy << u_vz;
-        _h << u_p << u_q << u_r;
-
-        if (_Q.getNumCols() != 6 || _Q.getNumRows() != 6) {
-            std::cout << "Weight matrix size is not suitable for this model" << std::endl;
-        }
-
-    }
-
-    ocp.minimizeLSQ(_Q, _h, _refVec);
-    ocp.subjectTo(f);
+// Service pour ajouter sphere (avec ellipse autour)
+    init(Q, refVec, t_in, t_fin, dt, isPWD);
 
 //    EnvironmentParser
 //    parser(PIE_SOURCE_DIR
@@ -122,20 +34,136 @@ Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
 //                      (pow(c.x2 - c.x1, 2) + pow(c.y2 - c.y1, 2) + pow(c.z2 - c.z1, 2))
 //        );
 //    }
+};
 
-    DynamicSystem dynamicSystem(f, OutputFcn{});
-    _process = std::unique_ptr<Process>( new Process( dynamicSystem, INT_RK45 ) );
+bool Optcontrol::addEllipse( intel_teleop_msgs::addCylinder::Request &c,
+                             intel_teleop_msgs::addCylinder::Response &answer )
+{
+    _ocp->subjectTo(pow(c.radius + 1, 2) <=
+                    (pow((y - c.y1) * (c.z2 - c.z1) - (c.y2 - c.y1) * (z - c.z1), 2) +
+                     pow((z - c.z1) * (c.x2 - c.x1) - (c.z2 - c.z1) * (x - c.x1), 2) +
+                     pow((x - c.x1) * (c.y2 - c.y1) - (c.x2 - c.x1) * (y - c.y1), 2)) /
+                    (pow(c.x2 - c.x1, 2) + pow(c.y2 - c.y1, 2) + pow(c.z2 - c.z1, 2)));
+}
+void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const double t_fin, const double dt, bool isPWD) {
+
+    _Q = Q;
+    _refVec = refVec;
+
+
+
+    // Introducing constants
+    const double c = 0.00001;
+    const double Cf = 0.00065;
+    const double d = 0.250;
+    const double Jx = 0.018;
+    const double Jy = 0.018;
+    const double Jz = 0.026;
+    const double m = 0.9;
+    const double g = 9.81;
+
+    _ocp = std::unique_ptr<OCP>(new OCP(t_in, t_fin, static_cast< int >((t_fin - t_in) / dt )));
+
+
+    if (isPWD) {
+        DifferentialState vx, vy, vz, phi, theta, psi, p, q, r;
+
+        // x, y, z : position
+        // vx, vy, vz : linear velocity
+        // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
+        // p, q, r : angular velocity
+        // u1, u2, u3, u4 : velocity of the propellers
+        Control u1, u2, u3, u4;
+
+
+        _f << dot(x) == vx;
+        _f << dot(y) == vy;
+        _f << dot(z) == vz;
+        _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
+        _f << dot(theta) == cos(phi) * q - sin(phi) * r;
+        _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
+        _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx;
+        _f << dot(q) == (d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy;
+        _f << dot(r) == (c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz;
+        _f << dot(vx) ==
+        -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
+        _f << dot(vy) ==
+        -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
+        _f << dot(vz) ==
+        -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m + g; // axe z vers le bas
+
+
+
+        // Constraints on the velocity of each propeller
+        _ocp->subjectTo(16 <= u1 <= 95);
+        _ocp->subjectTo(16 <= u2 <= 95);
+        _ocp->subjectTo(16 <= u3 <= 95);
+        _ocp->subjectTo(16 <= u4 <= 95);
+
+        // Constraint to avoid singularity
+        _ocp->subjectTo(-1. <= theta <= 1.);
+
+        _h << vx << vy << vz;
+        _h << u1 << u2 << u3 << u4;
+        _h << p << q << r;
+
+        if (_Q.getNumCols() != 10 || _Q.getNumRows() != 10) {
+            std::cout << "Weight matrix size is not suitable for this model" << std::endl;
+        }
+
+
+    } else {
+
+        DifferentialState phi, theta, psi;
+
+        // x, y, z : position
+        // vx, vy, vz : linear velocity
+        // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
+
+        Control u_vx, u_vy, u_vz, u_p, u_q, u_r; // Linear and angular velocity
+
+        _f << dot(x) == u_vx;
+        _f << dot(y) == u_vy;
+        _f << dot(z) == u_vz;
+        _f << dot(phi) == u_p + sin(phi) * tan(theta) * u_q + cos(phi) * tan(theta) * u_r;
+        _f << dot(theta) == cos(phi) * u_q - sin(phi) * u_r;
+        _f << dot(psi) == sin(phi) / cos(theta) * u_q + cos(phi) / cos(theta) * u_r;
+        // Quid ? Pas de variable ax, ay, az ?
+//        _f << ax == dot(u_vx);
+//        _f << ay == dot(u_vy);
+//        _f << az == dot(u_vz);
+
+        _ocp->subjectTo(-15 <= u_p <= 15);
+        _ocp->subjectTo(-15 <= u_q <= 15);
+        _ocp->subjectTo(-15 <= u_r <= 15);
+
+        _h << u_vx << u_vy << u_vz;
+        _h << u_p << u_q << u_r;
+
+        if (_Q.getNumCols() != 6 || _Q.getNumRows() != 6) {
+            std::cout << "Weight matrix size is not suitable for this model" << std::endl;
+        }
+
+    }
+
+    _ocp->minimizeLSQ(_Q, _h, _refVec);
+    _ocp->subjectTo(_f);
+}
+
+void Optcontrol::completeSimulation(DVector &X_0) {
+    DynamicSystem dynamicSystem(_f, OutputFcn{});
+    _process = std::unique_ptr<Process>(new Process(dynamicSystem, INT_RK45));
 
 
     // SET UP THE MPC CONTROLLER:
     // --------------------------
-    _alg = std::unique_ptr<RealTimeAlgorithm>( new RealTimeAlgorithm( ocp ) );
+    _alg = std::unique_ptr<RealTimeAlgorithm>(new RealTimeAlgorithm(*_ocp));
     _alg->set(INTEGRATOR_TYPE, INT_RK45);
     _alg->set(MAX_NUM_ITERATIONS, 1);
     _alg->set(PRINT_COPYRIGHT, false);
     _alg->set(DISCRETIZATION_TYPE, MULTIPLE_SHOOTING);
 
-    _controller = std::unique_ptr<Controller>( new Controller( *_alg ) );
+    _controller = std::unique_ptr<Controller>(new Controller(*_alg));
 
     // SETTING UP THE SIMULATION ENVIRONMENT:
     // --------------------------------------
@@ -143,13 +171,11 @@ Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
     u.setZero();
     _controller->init(0., X_0);
     _process->init(0., X_0, u);
-
-
-};
+}
 
 
 DVector
-Optcontrol::solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t ) {
+Optcontrol::solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t) {
 
     if (abs(NewRefVec[0] - _refVec(0)) > 1.) {
         if (NewRefVec[0] > _refVec(0)) {
@@ -218,7 +244,7 @@ X = Y.getLastVector();
 }
 
 
-DMatrix Optcontrol::getMatrixQ()  {
+DMatrix Optcontrol::getMatrixQ() {
     return _Q;
 }
 
@@ -226,7 +252,7 @@ void Optcontrol::setMatrixQ(DMatrix &Q) {
     _Q = Q;
 }
 
-DVector Optcontrol::getrefVec()  {
+DVector Optcontrol::getrefVec() {
     return _refVec;
 }
 

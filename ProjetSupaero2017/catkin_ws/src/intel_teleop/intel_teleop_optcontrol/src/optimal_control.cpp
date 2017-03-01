@@ -12,6 +12,16 @@ void node_loop()
     ROS_INFO("%s", "optimal_control loop");
 }
 
+
+// Service pour ajouter cylindre
+
+// Service pour ajouter cube (avec sphère == ellipse autour)
+
+// Service pour ajouter sphere (avec ellipse autour)
+
+// Callback du topic /clock pour déclencher la màj de l'opt-control.
+
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "optimal_control");

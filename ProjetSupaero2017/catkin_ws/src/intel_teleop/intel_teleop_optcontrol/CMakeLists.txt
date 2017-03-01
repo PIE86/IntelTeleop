@@ -39,8 +39,7 @@ add_definitions(-std=c++11)
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
+#   addCylinder.srv
 # )
 
 ## Generate actions in the 'action' folder
@@ -55,7 +54,7 @@ add_definitions(-std=c++11)
 #   DEPENDENCIES
 #   std_msgs
 # )
-
+#
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -89,6 +88,7 @@ include_directories(include
 
 add_library(optcontrol src/optcontrol.cpp src/model.cpp)
 target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
+add_dependencies( optcontrol intel_teleop_msgs_generate_messages_cpp )
 
 add_executable(optimal_control src/optimal_control.cpp)
 target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} optcontrol)
