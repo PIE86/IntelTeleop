@@ -1,30 +1,24 @@
-#ifndef ACADO_TOOLKIT_FUNCTION_HPP
-#define ACADO_TOOLKIT_FUNCTION_HPP
-
-#endif  // ACADO_TOOLKIT_FUNCTION_HPP
-
-#inclde "baro.hpp"
+//#include "baro.hpp"
+#include <acado_toolkit.hpp>
+//#include <acado_gnuplot.hpp>
 
 
-BEGIN_NAMESPACE_ACADO
+USING_NAMESPACE_ACADO
 
 class Model{
 
 private:
-	 
+
 	DifferentialEquation f;
 	OutputFcn ym;
 
 public:
-	
+
 	Model();
-
-
-	~Model();
 
 	DifferentialEquation getDiffEq() const;
 
 	OutputFcn getOutPutEq() const;
 
 
-}
+};

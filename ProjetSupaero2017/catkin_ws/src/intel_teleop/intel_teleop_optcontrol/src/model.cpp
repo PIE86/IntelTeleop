@@ -1,4 +1,5 @@
-BEGIN_NAMESPACE_ACADO
+#include "model.hpp"
+
 
 Model::Model(){
 	// INTRODUCE THE VARIABLES:
@@ -6,7 +7,7 @@ Model::Model(){
 	DifferentialState x,y,z, vx,vy,vz, phi,theta,psi, p,q,r,
 	                  b_ax,b_ay,b_az,b_p,b_q,b_r,b_bar;
 	AlgebraicState ax,ay,az;
-	
+
 	// x, y, z : position
 	// vx, vy, vz : linear velocity
 	// phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
@@ -32,8 +33,8 @@ Model::Model(){
 	const double tau_bq = 0.001;
 	const double tau_br = 0.001;
 	const double tau_bbar = 0.001;
-	
-	
+
+
 	f << dot(x) == vx;
 	f << dot(y) == vy;
 	f << dot(z) == vz;
@@ -49,37 +50,47 @@ Model::Model(){
 	f << ax == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m;
 	f << ay == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m;
 	f << az == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
-	
-	
-	
+
+
+
 	ym << cos(theta)*cos(psi)*(ax-g) + cos(theta)*sin(psi)*(ay-g)
 			-sin(theta)*(az-g);
 	ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax-g)
-		+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay-g) 
+		+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay-g)
 		+ sin(phi)*cos(theta)*(az-g);
 	ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax-g)
-		+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay-g) 
-		+ cos(phi)*cos(theta)*(az-g);	
+		+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay-g)
+		+ cos(phi)*cos(theta)*(az-g);
 	ym << p;
 	ym << q;
 	ym << r;
-	ym << getStandardPressure(z);
+
+    // Cannot work, this function uses float, not differentialState.
+//	ym << getStandardPressure(z);
+
+    const double EARTH_RADIUS = 6356.766;
+    const double METERS_TO_KM = 0.001;
+
+    // Limited to 11 km.
+    ym << 101325. * pow( 288.15 / ( 288.15 - ( 6.5 * ( ( EARTH_RADIUS * ( z * METERS_TO_KM ) ) /
+                                                       ( EARTH_RADIUS + ( z * METERS_TO_KM ) ) ) ) ),
+                         -5.255877);
 
 
-	
-	}	
-	
+
+	}
+
 	DifferentialEquation Model::getDiffEq() const{
-		return f;	
+		return f;
 	}
-	
 
-	
+
+
 	OutputFcn Model::getOutPutEq() const{
-		return ym
+		return ym;
 	}
-	
 
-	
-	
-	
+
+
+
+
