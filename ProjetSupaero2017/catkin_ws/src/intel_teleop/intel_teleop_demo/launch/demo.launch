@@ -1,26 +1,46 @@
 <!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
 <launch>
 
+  <arg name="joystick" default="false"/>
+  <arg unless="$(arg joystick)" name="keyboard" default="true"/>
+  <arg if="$(arg joystick)" name="keyboard" value="false" />
+
   <!-- world file -->
-  <include file="$(find hector_gazebo_worlds)/launch/rolling_landscape_120m.launch" />
+  <include file="$(find intel_teleop_demo)/launch/demo_world.launch" >
+  </include>
 
   <!-- hector quadrotor -->
   <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor.launch" >
-    <arg name="model" value="$(find hector_quadrotor_description)/urdf/quadrotor_hokuyo_utm30lx.gazebo.xacro" />
   </include>
+
+  <!-- keyboard and joystick control -->
+  <group if="$(arg joystick)">
+    <include file="$(find hector_quadrotor_teleop)/launch/xbox_controller.launch" >
+      <arg name="joy_dev" value="/dev/input/js2" />
+      <arg name="control_mode" value="velocity" />
+    </include>
+  </group>
+
+  <group if="$(arg keyboard)">
+    <include file="$(find intel_teleop_demo)/launch/keyboard_controller.launch" >
+    </include>
+  </group>
 
   <!-- parameters -->
   <include file="$(find intel_teleop_demo)/launch/parameters_demo.launch" />
 
-  <!-- intel teleop nodes -->
+  <!-- script calling service to enable motors -->
+  <node name="enable_motors" pkg="intel_teleop_demo" type="enable_motors.sh" output="screen" />
+
+  <!-- intel teleop nodes
   <node name="" pkg="intel_teleop_" type="" />
   <node name="" pkg="intel_teleop_controller" type="" />
   <node name="" pkg="intel_teleop_estimator" type="" />
   <node name="" pkg="intel_teleop_ground" type="" />
   <node name="" pkg="intel_teleop_optcontrol" type="" />
-  <node name="" pkg="intel_teleop_ui" type="" />
+  <node name="" pkg="intel_teleop_ui" type="" /> -->
 
-  <!-- start rviz visualization -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-f $(find hector_quadrotor_demo)/rviz_cfg/outdoor_flight.vcg" />
+  <!-- start rviz visualization 
+  <node pkg="rviz" type="rviz" name="rviz" args="-f $(find hector_quadrotor_demo)/rviz_cfg/outdoor_flight.vcg" /> -->
 
 </launch>

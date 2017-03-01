@@ -3,7 +3,7 @@
 //#include "std_msgs/String.h"
 
 //#include <intel_teleop_msgs/UserInput.h>
-//#include <sensor_msgs/Joy.h>
+#include <sensor_msgs/Joy.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <termios.h>
 #include <signal.h>
@@ -21,14 +21,19 @@
 
 // Tranlation and rotation step
 
-#define TRANS_STEP 0.1
-//#define ROT_STEP 0.1
+#define TRANS_STEP_KB 0.2
+#define TRANS_STEP_JS 2.0
+#define ROT_STEP_JS 2.0
 
 
 static struct termios old_terminal, new_terminal;
 
-//intel_teleop_msgs::UserInput input;
-geometry_msgs::TwistStamped input;
+geometry_msgs::Twist input;
+ros::Publisher user_input_topic;
+ros::Subscriber joystick_topic;
+bool js;
+int x_axis, y_axis, z_axis, yaw_axis;
+int motor_on_button, motor_off_button;
 
 void get_keyboard_input()
 {
@@ -52,47 +57,54 @@ void get_keyboard_input()
     {
       case KEYCODE_FORWARD:
         ROS_INFO("FORWARD");
-        //input.x += TRANS_STEP;
-        input.twist.linear.x += TRANS_STEP;
+        input.linear.x += TRANS_STEP_KB;
         break;
       case KEYCODE_BACKWARD:
         ROS_INFO("BACKWARD");
-        //input.x -= TRANS_STEP;
-        input.twist.linear.x -= TRANS_STEP;
+        input.linear.x -= TRANS_STEP_KB;
         break;
       case KEYCODE_LEFT:
         ROS_INFO("LEFT");
-        //input.y += TRANS_STEP;
-        input.twist.linear.y += TRANS_STEP;
+        input.linear.y += TRANS_STEP_KB;
         break;
       case KEYCODE_RIGHT:
         ROS_INFO("RIGHT");
-        //input.y -= TRANS_STEP;
-        input.twist.linear.y -= TRANS_STEP;
+        input.linear.y -= TRANS_STEP_KB;
         break;
       case KEYCODE_UP:
         ROS_INFO("UP");
-        //input.z += TRANS_STEP;
-        input.twist.linear.z += TRANS_STEP;
+        input.linear.z += TRANS_STEP_KB;
         break;
       case KEYCODE_DOWN:
         ROS_INFO("DOWN");
-        //input.z -= TRANS_STEP;
-        input.twist.linear.z -= TRANS_STEP;
+        input.linear.z -= TRANS_STEP_KB;
         break;
-    }    
+      default:
+		return;
+    }
+    
+    user_input_topic.publish(input);
+    
+    ROS_INFO("User input: V = [%lf,%lf,%lf]", 
+			input.linear.x, input.linear.y, input.linear.z);
 }
 
 
-/*void joy_callback(const sensor_msgs::Joy joy)
+void joy_callback(const sensor_msgs::Joy joy)
 {	
-    input.x = joy.axes[0] * TRANS_STEP;
-    input.y = joy.axes[1] * TRANS_STEP;
-    input.z = joy.axes[2] * TRANS_STEP;
-    input.roll = 0.0;
-    input.pitch = 0.0;
-    input.yaw = 0.0;
-}*/
+    input.linear.x = joy.axes[4] * TRANS_STEP_JS;
+    input.linear.y = joy.axes[3] * TRANS_STEP_JS;
+    input.linear.z = joy.axes[1] * TRANS_STEP_JS;
+    
+    input.angular.x = 0.0;
+    input.angular.y = 0.0;
+    input.angular.z = joy.axes[0] * ROT_STEP_JS;
+    
+    user_input_topic.publish(input);
+    
+    ROS_INFO("User input: V = [%lf,%lf,%lf]", 
+			input.linear.x, input.linear.y, input.linear.z);
+}
 
 
 void quit(int sig)
@@ -107,36 +119,42 @@ void quit(int sig)
 
 int main(int argc, char **argv)
 {
+	//ROS_INFO("Begin...");
+	
 	ros::init(argc, argv, "user_interface");
 	ros::NodeHandle n;
 	
+	// Controller (keyboard or joystick)
+	
+	n.param<bool>("joystick", js, false);
+        
+    n.param<int>("x_axis", x_axis, 4);
+    n.param<int>("y_axis", y_axis, 3);
+    n.param<int>("z_axis", z_axis, 1);
+    n.param<int>("yaw_axis", yaw_axis, 0);
+		
+    n.param<int>("motor_on_button", motor_on_button, 2);
+    n.param<int>("motor_off_button", motor_on_button, 1);
+	
 	// Initialize user input message
-	
-	/*input.x = 0.0;
-	input.y = 0.0;
-	input.z = 0.0;
-	input.roll = 0.0;
-	input.pitch = 0.0;
-	input.yaw = 0.0;*/
-	
-	input.header.frame_id = "";
-    input.header.stamp = ros::Time::now();
-	
-	input.twist.linear.x = 0.0;
-	input.twist.linear.y = 0.0;
-	input.twist.linear.z = 0.0;
-	input.twist.angular.x = 0.0;
-	input.twist.angular.y = 0.0;
-	input.twist.angular.z = 0.0;
+		
+	input.linear.x = 0.0;
+	input.linear.y = 0.0;
+	input.linear.z = 0.0;
+	input.angular.x = 0.0;
+	input.angular.y = 0.0;
+	input.angular.z = 0.0;
 
-	//ros::Publisher user_input_topic = n.advertise<intel_teleop_msgs::UserInput>("user_input", 1000);
-	ros::Publisher user_input_topic = n.advertise<geometry_msgs::TwistStamped>("cmd_vel", 1000);
+	user_input_topic = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
-	//ros::Subscriber joystick_topic = n.subscribe("joy", 1000, joy_callback);
+	if(js)
+	{
+		joystick_topic = n.subscribe("joy", 10, joy_callback);
+	}
 
 	signal(SIGINT,quit);
 
-	/* Change terminal mode */
+	// * Change terminal mode *
 
 	tcgetattr(STDIN_FILENO, &old_terminal);                       // Save old settings
 	memcpy(&new_terminal, &old_terminal, sizeof(struct termios)); // Initialize new settings
@@ -147,21 +165,16 @@ int main(int argc, char **argv)
 	new_terminal.c_cc[VTIME] = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &new_terminal);              // Apply new settings
 
-	ros::Rate loop_rate(10);
+	ros::Rate loop_rate(100);
 
 	loop_rate.sleep();
 
 	while (ros::ok())
 	{
-		get_keyboard_input();
-
-		/*ROS_INFO("User input: [%lf,%lf,%lf] ; [%lf,%lf,%lf]", 
-			input.x, input.y, input.z, input.roll, input.pitch, input.yaw);*/
-			
-		ROS_INFO("User input: V = [%lf,%lf,%lf]", 
-			input.twist.linear.x, input.twist.linear.y, input.twist.linear.z);
-
-		user_input_topic.publish(input);
+		if(!js)
+		{
+			get_keyboard_input();
+		}
 
 		ros::spinOnce();
 
