@@ -14,7 +14,7 @@ private:
 
 public:
 	
-	Model(bool const isPWD);
+	Model(bool const isPWD = true);
 
 	DifferentialEquation getDiffEq() const;
 

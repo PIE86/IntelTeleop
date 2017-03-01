@@ -1,27 +1,16 @@
-#include "model.hpp"
-
+BEGIN_NAMESPACE_ACADO
 
 Model::Model(bool const isPWD){
-
-// Introducing constants
-	const double c = 0.00001;
-	const double Cf = 0.00065;
-	const double d = 0.250;
-	const double Jx = 0.018;
-	const double Jy = 0.018;
-	const double Jz = 0.026;
-	const double m = 0.9;
-	const double g = 9.81;
-
-
+	
+	
 	// INTRODUCE THE VARIABLES:
 	// -------------------------
-
+	
 	if(isPWD){
 		DifferentialState x,y,z, vx,vy,vz, phi,theta,psi, p,q,r;
-
+		
 		AlgebraicState ax,ay,az;
-
+		
 		// x, y, z : position
 		// vx, vy, vz : linear velocity
 		// phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
@@ -46,16 +35,11 @@ Model::Model(bool const isPWD){
 		f << ax == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(theta)/m;
 		f << ay == -Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*sin(psi)*cos(theta)/m;
 		f << az == Cf*(u1*u1+u2*u2+u3*u3+u4*u4)*cos(psi)*cos(theta)/m - g;
-
-
-		ym << cos(theta)*cos(psi)*(ax) + cos(theta)*sin(psi)*(ay)
-				-sin(theta)*(az+g);
-		ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax)
-			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay)
-			+ sin(phi)*cos(theta)*(az+g);
-		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax)
-			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay)
-			+ cos(phi)*cos(theta)*(az+g);
+		
+		
+		ym << ax;
+		ym << ay;
+		ym << az+g;
 		ym << p;
 		ym << q;
 		ym << r;
@@ -73,11 +57,11 @@ Model::Model(bool const isPWD){
 
 
 	}else{
-
+		
 		DifferentialState x,y,z,phi,theta,psi;
-
+		
 		AlgebraicState ax,ay,az;
-
+		
 		// x, y, z : position
 		// vx, vy, vz : linear velocity
 		// phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
@@ -85,8 +69,8 @@ Model::Model(bool const isPWD){
 
 		Disturbance u_vx, u_vy, u_vz, u_p, u_q, u_r ; // Pour pouvoir recuperer le control
 
-
-
+		
+		
 		f << dot(x) == u_vx;
 		f << dot(y) == u_vy;
 		f << dot(z) == u_vz;
@@ -97,17 +81,20 @@ Model::Model(bool const isPWD){
 		f << ay == dot(u_vy);
 		f << az == dot(u_vz);
 
-		ym << cos(theta)*cos(psi)*(ax) + cos(theta)*sin(psi)*(ay)
+		/*ym << cos(theta)*cos(psi)*(ax) + cos(theta)*sin(psi)*(ay)
 				-sin(theta)*(az+g);
 		ym << (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*(ax)
-			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay)
+			+ (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*(ay) 
 			+ sin(phi)*cos(theta)*(az+g);
 		ym << (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*(ax)
-			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay)
-			+ cos(phi)*cos(theta)*(az+g);
-		ym << u_p;
-		ym << u_q;
-		ym << u_r;
+			+ (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*(ay) 
+			+ cos(phi)*cos(theta)*(az+g);*/
+        ym << ax;
+        ym << ay;
+        ym << az+g;
+        ym << p;
+		ym << q;
+		ym << r;
         // Cannot work, this function uses float, not differentialState.
 //	ym << getStandardPressure(z);
 
@@ -118,8 +105,10 @@ Model::Model(bool const isPWD){
         ym << 101325. * pow( 288.15 / ( 288.15 - ( 6.5 * ( ( EARTH_RADIUS * ( z * METERS_TO_KM ) ) /
                                                            ( EARTH_RADIUS + ( z * METERS_TO_KM ) ) ) ) ),
                              -5.255877);
-
-
+		
+		
+		
+		
 		}
 
 	
