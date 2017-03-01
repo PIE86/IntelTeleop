@@ -1,30 +1,31 @@
+#include <memory>
+
 #include "model.hpp"
-
-BEGIN_NAMESPACE_ACADO
-
 
 class Optcontrol {
 
-	public:
-  	  Optcontrol(DMatrix& Q, const Model& model, Function& h, DVector& refVec,
-			double const t_in, double const t_fin, double const dt, Dvector& X_0);
-			DMatrix getMatrixQ();
-			void setMatrixQ(DMatrix& Q);
-			Model getModel();
-			Function getFunction();
-			void setFunction(Function& h);
-			DVector getrefVec();
-			void setrefVec(Dvector& refVec);
-			DVector u solveOptimalControl(Dvector& NewRefVec, Dvector& U, );
-			void Init(double const t_in, double const t_fin, double const dt, Dvector& X_0);
+private:
+    DMatrix _Q;
+    Function _h;
+    DVector _refVec;
+    std::unique_ptr< Controller > _controller;
+    std::unique_ptr< RealTimeAlgorithm > _alg;
+    std::unique_ptr< Process > _process;
 
-	private:
-		DMatrix Q;
-		Model model;
-		Function h;
-		DVector refVec;
-		Controller controller;
-		RealTimeAlgorithm alg;
-		Process process;
+public:
+    Optcontrol(DMatrix &Q, DVector &refVec,
+               const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD = true);
 
-	};
+
+    DVector solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t );
+
+    DMatrix getMatrixQ();
+
+    void setMatrixQ(DMatrix &Q);
+
+    DVector getrefVec();
+
+    void setrefVec(DVector &refVec);
+
+
+};

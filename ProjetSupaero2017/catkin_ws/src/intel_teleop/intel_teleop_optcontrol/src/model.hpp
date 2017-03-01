@@ -1,25 +1,9 @@
-#ifndef ACADO_TOOLKIT_FUNCTION_HPP
-#define ACADO_TOOLKIT_FUNCTION_HPP
-
-#endif  // ACADO_TOOLKIT_FUNCTION_HPP
-
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <ctime>
-
+//#include "baro.hpp"
 #include <acado_toolkit.hpp>
-#include <acado_optimal_control.hpp>
-#include <acado_gnuplot.hpp>
-
-//#include "input.h"
-//#include "viewer.h"
-//#include "environmentparser.h"
-#include "baro.hpp"
+//#include <acado_gnuplot.hpp>
 
 
-BEGIN_NAMESPACE_ACADO
+USING_NAMESPACE_ACADO
 
 class Model{
 
@@ -29,17 +13,12 @@ private:
 	OutputFcn ym;
 
 public:
-
-	Model();
-
-
-	~Model();
+	
+	Model(bool const isPWD = true);
 
 	DifferentialEquation getDiffEq() const;
 
 	OutputFcn getOutPutEq() const;
 
 
-}
-
-CLOSE_NAMESPACE_ACADO
+};

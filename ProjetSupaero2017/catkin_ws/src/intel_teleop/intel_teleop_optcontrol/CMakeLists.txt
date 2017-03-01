@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   intel_teleop_msgs
 )
 
-find_library(ACADO_SHARED_LIBRARIES libacado_toolkit_s.so /home/diane-pie/ACADOtoolkit/build/lib)
+SET( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+        ${CMAKE_CURRENT_LIST_DIR} )
+FIND_PACKAGE( ACADO REQUIRED )
 
 add_definitions(-std=c++11)
 
@@ -77,27 +79,22 @@ catkin_package(
 ## Build ##
 ###########
 
-set(ACADO_INCLUDE_DIRS
-   /home/diane-pie/ACADOtoolkit
-   /home/diane-pie/ACADOtoolkit/acado
-   /home/diane-pie/ACADOtoolkit/external_packages
-   /home/diane-pie/ACADOtoolkit/external_packages/qpOASES-3.2.0/include
-   /home/diane-pie/ACADOtoolkit/build)
 
 include_directories(include
    ${roscpp_INDLUDE_DIRS}
    ${catkin_INCLUDE_DIRS}
-   ${ACADO_INCLUDE_DIRS}
+        ${ACADO_INCLUDE_DIRS}
 )
 
-add_library(baro src/baro.cpp)
-target_link_libraries(baro ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
+#add_library(baro src/baro.cpp)
+#target_link_libraries(baro ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(optcontrol src/optcontrol.cpp)
-target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_LIBRARY})
+add_library(optcontrol src/optcontrol.cpp src/model.cpp)
+target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
 
-add_executable(optimal_control src/optimal_control.cpp)
-target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} baro optcontrol)
-add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
+#add_executable(optimal_control src/optimal_control.cpp)
+#target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} baro optcontrol)
+#add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
+
 
 
