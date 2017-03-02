@@ -42,60 +42,60 @@ std::array<double,6> Input::getReference()
     double rotSpeed = 2;
     std::array<double,6> consigne = {0,0,0,0,0,0};
 
-if (joystickOn_ == false)
-{
-    // set each speed command if the corresponding key is pressed
+	if (joystickOn_ == false)
+	{
+		// set each speed command if the corresponding key is pressed
 
-    // translation commands
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-        consigne[0] += transSpeed;
+		// translation commands
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+			consigne[0] += transSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-        consigne[0] += -transSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+			consigne[0] += -transSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-        consigne[1] += -transSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+			consigne[1] += -transSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-        consigne[1] += transSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+			consigne[1] += transSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
-        consigne[2] += transSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+			consigne[2] += transSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
-        consigne[2] += -transSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+			consigne[2] += -transSpeed;
 
 
-    // rotation commands (used only for testing purposes)
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
-        consigne[3] += -rotSpeed;
+		// rotation commands (used only for testing purposes)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
+			consigne[3] += -rotSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::X))
-        consigne[3] += rotSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::X))
+			consigne[3] += rotSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C))
-        consigne[4] += -rotSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C))
+			consigne[4] += -rotSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::V))
-        consigne[4] += rotSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::V))
+			consigne[4] += rotSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B))
-        consigne[5] += -rotSpeed;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B))
+			consigne[5] += -rotSpeed;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::N))
-        consigne[5] += rotSpeed;
-}
-else
-{
-sf::Joystick::update();
-float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X);
-float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y);
-float r = sf::Joystick::getAxisPosition(0, sf::Joystick::R);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::N))
+			consigne[5] += rotSpeed;
+	}
+	else
+	{
+		sf::Joystick::update();
+		float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X);
+		float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y);
+		float r = sf::Joystick::getAxisPosition(0, sf::Joystick::R);
 
-consigne[0] = -x*transSpeed/100;
-consigne[1] = y*transSpeed/100;
-consigne[2] = -r*transSpeed/100;
-}
+		consigne[0] = -x*transSpeed/100;
+		consigne[1] = y*transSpeed/100;
+		consigne[2] = -r*transSpeed/100;
+	}
     return consigne;
 }
 
