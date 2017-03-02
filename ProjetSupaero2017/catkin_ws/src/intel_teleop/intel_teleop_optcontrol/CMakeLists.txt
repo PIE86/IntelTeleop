@@ -12,6 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   intel_teleop_msgs
 )
 
+FIND_PACKAGE( ACADO REQUIRED )
+
+add_definitions(-std=c++11)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -35,8 +39,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
+#   addCylinderOptControl.srv
 # )
 
 ## Generate actions in the 'action' folder
@@ -51,7 +54,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   DEPENDENCIES
 #   std_msgs
 # )
-
+#
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -74,10 +77,22 @@ catkin_package(
 ###########
 
 
-include_directories(include ${roscpp_INDLUDE_DIRS}
+include_directories(include
+   ${roscpp_INDLUDE_DIRS}
    ${catkin_INCLUDE_DIRS}
+        ${ACADO_INCLUDE_DIRS}
 )
 
+#add_library(baro src/baro.cpp)
+#target_link_libraries(baro ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
+
+add_library(optcontrol src/optcontrol.cpp src/model.cpp)
+target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
+add_dependencies( optcontrol intel_teleop_msgs_generate_messages_cpp )
+
 add_executable(optimal_control src/optimal_control.cpp)
-target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES})
-add_dependencies(optimal_control ${roscpp_LIBRARIES} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(optimal_control ${catkin_LIBRARIES} ${roscpp_LIBRARIES} optcontrol)
+add_dependencies(optimal_control ${catkin_EXPORTED_TARGETS})
+
+
+
