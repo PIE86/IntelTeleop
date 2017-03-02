@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(intel_teleop_env)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-
 find_package(roscpp REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -18,8 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 
 add_definitions(-std=c++11)
-
-
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -53,8 +47,6 @@ add_definitions(-std=c++11)
 #   std_msgs  # Or other packages containing msgs
 # )
 
-
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -80,8 +72,10 @@ include_directories(inlude
 add_library(minvolellipse lib/MinVolEllipse.cpp lib/MinVolEllipse_emxutil.cpp lib/norm.cpp lib/diag.cpp lib/inv.cpp lib/rt_nonfinite.cpp)
 target_link_libraries(minvolellipse ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(ellipsoidgen lib/rt_nonfinite.cpp lib/MinVolEllipse_terminate.cpp lib/MinVolEllipse_initialize.cpp lib/MinVolEllipse_emxAPI.cpp)
+add_library(ellipsoidgen src/ellipsoid_gen.cpp lib/rt_nonfinite.cpp lib/MinVolEllipse_terminate.cpp lib/MinVolEllipse_initialize.cpp lib/MinVolEllipse_emxAPI.cpp lib/rtGetNaN.cpp lib/rtGetInf.cpp)
 target_link_libraries(ellipsoidgen ${roscpp_LIBRARIES} ${catkin_LIBRARIES} minvolellipse)
+
+
 
 ## Declare a C++ executable
 add_executable(environment_generator src/environment_generator.cpp)
