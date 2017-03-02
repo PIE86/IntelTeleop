@@ -2,7 +2,9 @@
 
 #include "model.hpp"
 
-#include "intel_teleop_msgs/addCylinder.h"
+#include "intel_teleop_msgs/addCylinderOptControl.h"
+#include "intel_teleop_msgs/addEllipseOptControl.h"
+#include "intel_teleop_msgs/startOptControl.h"
 
 
 class Optcontrol {
@@ -20,19 +22,25 @@ private:
 
     DifferentialState x, y, z;
 
+    bool _started;
+
 public:
 
     Optcontrol(DMatrix &Q, DVector &refVec,
                const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD = true);
 
+
     void init( DMatrix &Q, DVector &refVec, const double t_in, const double t_fin, const double dt, bool isPWD );
 
-    void addCylinder();
+    bool addCylinder( intel_teleop_msgs::addCylinderOptControl::Request &c,
+                      intel_teleop_msgs::addCylinderOptControl::Response &answer );
 
-    bool addEllipse( intel_teleop_msgs::addCylinder::Request &c,
-                     intel_teleop_msgs::addCylinder::Response &answer );
+    bool addEllipse( intel_teleop_msgs::addEllipseOptControl::Request &req,
+                     intel_teleop_msgs::addEllipseOptControl::Response &ans );
 
-    void completeSimulation( DVector &X_0 );
+    bool completeSimulation( intel_teleop_msgs::startOptControl::Request &req,
+                             intel_teleop_msgs::startOptControl::Response &ans );
+
 
     DVector solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t );
 
