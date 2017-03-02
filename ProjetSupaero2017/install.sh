@@ -1,9 +1,9 @@
 #!/bin/bash
-# to execute when in catkin_ws/src folder
 
 cd catkin_ws/src
 catkin_init_workspace
 
+# to execute when in catkin_ws/src folder
 sudo apt-get install ros-kinetic-ros-control
 sudo apt-get install ros-kinetic-gazebo-ros-control
 sudo apt-get install ros-kinetic-unique-identifier
