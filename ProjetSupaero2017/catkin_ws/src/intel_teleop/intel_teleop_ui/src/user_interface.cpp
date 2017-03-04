@@ -214,19 +214,20 @@ int main(int argc, char **argv)
 	//ROS_INFO("Begin...");
 	
 	ros::init(argc, argv, "user_interface");
-	ros::NodeHandle n;
+	ros::NodeHandle nh;
+	ros::NodeHandle nh_param("~");
 	
 	// Controller (keyboard or joystick)
 	
-	n.param<bool>("joystick", js, true);
+	nh_param.param<bool>("joystick", js, false);
         
-    n.param<int>("x_axis", x_axis, 5);
-    n.param<int>("y_axis", y_axis, 4);
-    n.param<int>("z_axis", z_axis, 2);
-    n.param<int>("yaw_axis", yaw_axis, 1);
+    nh_param.param<int>("x_axis", x_axis, 5);
+    nh_param.param<int>("y_axis", y_axis, 4);
+    nh_param.param<int>("z_axis", z_axis, 2);
+    nh_param.param<int>("yaw_axis", yaw_axis, 1);
 		
-    n.param<int>("motor_on_button", motor_on_button, 3);
-    n.param<int>("motor_off_button", motor_off_button, 2);
+    nh_param.param<int>("motor_on_button", motor_on_button, 3);
+    nh_param.param<int>("motor_off_button", motor_off_button, 2);
 	
 	// Initialize user input message
 		
@@ -237,20 +238,20 @@ int main(int argc, char **argv)
 	input.angular.y = 0.0;
 	input.angular.z = 0.0;
 
-	user_input_topic = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+	user_input_topic = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
 	if(js)
 	{
 		ROS_INFO("Command interface: joystick");
 		
-		joystick_topic = n.subscribe("joy", 10, joy_callback);
+		joystick_topic = nh.subscribe("joy", 10, joy_callback);
 	}
 	else
 	{
 		ROS_INFO("Command interface: keyboard");
 	}
 	
-	n.serviceClient<hector_uav_msgs::EnableMotors>("enable_motors");
+	motor_enable_service = nh.serviceClient<hector_uav_msgs::EnableMotors>("enable_motors");
 
 	signal(SIGINT,quit);
 
