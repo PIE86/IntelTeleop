@@ -1,10 +1,16 @@
 #include <memory>
 
+#include <ros/ros.h>
+
 #include "model.hpp"
 
 #include "intel_teleop_msgs/addCylinderOptControl.h"
 #include "intel_teleop_msgs/addEllipseOptControl.h"
 #include "intel_teleop_msgs/startOptControl.h"
+
+#include <sensor_msgs/Imu.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 
 
 class Optcontrol {
@@ -18,16 +24,23 @@ private:
     std::unique_ptr< Process > _process;
     DifferentialEquation _f;
     std::unique_ptr< OCP > _ocp;
-    DVector& _X_0;
 
+    DVector _xEst;
+
+    // Phi: roll, Theta: pitch, Psi: yaw, p = wX, q = wY, r = wZ
     DifferentialState x, y, z;
 
     bool _started;
 
+    double _t;
+    ros::Time _previousClock;
+
+    DVector _currentState;
+
 public:
 
     Optcontrol(DMatrix &Q, DVector &refVec,
-               const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD = true);
+               const double t_in, const double t_fin, const double dt, bool isPWD = true);
 
 
     void init( DMatrix &Q, DVector &refVec, const double t_in, const double t_fin, const double dt, bool isPWD );
@@ -41,8 +54,15 @@ public:
     bool completeSimulation( intel_teleop_msgs::startOptControl::Request &req,
                              intel_teleop_msgs::startOptControl::Response &ans );
 
+    DVector solveOptimalControl( );
 
-    DVector solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t );
+
+    void setPose( const geometry_msgs::PoseStamped::ConstPtr &pose );
+
+    void setVelocities( const geometry_msgs::Vector3Stamped::ConstPtr &vel );
+
+    void setAngularVelocities( const sensor_msgs::Imu::ConstPtr &imu );
+
 
     DMatrix getMatrixQ();
 

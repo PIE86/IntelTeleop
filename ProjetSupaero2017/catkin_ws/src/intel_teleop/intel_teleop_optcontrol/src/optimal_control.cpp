@@ -9,6 +9,8 @@
 #include <intel_teleop_msgs/MotorControl.h>
 #include <intel_teleop_msgs/UserInput.h>
 
+#include "hector_uav_msgs/MotorPWM.h"
+
 
 // Service pour ajouter cylindre
 
@@ -33,12 +35,7 @@ int main(int argc, char **argv) {
   DVector refVec{ 10 };
   refVec.setZero( 10 );
 
-  // Pose ?
-  DVector X_0{ 12 };
-  X_0.setZero();
-  X_0( 2 ) = 4.;
-
-  Optcontrol optControl{ Q, refVec, 0., 1., 0.25, X_0 };
+  Optcontrol optControl{ Q, refVec, 0., 1., 0.25 };
 
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;
@@ -48,14 +45,55 @@ int main(int argc, char **argv) {
   servers.push_back( n.advertiseService("startOptControl", &Optcontrol::completeSimulation, &optControl ) );
 
   // Ajouter un topic pour récupérer la clock de gazebo.
+  // /clock -> publication tick gazebo pour connaître le t entre deux pas de simulation.
+  // msg.clock, type time
+  // PAS BESOIN, il suffit de mettre /use_sim_time à true
 
-  ros::Rate loop_rate(1);
+  // Ajouter un topic pour récupérer l'état du drone (voir NoteS).
+  // /imu -> angles et vitesses angulaires. /velocity, vitesses linéaires. /pose (pose_estimator), positions linéaires.
+  // imu : msg.angular_velocity.x, y, z
+  // velocity : msg.vector.x, y, z
+  // pose : msg.position.x, y, z
+  // pose : msg.orientation.x, y, z, w (convertir)
+  // AJOUTER hector_quadrotor_pose_estimator nrstiuers
+  auto imuSub = n.subscribe< sensor_msgs::Imu >( "/imu", 1, &Optcontrol::setAngularVelocities, &optControl );
+  auto poseSub = n.subscribe< geometry_msgs::PoseStamped >( "/pose", 1, &Optcontrol::setPose, &optControl );
+  auto velSub = n.subscribe< geometry_msgs::Vector3Stamped >( "/velocity", 1, &Optcontrol::setVelocities,
+                                                                         &optControl );
+
+  // Ajouter un topic pour récupérer les commandes clavier (/cmd_vel, faut rediriger..., voir Bertrand).
+  // Pour le moment, interne.
+
+  // Calculer les commandes.
+
+  // Ajouter un topic pour envoyer les commandes de vol.
+  ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 100 );
+
+  sleep( 5 );
+
+
+  ros::Rate loop_rate( 50 );
+
+  std::vector< unsigned char > cmdVec( 4, 0 );
 
   while( ros::ok() )
   {
     ROS_INFO("%s", "optimal_control loop");
 
+    // Gets subscriptions.
     ros::spinOnce();
+
+    auto cmd = optControl.solveOptimalControl();
+
+    hector_uav_msgs::MotorPWM cmdMsg;
+    cmdVec[ 0 ] = static_cast< unsigned char >( cmd( 0 ) );//* 0 + 90;
+    cmdVec[ 1 ] = static_cast< unsigned char >( cmd( 1 ) );// * 0 + 90;
+    cmdVec[ 2 ] = static_cast< unsigned char >( cmd( 2 ) );// * 0 + 90;
+    cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );// * 0 + 90;
+
+
+    cmdMsg.pwm = cmdVec;
+    motor_command.publish( cmdMsg ); // Publish msg
 
     loop_rate.sleep();
   }

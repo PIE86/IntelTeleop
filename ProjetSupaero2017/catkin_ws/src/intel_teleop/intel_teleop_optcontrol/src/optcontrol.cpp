@@ -11,8 +11,8 @@
 
 
 Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
-                       const double t_in, const double t_fin, const double dt, DVector &X_0, bool isPWD)
-    : _X_0{X_0}, _started{false}
+                       const double t_in, const double t_fin, const double dt, bool isPWD)
+    : _t{ -1. }, _xEst{ 12 }
 {
   init(Q, refVec, t_in, t_fin, dt, isPWD);
 };
@@ -20,7 +20,7 @@ Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
 bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &c,
                              intel_teleop_msgs::addCylinderOptControl::Response &answer)
 {
-  if (_started)
+  if ( _t > -0.5 )
     return false;
 
   _ocp->subjectTo(pow(c.radius + 1, 2) <=
@@ -35,7 +35,7 @@ bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &
 bool Optcontrol::addEllipse(intel_teleop_msgs::addEllipseOptControl::Request &req,
                             intel_teleop_msgs::addEllipseOptControl::Response &ans)
 {
-  if (_started)
+  if ( _t > -0.5 )
     return false;
   // Quid ?
   return false;
@@ -53,10 +53,10 @@ void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const doub
   const double c = 0.00001;
   const double Cf = 0.00065;
   const double d = 0.250;
-  const double Jx = 0.018;
-  const double Jy = 0.018;
-  const double Jz = 0.026;
-  const double m = 0.9;
+  const double Jx = 0.01152;
+  const double Jy = 0.01152;
+  const double Jz = 0.0218;
+  const double m = 3.477;
   const double g = 9.81;
 
   _ocp = std::unique_ptr<OCP>(new OCP(t_in, t_fin, static_cast< int >((t_fin - t_in) / dt )));
@@ -69,6 +69,7 @@ void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const doub
     // x, y, z : position
     // vx, vy, vz : linear velocity
     // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
+    // Roll pitch yaw plutôt, compte tenu des formules et du rapport... ? http://adg.stanford.edu/aa208/dynamics/notation.html
     // p, q, r : angular velocity
     // u1, u2, u3, u4 : velocity of the propellers
     Control u1, u2, u3, u4;
@@ -77,26 +78,27 @@ void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const doub
     _f << dot(x) == vx;
     _f << dot(y) == vy;
     _f << dot(z) == vz;
-    _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
-    _f << dot(theta) == cos(phi) * q - sin(phi) * r;
-    _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
-    _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx;
-    _f << dot(q) == (d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy;
-    _f << dot(r) == (c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz;
     _f << dot(vx) ==
     -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
     _f << dot(vy) ==
     -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
     _f << dot(vz) ==
     -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m + g; // axe z vers le bas
+    _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
+    _f << dot(theta) == cos(phi) * q - sin(phi) * r;
+    _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
+    _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx;
+    _f << dot(q) == (d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy;
+    _f << dot(r) == (c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz;
+
 
 
 
     // Constraints on the velocity of each propeller
-    _ocp->subjectTo(16 <= u1 <= 95);
-    _ocp->subjectTo(16 <= u2 <= 95);
-    _ocp->subjectTo(16 <= u3 <= 95);
-    _ocp->subjectTo(16 <= u4 <= 95);
+    _ocp->subjectTo(16 <= u1 <= 255);
+    _ocp->subjectTo(16 <= u2 <= 255);
+    _ocp->subjectTo(16 <= u3 <= 255);
+    _ocp->subjectTo(16 <= u4 <= 255);
 
     // Constraint to avoid singularity
     _ocp->subjectTo(-1. <= theta <= 1.);
@@ -172,18 +174,22 @@ bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request 
   // --------------------------------------
   DVector u(4);
   u.setZero();
-  _controller->init(0., _X_0);
-  _process->init(0., _X_0, u);
+  _controller->init(0., _xEst);
+  _process->init(0., _xEst, u);
 
-  _started = true;
+  _previousClock = ros::Time::now();
+  _t = 0.;
+
   return true;
 }
 
 
-DVector Optcontrol::solveOptimalControl(DVector &NewRefVec, DVector &x_est, double &t)
+DVector Optcontrol::solveOptimalControl()
 {
+  if( _t < -0.5 )
+    return DVector{ 4 };
 
-  if (abs(NewRefVec[0] - _refVec(0)) > 1.)
+ /* if (abs(NewRefVec[0] - _refVec(0)) > 1.)
   {
     if (NewRefVec[0] > _refVec(0))
     {
@@ -214,11 +220,12 @@ DVector Optcontrol::solveOptimalControl(DVector &NewRefVec, DVector &x_est, doub
     {
       NewRefVec[2] = _refVec(2) - 1.;
     }
-  }
+  }*/
 
-  double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
+  //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
+  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
   DVector refVecN(10, refT);
-  VariablesGrid referenceVG(refVecN, Grid{t, t + 1., 2});
+  VariablesGrid referenceVG(refVecN, Grid{_t, _t + 1., 4});
   referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
   setrefVec(refVecN);
@@ -238,7 +245,8 @@ X = Y.getLastVector();
 
 // MPC step
 // compute the command
-  bool success = _controller->step(t, x_est);
+  ROS_INFO( "x: %f, y:%f, z:%f", _xEst[ 0 ], _xEst[ 1 ], _xEst[ 2 ] );
+  bool success = _controller->step(_t, _xEst);
 
   if (success != 0)
   {
@@ -254,14 +262,14 @@ X = Y.getLastVector();
   _controller->getU(u);
 
 
-  std::clock_t t_new = std::clock();
-  double dt = (double) (t_new - t) / (double) CLOCKS_PER_SEC;
-  _process->step(t, t + dt, u);
-  t += dt;
+  auto currentClock{ ros::Time::now() };
+  double dt{ ( currentClock - _previousClock ).toSec() };
+  _previousClock = currentClock;
+  _process->step(_t, _t + dt, u);
+  _t += dt;
 
   return u;
 }
-
 
 DMatrix Optcontrol::getMatrixQ()
 {
@@ -283,3 +291,53 @@ void Optcontrol::setrefVec(DVector &refVec)
   _refVec = refVec;
 }
 
+
+void Optcontrol::setAngularVelocities(const sensor_msgs::Imu::ConstPtr &imu)
+{
+  // imu : msg.angular_velocity.x, y, z
+
+  _xEst[ 9 ] = imu->angular_velocity.x;
+  _xEst[ 10 ] = imu->angular_velocity.y;
+  _xEst[ 11 ] = imu->angular_velocity.z;
+}
+
+void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
+{
+  // pose : msg.position.x, y, z
+  // pose : msg.orientation.x, y, z, w (convertir)
+
+  _xEst[ 0 ] = pose->pose.position.x;
+  _xEst[ 1 ] = pose->pose.position.y;
+  _xEst[ 2 ] = pose->pose.position.z;
+
+
+  double x{ pose->pose.orientation.x };
+  double y{ pose->pose.orientation.y };
+  double z{ pose->pose.orientation.z };
+  double w{ pose->pose.orientation.w };
+
+  // roll (x-axis rotation)
+  double t0{ 2. * ( w * x + y * z) };
+  double t1{ 1. - 2. * ( std::pow( x, 2. ) + std::pow( y, 2. ) ) };
+  _xEst[ 6 ] = std::atan2( t0, t1 );
+
+  // pitch (y-axis rotation)
+  double t2{ 2. * ( w * y - z * x ) };
+  t2 = t2 > 1. ? 1. : t2;
+  t2 = t2 < -1. ? -1. : t2;
+  _xEst[ 7 ] = std::asin( t2 );
+
+  // yaw (z-axis rotation)
+  double t3{ 2. * ( w * z + x * y ) };
+  double t4{ 1. - 2. * ( std::pow( y, 2. ) + std::pow( z, 2. ) ) };
+  _xEst[ 8 ] = std::atan2( t3, t4 );
+}
+
+void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &vel)
+{
+  // velocity : msg.vector.x, y, z
+
+  _xEst[ 3 ] = vel->vector.x;
+  _xEst[ 4 ] = vel->vector.y;
+  _xEst[ 5 ] = vel->vector.z;
+}
