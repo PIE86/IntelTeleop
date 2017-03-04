@@ -1,7 +1,14 @@
+/*
+ * File:        user_interface.cpp
+ * Project:     intel_teleop
+ * ROS node:    intel_teleop_user_interface
+ * ROS package: intel_teleop_ui
+ * Date:        05/03/2017
+ */
+ 
+ 
 // Include the ROS C++ APIs
 #include "ros/ros.h"
-//#include "std_msgs/String.h"
-
 
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Twist.h>
@@ -28,18 +35,15 @@
 // Tranlation and rotation step
 
 #define TRANS_STEP_KB 0.5
-#define ROT_STEP_KB 0.5
+#define ROT_STEP_KB   0.5
 #define TRANS_STEP_JS 2.0
-#define ROT_STEP_JS 2.0
+#define ROT_STEP_JS   2.0
 
+
+
+// Global variables
 
 static struct termios old_terminal, new_terminal;
-
-/*namespace hector_quadrotor
-{
-
-class Teleop
-{*/
 
 geometry_msgs::Twist input;
 ros::Publisher user_input_topic;
@@ -51,22 +55,161 @@ int motor_on_button, motor_off_button;
 
 
 
-bool enableMotors(bool enable)
-{		
-	if (!motor_enable_service.waitForExistence(ros::Duration(5.0)))
+// Function declaration
+
+void initialize();
+
+void quit(int sig);
+
+void joyCallback(const sensor_msgs::JoyConstPtr &joy);
+
+void getKeyboardInput();
+
+bool enableMotors(bool enable);
+
+double getJoystickAxis(const sensor_msgs::JoyConstPtr &joy, const int &axis);
+  
+bool getJoystickButton(const sensor_msgs::JoyConstPtr &joy, const int &button);
+
+
+
+// Main
+
+
+int main(int argc, char **argv)
+{
+	ROS_INFO("Initializing UI");
+	
+	ros::init(argc, argv, "user_interface");
+	
+	initialize();	
+	
+	ros::Rate loop_rate(50);
+
+	loop_rate.sleep();
+
+	while (ros::ok())
 	{
-		ROS_WARN("Motor enable service not found");
-		return false;
+		if(!js)
+		{
+			getKeyboardInput();
+		}
+
+		ros::spinOnce();
+
+		loop_rate.sleep();
 	}
 
-	hector_uav_msgs::EnableMotors srv;
-	srv.request.enable = enable;
-	
-	return motor_enable_service.call(srv);
+	return 0;
 }
 
 
-void get_keyboard_input()
+
+// Function implementation
+
+void initialize()
+{	
+	ros::NodeHandle nh;
+	ros::NodeHandle nh_param("~");
+	
+	nh_param.param<bool>("joystick", js, false);
+        
+    nh_param.param<int>("x_axis", x_axis, 5);
+    nh_param.param<int>("y_axis", y_axis, 4);
+    nh_param.param<int>("z_axis", z_axis, 2);
+    nh_param.param<int>("yaw_axis", yaw_axis, 1);
+		
+    nh_param.param<int>("motor_on_button", motor_on_button, 3);
+    nh_param.param<int>("motor_off_button", motor_off_button, 2);
+	
+	// Initialize user input message
+		
+	input.linear.x = 0.0;
+	input.linear.y = 0.0;
+	input.linear.z = 0.0;
+	input.angular.x = 0.0;
+	input.angular.y = 0.0;
+	input.angular.z = 0.0;
+
+	user_input_topic = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+
+	if(js)
+	{
+		ROS_INFO("Command interface: joystick");
+		
+		joystick_topic = nh.subscribe("joy", 10, joyCallback);
+	}
+	else
+	{
+		ROS_INFO("Command interface: keyboard");
+	}
+	
+	motor_enable_service = nh.serviceClient<hector_uav_msgs::EnableMotors>("enable_motors");
+
+	signal(SIGINT,quit);
+	
+	// * Change terminal mode *
+
+	tcgetattr(STDIN_FILENO, &old_terminal);                       // Save old settings
+	memcpy(&new_terminal, &old_terminal, sizeof(struct termios)); // Initialize new settings
+	new_terminal.c_lflag &= ~(ICANON | ECHO);                     // Disable buffering and typed character's echo
+	new_terminal.c_cc[VEOL] = 1;
+	new_terminal.c_cc[VEOF] = 2;
+	new_terminal.c_cc[VMIN] = 0;                                  // Polling read
+	new_terminal.c_cc[VTIME] = 0;
+	tcsetattr(STDIN_FILENO, TCSANOW, &new_terminal);              // Apply new settings
+}
+
+
+void quit(int sig)
+{
+	(void)sig; // Unused parameter
+	
+	tcsetattr(STDIN_FILENO, TCSANOW, &old_terminal);
+		
+	if(js)
+	{
+		joystick_topic.shutdown();
+	}
+		
+	ROS_INFO("Exiting UI...");
+	
+	ros::shutdown();
+	
+	exit(0);
+}
+
+
+void joyCallback(const sensor_msgs::JoyConstPtr &joy)
+{	
+    input.linear.x = getJoystickAxis(joy, x_axis) * TRANS_STEP_JS;
+    input.linear.y = getJoystickAxis(joy, y_axis) * TRANS_STEP_JS;
+    input.linear.z = getJoystickAxis(joy, z_axis) * TRANS_STEP_JS;
+    
+    input.angular.x = 0.0;
+    input.angular.y = 0.0;
+    input.angular.z = getJoystickAxis(joy, yaw_axis) * ROT_STEP_JS;
+    
+    user_input_topic.publish(input);
+		
+	if (getJoystickButton(joy, motor_off_button))
+    {
+      if(enableMotors(false))
+		ROS_INFO("Disable motors");
+	  else
+	    ROS_WARN("Failed to disable motors");
+    }
+    else if (getJoystickButton(joy, motor_on_button))
+    {
+      if(enableMotors(true))
+		ROS_INFO("Enable motors");
+	  else
+	    ROS_WARN("Failed to enable motors");
+    }
+}
+
+
+void getKeyboardInput()
 {
 	// Get the next event from the keyboard
 	
@@ -144,7 +287,22 @@ void get_keyboard_input()
 }
 
 
-double getAxis(const sensor_msgs::JoyConstPtr &joy, const int &axis)
+bool enableMotors(bool enable)
+{		
+	if (!motor_enable_service.waitForExistence(ros::Duration(5.0)))
+	{
+		ROS_WARN("Motor enable service not found");
+		return false;
+	}
+
+	hector_uav_msgs::EnableMotors srv;
+	srv.request.enable = enable;
+	
+	return motor_enable_service.call(srv);
+}
+
+
+double getJoystickAxis(const sensor_msgs::JoyConstPtr &joy, const int &axis)
 {
 	if (axis == 0 || std::abs(axis) > joy->axes.size())
 	{
@@ -156,8 +314,9 @@ double getAxis(const sensor_msgs::JoyConstPtr &joy, const int &axis)
 
 	return output;
 }
+
   
-bool getButton(const sensor_msgs::JoyConstPtr &joy, const int &button)
+bool getJoystickButton(const sensor_msgs::JoyConstPtr &joy, const int &button)
 {
 	if (button <= 0 || button > joy->buttons.size())
 	{
@@ -166,121 +325,4 @@ bool getButton(const sensor_msgs::JoyConstPtr &joy, const int &button)
 	}
 
 	return joy->buttons[button - 1] > 0;
-}
-  
-
-//void joy_callback(const sensor_msgs::Joy joy)
-void joy_callback(const sensor_msgs::JoyConstPtr &joy)
-{	
-    input.linear.x = getAxis(joy, x_axis) * TRANS_STEP_JS;
-    input.linear.y = getAxis(joy, y_axis) * TRANS_STEP_JS;
-    input.linear.z = getAxis(joy, z_axis) * TRANS_STEP_JS;
-    
-    input.angular.x = 0.0;
-    input.angular.y = 0.0;
-    input.angular.z = getAxis(joy, yaw_axis) * ROT_STEP_JS;
-    
-    user_input_topic.publish(input);
-		
-	if (getButton(joy, motor_off_button))
-    {
-      if(enableMotors(false))
-		ROS_INFO("Disable motors");
-	  else
-	    ROS_WARN("Failed to disable motors");
-    }
-    else if (getButton(joy, motor_on_button))
-    {
-      if(enableMotors(true))
-		ROS_INFO("Enable motors");
-	  else
-	    ROS_WARN("Failed to enable motors");
-    }
-}
-
-
-void quit(int sig)
-{
-	(void)sig; // Unused parameter
-	tcsetattr(STDIN_FILENO, TCSANOW, &old_terminal);
-	ROS_INFO("Exit...");
-	ros::shutdown();
-	exit(0);
-}
-
-
-int main(int argc, char **argv)
-{
-	//ROS_INFO("Begin...");
-	
-	ros::init(argc, argv, "user_interface");
-	ros::NodeHandle nh;
-	ros::NodeHandle nh_param("~");
-	
-	// Controller (keyboard or joystick)
-	
-	nh_param.param<bool>("joystick", js, false);
-        
-    nh_param.param<int>("x_axis", x_axis, 5);
-    nh_param.param<int>("y_axis", y_axis, 4);
-    nh_param.param<int>("z_axis", z_axis, 2);
-    nh_param.param<int>("yaw_axis", yaw_axis, 1);
-		
-    nh_param.param<int>("motor_on_button", motor_on_button, 3);
-    nh_param.param<int>("motor_off_button", motor_off_button, 2);
-	
-	// Initialize user input message
-		
-	input.linear.x = 0.0;
-	input.linear.y = 0.0;
-	input.linear.z = 0.0;
-	input.angular.x = 0.0;
-	input.angular.y = 0.0;
-	input.angular.z = 0.0;
-
-	user_input_topic = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-
-	if(js)
-	{
-		ROS_INFO("Command interface: joystick");
-		
-		joystick_topic = nh.subscribe("joy", 10, joy_callback);
-	}
-	else
-	{
-		ROS_INFO("Command interface: keyboard");
-	}
-	
-	motor_enable_service = nh.serviceClient<hector_uav_msgs::EnableMotors>("enable_motors");
-
-	signal(SIGINT,quit);
-
-	// * Change terminal mode *
-
-	tcgetattr(STDIN_FILENO, &old_terminal);                       // Save old settings
-	memcpy(&new_terminal, &old_terminal, sizeof(struct termios)); // Initialize new settings
-	new_terminal.c_lflag &= ~(ICANON | ECHO);                     // Disable buffering and typed character's echo
-	new_terminal.c_cc[VEOL] = 1;
-	new_terminal.c_cc[VEOF] = 2;
-	new_terminal.c_cc[VMIN] = 0;                                  // Polling read
-	new_terminal.c_cc[VTIME] = 0;
-	tcsetattr(STDIN_FILENO, TCSANOW, &new_terminal);              // Apply new settings
-
-	ros::Rate loop_rate(50);
-
-	loop_rate.sleep();
-
-	while (ros::ok())
-	{
-		if(!js)
-		{
-			get_keyboard_input();
-		}
-
-		ros::spinOnce();
-
-		loop_rate.sleep();
-	}
-
-	return 0;
 }
