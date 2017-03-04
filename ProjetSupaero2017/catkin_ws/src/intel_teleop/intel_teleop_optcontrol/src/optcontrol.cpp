@@ -51,12 +51,12 @@ void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const doub
 
   // Introducing constants
   const double c = 0.00001;
-  const double Cf = 0.00065;
+  const double Cf = 0.00018;
   const double d = 0.250;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
   const double Jz = 0.0218;
-  const double m = 3.477;
+  const double m = 1.477;
   const double g = 9.81;
 
   _ocp = std::unique_ptr<OCP>(new OCP(t_in, t_fin, static_cast< int >((t_fin - t_in) / dt )));
@@ -83,7 +83,7 @@ void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const doub
     _f << dot(vy) ==
     -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
     _f << dot(vz) ==
-    -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m + g; // axe z vers le bas
+    Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m - g; // axe z vers le bas - NON !
     _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
     _f << dot(theta) == cos(phi) * q - sin(phi) * r;
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
