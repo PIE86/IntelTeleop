@@ -10,11 +10,10 @@
 #include <acado_optimal_control.hpp>
 
 
-Optcontrol::Optcontrol(DMatrix &Q, DVector &refVec,
-                       const double t_in, const double t_fin, const double dt, bool isPWD)
+Optcontrol::Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD)
     : _t{ -1. }, _xEst{ 12 }
 {
-  init(Q, refVec, t_in, t_fin, dt, isPWD);
+  init(Q, t_in, t_fin, dt, isPWD);
 };
 
 bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &c,
@@ -45,9 +44,7 @@ void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const doub
 {
 
   _Q = Q;
-  _refVec = refVec;
-
-
+  _refVec = DVector{ 10 };
 
   // Introducing constants
   const double c = 0.00001;
@@ -223,12 +220,12 @@ DVector Optcontrol::solveOptimalControl()
   }*/
 
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
-  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
-  DVector refVecN(10, refT);
-  VariablesGrid referenceVG(refVecN, Grid{_t, _t + 1., 4});
+//  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
+//  DVector refVecN(10, refT);
+  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 1., 4});
   referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
-  setrefVec(refVecN);
+//  setrefVec(refVecN);
 
 
   // Inclure état réel drone.
@@ -340,4 +337,14 @@ void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &ve
   _xEst[ 3 ] = vel->vector.x;
   _xEst[ 4 ] = vel->vector.y;
   _xEst[ 5 ] = vel->vector.z;
+}
+
+void Optcontrol::setRefVec(const geometry_msgs::Twist &refVec)
+{
+  _refVec[ 0 ] = refVec->linear.x;
+  _refVec[ 1 ] = refVec->linear.y;
+  _refVec[ 2 ] = refVec->linear.z;
+  _refVec[ 7 ] = refVec->linear.x;
+  _refVec[ 8 ] = refVec->linear.x;
+  _refVec[ 9 ] = refVec->linear.x;
 }

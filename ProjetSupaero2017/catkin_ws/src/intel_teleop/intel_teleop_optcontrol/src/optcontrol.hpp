@@ -11,6 +11,7 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <geometry_msgs/Twist.h>
 
 
 class Optcontrol {
@@ -18,7 +19,6 @@ class Optcontrol {
 private:
     DMatrix _Q;
     Function _h;
-    DVector _refVec;
     std::unique_ptr< Controller > _controller;
     std::unique_ptr< RealTimeAlgorithm > _alg;
     std::unique_ptr< Process > _process;
@@ -26,6 +26,7 @@ private:
     std::unique_ptr< OCP > _ocp;
 
     DVector _xEst;
+    DVector _refVec;
 
     // Phi: roll, Theta: pitch, Psi: yaw, p = wX, q = wY, r = wZ
     DifferentialState x, y, z;
@@ -62,6 +63,8 @@ public:
     void setVelocities( const geometry_msgs::Vector3Stamped::ConstPtr &vel );
 
     void setAngularVelocities( const sensor_msgs::Imu::ConstPtr &imu );
+
+    void setRefVec( const geometry_msgs::Twist &refVec );
 
 
     DMatrix getMatrixQ();

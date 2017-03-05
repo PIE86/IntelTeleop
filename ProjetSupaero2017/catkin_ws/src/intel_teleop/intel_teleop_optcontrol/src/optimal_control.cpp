@@ -62,9 +62,8 @@ int main(int argc, char **argv) {
                                                                          &optControl );
 
   // Ajouter un topic pour récupérer les commandes clavier (/cmd_vel, faut rediriger..., voir Bertrand).
-  // Pour le moment, interne.
-
-  // Calculer les commandes.
+  auto cmdSub = n.subscribe< geometry_msgs::Twist >( "/command_velocity", 1, &Optcontrol::setRefVec,
+                                                              &optControl );
 
   // Ajouter un topic pour envoyer les commandes de vol.
   ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 100 );
