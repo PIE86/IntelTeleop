@@ -12,10 +12,10 @@
   </include>
 
   <!-- teleoperation -->
-  <!--<include file="$(find intel_teleop_demo)/launch/command_interface.launch" >
+  <include file="$(find intel_teleop_demo)/launch/command_interface.launch" >
     <arg name="joy_dev" value="/dev/input/js2" />
     <arg name="joystick" value="$(arg joystick)" />
-  </include>-->
+  </include>
 
   <!-- parameters -->
   <include file="$(find intel_teleop_demo)/launch/parameters_demo.launch" />

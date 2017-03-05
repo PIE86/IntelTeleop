@@ -48,8 +48,8 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
   // Introducing constants
   const double c = 0.00001;
-  const double Cf = 0.00018;
-  const double d = 0.250;
+  const double Cf = 0.00030;
+  const double d = 0.275;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
   const double Jz = 0.0218;
@@ -80,7 +80,7 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     _f << dot(vy) ==
     -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
     _f << dot(vz) ==
-    Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m - g; // axe z vers le bas - NON !
+    -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m + g; // axe z vers le bas !
     _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
     _f << dot(theta) == cos(phi) * q - sin(phi) * r;
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
@@ -92,10 +92,10 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
 
     // Constraints on the velocity of each propeller
-    _ocp->subjectTo(16 <= u1 <= 255);
-    _ocp->subjectTo(16 <= u2 <= 255);
-    _ocp->subjectTo(16 <= u3 <= 255);
-    _ocp->subjectTo(16 <= u4 <= 255);
+    _ocp->subjectTo(16 <= u1 <= 150);
+    _ocp->subjectTo(16 <= u2 <= 150);
+    _ocp->subjectTo(16 <= u3 <= 150);
+    _ocp->subjectTo(16 <= u4 <= 150);
 
     // Constraint to avoid singularity
     _ocp->subjectTo(-1. <= theta <= 1.);
@@ -305,7 +305,7 @@ void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
 
   _xEst[ 0 ] = pose->pose.position.x;
   _xEst[ 1 ] = pose->pose.position.y;
-  _xEst[ 2 ] = pose->pose.position.z;
+  _xEst[ 2 ] = -pose->pose.position.z;
 
 
   double x{ pose->pose.orientation.x };
@@ -336,15 +336,15 @@ void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &ve
 
   _xEst[ 3 ] = vel->vector.x;
   _xEst[ 4 ] = vel->vector.y;
-  _xEst[ 5 ] = vel->vector.z;
+  _xEst[ 5 ] = -vel->vector.z;
 }
 
 void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
 {
-  _refVec[ 0 ] = refVec->linear.x;
-  _refVec[ 1 ] = refVec->linear.y;
-  _refVec[ 2 ] = refVec->linear.z;
-  _refVec[ 7 ] = refVec->linear.x;
-  _refVec[ 8 ] = refVec->linear.x;
-  _refVec[ 9 ] = refVec->linear.x;
+  _refVec[ 0 ] = -refVec->linear.x;
+  _refVec[ 1 ] = -refVec->linear.y;
+  _refVec[ 2 ] = -refVec->linear.z;
+  _refVec[ 7 ] = refVec->angular.x;
+  _refVec[ 8 ] = refVec->angular.y;
+  _refVec[ 9 ] = refVec->angular.z;
 }
