@@ -33,9 +33,8 @@ int main(int argc, char **argv) {
 
   // Cmd ?
   DVector refVec{ 10 };
-  refVec.setZero( 10 );
 
-  Optcontrol optControl{ Q, refVec, 0., 1., 0.25 };
+  Optcontrol optControl{ Q, 0., 1., 0.25 };
 
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;

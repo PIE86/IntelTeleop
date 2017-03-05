@@ -40,11 +40,10 @@ private:
 
 public:
 
-    Optcontrol(DMatrix &Q, DVector &refVec,
-               const double t_in, const double t_fin, const double dt, bool isPWD = true);
+    Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD = true);
 
 
-    void init( DMatrix &Q, DVector &refVec, const double t_in, const double t_fin, const double dt, bool isPWD );
+    void init( DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD );
 
     bool addCylinder( intel_teleop_msgs::addCylinderOptControl::Request &c,
                       intel_teleop_msgs::addCylinderOptControl::Response &answer );
@@ -64,7 +63,7 @@ public:
 
     void setAngularVelocities( const sensor_msgs::Imu::ConstPtr &imu );
 
-    void setRefVec( const geometry_msgs::Twist &refVec );
+    void setRefVec( const geometry_msgs::Twist::ConstPtr &refVec );
 
 
     DMatrix getMatrixQ();

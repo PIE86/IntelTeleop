@@ -40,7 +40,7 @@ bool Optcontrol::addEllipse(intel_teleop_msgs::addEllipseOptControl::Request &re
   return false;
 }
 
-void Optcontrol::init(DMatrix &Q, DVector &refVec, const double t_in, const double t_fin, const double dt, bool isPWD)
+void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD)
 {
 
   _Q = Q;
@@ -339,7 +339,7 @@ void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &ve
   _xEst[ 5 ] = vel->vector.z;
 }
 
-void Optcontrol::setRefVec(const geometry_msgs::Twist &refVec)
+void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
 {
   _refVec[ 0 ] = refVec->linear.x;
   _refVec[ 1 ] = refVec->linear.y;
