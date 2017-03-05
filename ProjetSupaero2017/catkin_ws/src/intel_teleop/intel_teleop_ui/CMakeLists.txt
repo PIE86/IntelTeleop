@@ -130,8 +130,8 @@ include_directories(
 # add_dependencies(intel_teleop_user_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-#add_executable(intel_teleop_user_interface src/user_interface.cpp)
-add_executable(intel_teleop_user_interface src/test.cpp)
+add_executable(intel_teleop_user_interface src/user_interface.cpp)
+#add_executable(intel_teleop_user_interface src/test.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
