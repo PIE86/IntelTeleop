@@ -131,7 +131,7 @@ void initialize()
 	input.angular.y = 0.0;
 	input.angular.z = 0.0;
 
-	user_input_topic = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+	user_input_topic = nh.advertise<geometry_msgs::Twist>("command_velocity", 10);
 
 	if(js)
 	{
