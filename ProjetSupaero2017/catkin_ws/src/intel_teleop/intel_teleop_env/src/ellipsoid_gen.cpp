@@ -2,6 +2,7 @@
 
 using namespace std;
 
+// doesnt return anything but that's todo depending on other files
 bool GetMinVollEllipsoid(std::vector<Point3D> points, double tolerance) {
   printf("get min volume ellipsoid...\n");
   int nb = points.size();
