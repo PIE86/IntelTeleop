@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     cmdVec[ 2 ] = static_cast< unsigned char >( cmd( 2 ) );// * 0 + 90;
     cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );// * 0 + 90;
 
-//    cmdVec[ 0 ] = cmdVec[ 1 ] = cmdVec[ 2 ] = cmdVec[ 3 ] = 125;
+    //cmdVec[ 0 ] = cmdVec[ 1 ] = cmdVec[ 2 ] = cmdVec[ 3 ] = 125;
 
     cmdMsg.pwm = cmdVec;
     motor_command.publish( cmdMsg ); // Publish msg

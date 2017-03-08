@@ -26,7 +26,7 @@ private:
     std::unique_ptr< OCP > _ocp;
 
     DVector _xEst;
-    DVector _refVec;
+    DVector _refVec, _lastRefVec;
 
     // Phi: roll, Theta: pitch, Psi: yaw, p = wX, q = wY, r = wZ
     DifferentialState x, y, z;

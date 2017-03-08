@@ -48,7 +48,7 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
   // Introducing constants
   const double c = 0.00001;
-  const double Cf = 0.00030;
+  const double Cf = 0.00045;
   const double d = 0.275;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
@@ -294,8 +294,8 @@ void Optcontrol::setAngularVelocities(const sensor_msgs::Imu::ConstPtr &imu)
   // imu : msg.angular_velocity.x, y, z
 
   _xEst[ 9 ] = imu->angular_velocity.x;
-  _xEst[ 10 ] = imu->angular_velocity.y;
-  _xEst[ 11 ] = imu->angular_velocity.z;
+  _xEst[ 10 ] = -imu->angular_velocity.y;
+  _xEst[ 11 ] = -imu->angular_velocity.z;
 }
 
 void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
@@ -304,7 +304,7 @@ void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
   // pose : msg.orientation.x, y, z, w (convertir)
 
   _xEst[ 0 ] = pose->pose.position.x;
-  _xEst[ 1 ] = pose->pose.position.y;
+  _xEst[ 1 ] = -pose->pose.position.y;
   _xEst[ 2 ] = -pose->pose.position.z;
 
 
@@ -322,12 +322,12 @@ void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
   double t2{ 2. * ( w * y - z * x ) };
   t2 = t2 > 1. ? 1. : t2;
   t2 = t2 < -1. ? -1. : t2;
-  _xEst[ 7 ] = std::asin( t2 );
+  _xEst[ 7 ] = -std::asin( t2 );
 
   // yaw (z-axis rotation)
   double t3{ 2. * ( w * z + x * y ) };
   double t4{ 1. - 2. * ( std::pow( y, 2. ) + std::pow( z, 2. ) ) };
-  _xEst[ 8 ] = std::atan2( t3, t4 );
+  _xEst[ 8 ] = -std::atan2( t3, t4 );
 }
 
 void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &vel)
@@ -335,15 +335,15 @@ void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &ve
   // velocity : msg.vector.x, y, z
 
   _xEst[ 3 ] = vel->vector.x;
-  _xEst[ 4 ] = vel->vector.y;
+  _xEst[ 4 ] = -vel->vector.y;
   _xEst[ 5 ] = -vel->vector.z;
 }
 
 void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
 {
-  _refVec[ 0 ] = -refVec->linear.x;
-  _refVec[ 1 ] = -refVec->linear.y;
-  _refVec[ 2 ] = -refVec->linear.z;
+  _refVec[ 0 ] = refVec->linear.x;
+  _refVec[ 1 ] = refVec->linear.y;
+  _refVec[ 2 ] = refVec->linear.z;
   _refVec[ 7 ] = refVec->angular.x;
   _refVec[ 8 ] = refVec->angular.y;
   _refVec[ 9 ] = refVec->angular.z;
