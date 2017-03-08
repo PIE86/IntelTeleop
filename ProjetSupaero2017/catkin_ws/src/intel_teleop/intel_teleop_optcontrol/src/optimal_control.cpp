@@ -28,8 +28,9 @@ int main(int argc, char **argv) {
   // Ponderations
   DMatrix Q(10,10);
   Q(0,0) = Q(1,1) = Q(2,2) = 1e-1;
-  Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-9;
-  Q(7,7) = Q(8,8) = Q(9,9) = 1e-1;
+  Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
+  Q(7,7) = Q(8,8) = Q(9,9) = 75e-3;
+  //Q(10,10) = Q(11,11) = 1e-1;
 
   // Cmd ?
   DVector refVec{ 10 };
@@ -55,7 +56,7 @@ int main(int argc, char **argv) {
   // pose : msg.position.x, y, z
   // pose : msg.orientation.x, y, z, w (convertir)
   // AJOUTER hector_quadrotor_pose_estimator nrstiuers
-  auto imuSub = n.subscribe< sensor_msgs::Imu >( "/imu", 1, &Optcontrol::setAngularVelocities, &optControl );
+  auto imuSub = n.subscribe< sensor_msgs::Imu >( "/raw_imu", 1, &Optcontrol::setAngularVelocities, &optControl );
   auto poseSub = n.subscribe< geometry_msgs::PoseStamped >( "/pose", 1, &Optcontrol::setPose, &optControl );
   auto velSub = n.subscribe< geometry_msgs::Vector3Stamped >( "/velocity", 1, &Optcontrol::setVelocities,
                                                                          &optControl );
@@ -66,6 +67,7 @@ int main(int argc, char **argv) {
 
   // Ajouter un topic pour envoyer les commandes de vol.
   ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 100 );
+//    ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/penis", 100 );
 
   sleep( 5 );
 
@@ -89,7 +91,8 @@ int main(int argc, char **argv) {
     cmdVec[ 2 ] = static_cast< unsigned char >( cmd( 2 ) );// * 0 + 90;
     cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );// * 0 + 90;
 
-    //cmdVec[ 0 ] = cmdVec[ 1 ] = cmdVec[ 2 ] = cmdVec[ 3 ] = 125;
+    if( cmdVec[ 0 ] == 0 )
+      cmdVec[ 1 ] = cmdVec[ 3 ] = cmdVec[ 0 ] = cmdVec[ 2 ] = 115;
 
     cmdMsg.pwm = cmdVec;
     motor_command.publish( cmdMsg ); // Publish msg

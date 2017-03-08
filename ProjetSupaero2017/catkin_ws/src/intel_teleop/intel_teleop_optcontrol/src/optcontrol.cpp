@@ -47,8 +47,8 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
   _refVec = DVector{ 10 };
 
   // Introducing constants
-  const double c = 0.00001;
-  const double Cf = 0.00045;
+  const double c = 0.000005;
+  const double Cf = 0.000251552; // Plutôt mettre vers 0.0003
   const double d = 0.275;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
@@ -65,44 +65,45 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
     // x, y, z : position
     // vx, vy, vz : linear velocity
-    // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
-    // Roll pitch yaw plutôt, compte tenu des formules et du rapport... ? http://adg.stanford.edu/aa208/dynamics/notation.html
+    // Psi, Theta, Phi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
     // p, q, r : angular velocity
     // u1, u2, u3, u4 : velocity of the propellers
     Control u1, u2, u3, u4;
 
 
-    _f << dot(x) == vx;
-    _f << dot(y) == vy;
-    _f << dot(z) == vz;
-    _f << dot(vx) ==
-    -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
-    _f << dot(vy) ==
-    -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
-    _f << dot(vz) ==
-    -Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(psi) * cos(theta) / m + g; // axe z vers le bas !
-    _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
-    _f << dot(theta) == cos(phi) * q - sin(phi) * r;
+    _f << dot(x) == 0;//vx;
+    _f << dot(y) == 0;//vy;
+    _f << dot(z) == 0;//vz;
+    _f << dot(vx) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
+    _f << dot(vy) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
+    _f << dot(vz) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(phi) * cos(theta) / m - g;
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
-    _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx;
-    _f << dot(q) == (d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy;
-    _f << dot(r) == (c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz;
+    _f << dot(theta) == cos(phi) * q - sin(phi) * r;
+    _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
+    _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx; // OK au coef près
+//    _f << dot(q) == 0;//(d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy; // À l'envers ?
+    _f << dot(q) == -(d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy; // OK au coef près
+//    _f << dot(r) == (c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz; // À l'envers ?
+    _f << dot(r) == -(c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz; // OK au coef c près
 
 
 
 
     // Constraints on the velocity of each propeller
-    _ocp->subjectTo(16 <= u1 <= 150);
-    _ocp->subjectTo(16 <= u2 <= 150);
-    _ocp->subjectTo(16 <= u3 <= 150);
-    _ocp->subjectTo(16 <= u4 <= 150);
-
+    _ocp->subjectTo(2 <= u1 <= 150); // Ne pas mettre le min à 0, l'optimisation a tendance à garder cette valeur et il n'y a plus que u1 qui travaille.
+    _ocp->subjectTo(2 <= u2 <= 150);
+    _ocp->subjectTo(2 <= u3 <= 150);
+    _ocp->subjectTo(2 <= u4 <= 150);
+//    _ocp->subjectTo( u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4 == 40000 );
     // Constraint to avoid singularity
     _ocp->subjectTo(-1. <= theta <= 1.);
+    // Trying to save the day
+    _ocp->subjectTo(-1. <= phi <= 1.);
 
     _h << vx << vy << vz;
     _h << u1 << u2 << u3 << u4;
     _h << p << q << r;
+    //_h << phi << theta;
 
     if (_Q.getNumCols() != 10 || _Q.getNumRows() != 10)
     {
@@ -294,8 +295,8 @@ void Optcontrol::setAngularVelocities(const sensor_msgs::Imu::ConstPtr &imu)
   // imu : msg.angular_velocity.x, y, z
 
   _xEst[ 9 ] = imu->angular_velocity.x;
-  _xEst[ 10 ] = -imu->angular_velocity.y;
-  _xEst[ 11 ] = -imu->angular_velocity.z;
+  _xEst[ 10 ] = imu->angular_velocity.y;
+  _xEst[ 11 ] = imu->angular_velocity.z;
 }
 
 void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
@@ -304,8 +305,8 @@ void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
   // pose : msg.orientation.x, y, z, w (convertir)
 
   _xEst[ 0 ] = pose->pose.position.x;
-  _xEst[ 1 ] = -pose->pose.position.y;
-  _xEst[ 2 ] = -pose->pose.position.z;
+  _xEst[ 1 ] = pose->pose.position.y;
+  _xEst[ 2 ] = pose->pose.position.z;
 
 
   double x{ pose->pose.orientation.x };
@@ -316,18 +317,21 @@ void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
   // roll (x-axis rotation)
   double t0{ 2. * ( w * x + y * z) };
   double t1{ 1. - 2. * ( std::pow( x, 2. ) + std::pow( y, 2. ) ) };
-  _xEst[ 6 ] = std::atan2( t0, t1 );
+  _xEst[ 8 ] = std::atan2( t0, t1 );
+  ROS_INFO( "ROLL : %f", _xEst[ 8 ] );
 
   // pitch (y-axis rotation)
   double t2{ 2. * ( w * y - z * x ) };
   t2 = t2 > 1. ? 1. : t2;
   t2 = t2 < -1. ? -1. : t2;
-  _xEst[ 7 ] = -std::asin( t2 );
+  _xEst[ 7 ] = std::asin( t2 );
+  ROS_INFO( "PITCH : %f", _xEst[ 7 ] );
 
   // yaw (z-axis rotation)
   double t3{ 2. * ( w * z + x * y ) };
   double t4{ 1. - 2. * ( std::pow( y, 2. ) + std::pow( z, 2. ) ) };
-  _xEst[ 8 ] = -std::atan2( t3, t4 );
+  _xEst[ 6 ] = std::atan2( t3, t4 );
+  ROS_INFO( "YAW : %f", _xEst[ 6 ] );
 }
 
 void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &vel)
@@ -335,8 +339,8 @@ void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &ve
   // velocity : msg.vector.x, y, z
 
   _xEst[ 3 ] = vel->vector.x;
-  _xEst[ 4 ] = -vel->vector.y;
-  _xEst[ 5 ] = -vel->vector.z;
+  _xEst[ 4 ] = vel->vector.y;
+  _xEst[ 5 ] = vel->vector.z;
 }
 
 void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
@@ -344,7 +348,5 @@ void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
   _refVec[ 0 ] = refVec->linear.x;
   _refVec[ 1 ] = refVec->linear.y;
   _refVec[ 2 ] = refVec->linear.z;
-  _refVec[ 7 ] = refVec->angular.x;
-  _refVec[ 8 ] = refVec->angular.y;
   _refVec[ 9 ] = refVec->angular.z;
 }

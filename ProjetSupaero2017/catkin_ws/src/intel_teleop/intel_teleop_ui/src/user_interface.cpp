@@ -34,8 +34,8 @@
 
 // Tranlation and rotation step
 
-#define TRANS_STEP_KB 0.5
-#define ROT_STEP_KB   0.5
+#define TRANS_STEP_KB 0.1
+#define ROT_STEP_KB   0.25
 #define TRANS_STEP_JS 2.0
 #define ROT_STEP_JS   2.0
 
