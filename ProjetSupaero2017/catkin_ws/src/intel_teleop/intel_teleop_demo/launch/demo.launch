@@ -1,6 +1,5 @@
-<!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
 <launch>
-
+  <!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
   <arg name="joystick" default="false"/>
 
   <!-- world file -->
