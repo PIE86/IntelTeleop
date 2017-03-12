@@ -12,6 +12,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 
 
 class Optcontrol {
@@ -65,6 +66,7 @@ public:
 
     void setRefVec( const geometry_msgs::Twist::ConstPtr &refVec );
 
+    void setGroundTruth( const nav_msgs::Odometry::ConstPtr &groundTruth );
 
     DMatrix getMatrixQ();
 

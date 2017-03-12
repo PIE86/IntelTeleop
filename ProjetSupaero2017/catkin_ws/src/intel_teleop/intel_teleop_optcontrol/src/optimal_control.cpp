@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
   // Ponderations
   DMatrix Q(10,10);
-  Q(0,0) = Q(1,1) = Q(2,2) = 1;
+  Q(0,0) = Q(1,1) = Q(2,2) = 10;
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
   Q(7,7) = Q(8,8) = Q(9,9) = 75e-3;
   //Q(10,10) = Q(11,11) = 1e-1;
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   // Cmd ?
   DVector refVec{ 10 };
 
-  Optcontrol optControl{ Q, 0., 1., 0.25 };
+  Optcontrol optControl{ Q, 0., 0.01, 0.0025 };
 
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;
@@ -56,17 +56,19 @@ int main(int argc, char **argv) {
   // pose : msg.position.x, y, z
   // pose : msg.orientation.x, y, z, w (convertir)
   // AJOUTER hector_quadrotor_pose_estimator nrstiuers
-  auto imuSub = n.subscribe< sensor_msgs::Imu >( "/raw_imu", 1, &Optcontrol::setAngularVelocities, &optControl );
-  auto poseSub = n.subscribe< geometry_msgs::PoseStamped >( "/pose", 1, &Optcontrol::setPose, &optControl );
-  auto velSub = n.subscribe< geometry_msgs::Vector3Stamped >( "/velocity", 1, &Optcontrol::setVelocities,
-                                                                         &optControl );
+//  auto imuSub = n.subscribe< sensor_msgs::Imu >( "/raw_imu", 1, &Optcontrol::setAngularVelocities, &optControl );
+//  auto poseSub = n.subscribe< geometry_msgs::PoseStamped >( "/pose", 1, &Optcontrol::setPose, &optControl );
+//  auto velSub = n.subscribe< geometry_msgs::Vector3Stamped >( "/velocity", 1, &Optcontrol::setVelocities,
+//                                                                         &optControl );
+
+  auto groundTruthSub = n.subscribe< nav_msgs::Odometry >( "/ground_truth/state", 1, &Optcontrol::setGroundTruth, &optControl );
 
   // Ajouter un topic pour récupérer les commandes clavier (/cmd_vel, faut rediriger..., voir Bertrand).
   auto cmdSub = n.subscribe< geometry_msgs::Twist >( "/command_velocity", 1, &Optcontrol::setRefVec,
                                                               &optControl );
 
   // Ajouter un topic pour envoyer les commandes de vol.
-  ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 100 );
+  ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 1 );
 //    ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/penis", 100 );
 
   sleep( 5 );

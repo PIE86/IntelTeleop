@@ -45,10 +45,11 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
   _Q = Q;
   _refVec = DVector{ 10 };
+  _refVec[ 3 ] = _refVec[ 4 ] = _refVec[ 5 ] = _refVec[ 6 ] = 119;
 
   // Introducing constants
   const double c = 0.000005;
-  const double Cf = 0.000251552; // Plutôt mettre vers 0.0003
+  const double Cf = 0.0003; // Plutôt mettre vers 0.0003
   const double d = 0.275;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
@@ -71,11 +72,11 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     Control u1, u2, u3, u4;
 
 
-    _f << dot(x) == 0;//vx;
-    _f << dot(y) == 0;//vy;
-    _f << dot(z) == 0;//vz;
-    _f << dot(vx) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
-    _f << dot(vy) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
+    _f << dot(x) == vx;
+    _f << dot(y) == vy;
+    _f << dot(z) == vz;
+    _f << dot(vx) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
+    _f << dot(vy) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
     _f << dot(vz) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(phi) * cos(theta) / m - g;
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
     _f << dot(theta) == cos(phi) * q - sin(phi) * r;
@@ -154,15 +155,11 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request &req,
                                     intel_teleop_msgs::startOptControl::Response &ans)
 {
-  DynamicSystem dynamicSystem(_f, OutputFcn{});
-  _process = std::unique_ptr<Process>(new Process(dynamicSystem, INT_RK45));
-
-
   // SET UP THE MPC CONTROLLER:
   // --------------------------
   _alg = std::unique_ptr<RealTimeAlgorithm>(new RealTimeAlgorithm(*_ocp));
   _alg->set(INTEGRATOR_TYPE, INT_RK45);
-  _alg->set(MAX_NUM_ITERATIONS, 1);
+  _alg->set(MAX_NUM_ITERATIONS, 3);
   _alg->set(PRINT_COPYRIGHT, false);
   _alg->set(DISCRETIZATION_TYPE, MULTIPLE_SHOOTING);
 
@@ -173,7 +170,6 @@ bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request 
   DVector u(4);
   u.setZero();
   _controller->init(0., _xEst);
-  _process->init(0., _xEst, u);
 
   _previousClock = ros::Time::now();
   _t = 0.;
@@ -223,8 +219,10 @@ DVector Optcontrol::solveOptimalControl()
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
 //  DVector refVecN(10, refT);
-  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 1., 4});
-  referenceVG.setVector(0, _refVec);
+  ROS_INFO( "Time is: %f", _t );
+  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 0.1, 2});
+  ROS_INFO( "Grid says: %f, %f", referenceVG.getFirstTime(), referenceVG.getLastTime() );
+  //referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
 //  setrefVec(refVecN);
 
@@ -263,7 +261,6 @@ X = Y.getLastVector();
   auto currentClock{ ros::Time::now() };
   double dt{ ( currentClock - _previousClock ).toSec() };
   _previousClock = currentClock;
-  _process->step(_t, _t + dt, u);
   _t += dt;
 
   return u;
@@ -349,4 +346,43 @@ void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
   _refVec[ 1 ] = refVec->linear.y;
   _refVec[ 2 ] = refVec->linear.z;
   _refVec[ 9 ] = refVec->angular.z;
+}
+
+void Optcontrol::setGroundTruth(const nav_msgs::Odometry::ConstPtr &groundTruth)
+{
+  _xEst[ 0 ] = groundTruth->pose.pose.position.x;
+  _xEst[ 1 ] = groundTruth->pose.pose.position.y;
+  _xEst[ 2 ] = groundTruth->pose.pose.position.z;
+
+  _xEst[ 3 ] = groundTruth->twist.twist.linear.x;
+  _xEst[ 4 ] = groundTruth->twist.twist.linear.y;
+  _xEst[ 5 ] = groundTruth->twist.twist.linear.z;
+
+  double x{ groundTruth->pose.pose.orientation.x };
+  double y{ groundTruth->pose.pose.orientation.y };
+  double z{ groundTruth->pose.pose.orientation.z };
+  double w{ groundTruth->pose.pose.orientation.w };
+
+  // roll (x-axis rotation)
+  double t0{ 2. * ( w * x + y * z) };
+  double t1{ 1. - 2. * ( std::pow( x, 2. ) + std::pow( y, 2. ) ) };
+  _xEst[ 8 ] = std::atan2( t0, t1 );
+  ROS_INFO( "ROLL : %f", _xEst[ 8 ] );
+
+  // pitch (y-axis rotation)
+  double t2{ 2. * ( w * y - z * x ) };
+  t2 = t2 > 1. ? 1. : t2;
+  t2 = t2 < -1. ? -1. : t2;
+  _xEst[ 7 ] = std::asin( t2 );
+  ROS_INFO( "PITCH : %f", _xEst[ 7 ] );
+
+  // yaw (z-axis rotation)
+  double t3{ 2. * ( w * z + x * y ) };
+  double t4{ 1. - 2. * ( std::pow( y, 2. ) + std::pow( z, 2. ) ) };
+  _xEst[ 6 ] = std::atan2( t3, t4 );
+  ROS_INFO( "YAW : %f", _xEst[ 6 ] );
+
+  _xEst[ 9 ] = groundTruth->twist.twist.angular.x;
+  _xEst[ 10 ] = groundTruth->twist.twist.angular.y;
+  _xEst[ 11 ] = groundTruth->twist.twist.angular.z;
 }
