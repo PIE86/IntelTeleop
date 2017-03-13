@@ -89,15 +89,16 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
 
     // Constraints on the velocity of each propeller
-    _ocp->subjectTo(75 <= u1 <= 180); // Ne pas mettre le min à 0, l'optimisation a tendance à garder cette valeur et il n'y a plus que u1 qui travaille.
-    _ocp->subjectTo(75 <= u2 <= 180);
-    _ocp->subjectTo(75 <= u3 <= 180);
-    _ocp->subjectTo(75 <= u4 <= 180);
+    _ocp->subjectTo(25 <= u1 <= 180); // Ne pas mettre le min à 0, l'optimisation a tendance à garder cette valeur et il n'y a plus que u1 qui travaille.
+    _ocp->subjectTo(25 <= u2 <= 180);
+    _ocp->subjectTo(25 <= u3 <= 180);
+    _ocp->subjectTo(25 <= u4 <= 180);
 //    _ocp->subjectTo( u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4 == 40000 );
     // Constraint to avoid singularity
     _ocp->subjectTo(-1. <= theta <= 1.);
     // Trying to save the day
     _ocp->subjectTo(-1. <= phi <= 1.);
+
 
     _h << vx << vy << vz;
     _h << u1 << u2 << u3 << u4;
@@ -180,43 +181,27 @@ DVector Optcontrol::solveOptimalControl()
   if( _t < -0.5 )
     return DVector{ 4 };
 
- /* if (abs(NewRefVec[0] - _refVec(0)) > 1.)
-  {
-    if (NewRefVec[0] > _refVec(0))
-    {
-      NewRefVec[0] = _refVec(0) + 1.;
-    } else
-    {
-      NewRefVec[0] = _refVec(0) - 1.;
-    }
-  }
+  auto localRef = _refVec;
 
-  if (abs(NewRefVec[1] - _refVec(1)) > 1.)
-  {
-    if (NewRefVec[1] > _refVec(1))
-    {
-      NewRefVec[1] = _refVec(1) + 1.;
-    } else
-    {
-      NewRefVec[1] = _refVec(1) - 1.;
-    }
-  }
+  double dist{ std::sqrt( std::pow( _xEst[ 0 ] - 5., 2. ) + std::pow( _xEst[ 1 ] - 0., 2. ) ) };
+  double angle{ std::atan2( _xEst[ 1 ] - 0., _xEst[ 0 ] - 5. ) };
+  double speed{ std::sqrt( std::pow( localRef[ 0 ], 2. ) + std::pow( localRef[ 1 ], 2. ) ) };
 
-  if (abs(NewRefVec[2] - _refVec(2)) > 1.)
+  if( dist < 1. )
   {
-    if (NewRefVec[2] > _refVec(2))
-    {
-      NewRefVec[2] = _refVec(2) + 1.;
-    } else
-    {
-      NewRefVec[2] = _refVec(2) - 1.;
-    }
-  }*/
+    localRef[ 0 ] += speed * cos( angle );
+    localRef[ 1 ] += speed * sin( angle );
+  }
+  else if( dist < 2. )
+  {
+    localRef[ 0 ] += ( 2. - dist ) * speed * cos( angle );
+    localRef[ 1 ] += ( 2. - dist ) * speed * sin( angle );
+  }
 
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
 //  DVector refVecN(10, refT);
-  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 0.04, 2});
+  VariablesGrid referenceVG( localRef, Grid{_t, _t + 0.04, 2});
   //referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
 //  setrefVec(refVecN);
