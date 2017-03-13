@@ -26,16 +26,15 @@ int main(int argc, char **argv) {
   ros::NodeHandle n;
 
   // Ponderations
-  DMatrix Q(10,10);
-  Q(0,0) = Q(1,1) = Q(2,2) = 10;
+  DMatrix Q(12,12);
+  Q(0,0) = Q(1,1) = Q(2,2) = 1e-9;
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
-  Q(7,7) = Q(8,8) = Q(9,9) = 75e-3;
+  Q(7,7) = Q(8,8) = 10;
+  Q(9,9) = Q(10,10) = Q(11,11) = 0.5;
   //Q(10,10) = Q(11,11) = 1e-1;
 
   // Cmd ?
-  DVector refVec{ 10 };
-
-  Optcontrol optControl{ Q, 0., 0.01, 0.0025 };
+  Optcontrol optControl{ Q, 0., 0.04, 0.04 };
 
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;
@@ -94,7 +93,7 @@ int main(int argc, char **argv) {
     cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );// * 0 + 90;
 
     if( cmdVec[ 0 ] == 0 )
-      cmdVec[ 1 ] = cmdVec[ 3 ] = cmdVec[ 0 ] = cmdVec[ 2 ] = 115;
+      cmdVec[ 1 ] = cmdVec[ 3 ] = cmdVec[ 0 ] = cmdVec[ 2 ] = 0;
 
     cmdMsg.pwm = cmdVec;
     motor_command.publish( cmdMsg ); // Publish msg

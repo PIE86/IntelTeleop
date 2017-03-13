@@ -44,13 +44,13 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 {
 
   _Q = Q;
-  _refVec = DVector{ 10 };
+  _refVec = DVector{ 12 };
   _refVec[ 3 ] = _refVec[ 4 ] = _refVec[ 5 ] = _refVec[ 6 ] = 119;
 
   // Introducing constants
   const double c = 0.000005;
   const double Cf = 0.0003; // Plutôt mettre vers 0.0003
-  const double d = 0.275;
+  const double d = 0.5;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
   const double Jz = 0.0218;
@@ -62,7 +62,7 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
   if (isPWD)
   {
-    DifferentialState vx, vy, vz, phi, theta, psi, p, q, r;
+    DifferentialState vx, vy, vz, psi, theta, phi, p, q, r;
 
     // x, y, z : position
     // vx, vy, vz : linear velocity
@@ -72,29 +72,27 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     Control u1, u2, u3, u4;
 
 
-    _f << dot(x) == vx;
-    _f << dot(y) == vy;
-    _f << dot(z) == vz;
-    _f << dot(vx) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
-    _f << dot(vy) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
-    _f << dot(vz) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(phi) * cos(theta) / m - g;
+    _f << dot(x) == 0;//vx;
+    _f << dot(y) == 0;//vy;
+    _f << dot(z) == 0;//vz;
+    _f << dot(vx) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
+    _f << dot(vy) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
+    _f << dot(vz) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(phi) * cos(theta) / m - g;
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
     _f << dot(theta) == cos(phi) * q - sin(phi) * r;
     _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
     _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx; // OK au coef près
-//    _f << dot(q) == 0;//(d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy; // À l'envers ?
     _f << dot(q) == -(d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy; // OK au coef près
-//    _f << dot(r) == (c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz; // À l'envers ?
     _f << dot(r) == -(c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz; // OK au coef c près
 
 
 
 
     // Constraints on the velocity of each propeller
-    _ocp->subjectTo(2 <= u1 <= 150); // Ne pas mettre le min à 0, l'optimisation a tendance à garder cette valeur et il n'y a plus que u1 qui travaille.
-    _ocp->subjectTo(2 <= u2 <= 150);
-    _ocp->subjectTo(2 <= u3 <= 150);
-    _ocp->subjectTo(2 <= u4 <= 150);
+    _ocp->subjectTo(75 <= u1 <= 180); // Ne pas mettre le min à 0, l'optimisation a tendance à garder cette valeur et il n'y a plus que u1 qui travaille.
+    _ocp->subjectTo(75 <= u2 <= 180);
+    _ocp->subjectTo(75 <= u3 <= 180);
+    _ocp->subjectTo(75 <= u4 <= 180);
 //    _ocp->subjectTo( u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4 == 40000 );
     // Constraint to avoid singularity
     _ocp->subjectTo(-1. <= theta <= 1.);
@@ -103,10 +101,10 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
     _h << vx << vy << vz;
     _h << u1 << u2 << u3 << u4;
+    _h << theta << phi;
     _h << p << q << r;
-    //_h << phi << theta;
 
-    if (_Q.getNumCols() != 10 || _Q.getNumRows() != 10)
+    if (_Q.getNumCols() != 12 || _Q.getNumRows() != 12 )
     {
       std::cout << "Weight matrix size is not suitable for this model" << std::endl;
     }
@@ -115,36 +113,36 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
   } else
   {
 
-    DifferentialState phi, theta, psi;
-
-    // x, y, z : position
-    // vx, vy, vz : linear velocity
-    // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
-
-    Control u_vx, u_vy, u_vz, u_p, u_q, u_r; // Linear and angular velocity
-
-    _f << dot(x) == u_vx;
-    _f << dot(y) == u_vy;
-    _f << dot(z) == u_vz;
-    _f << dot(phi) == u_p + sin(phi) * tan(theta) * u_q + cos(phi) * tan(theta) * u_r;
-    _f << dot(theta) == cos(phi) * u_q - sin(phi) * u_r;
-    _f << dot(psi) == sin(phi) / cos(theta) * u_q + cos(phi) / cos(theta) * u_r;
-    // Quid ? Pas de variable ax, ay, az ?
-//        _f << ax == dot(u_vx);
-//        _f << ay == dot(u_vy);
-//        _f << az == dot(u_vz);
-
-    _ocp->subjectTo(-15 <= u_p <= 15);
-    _ocp->subjectTo(-15 <= u_q <= 15);
-    _ocp->subjectTo(-15 <= u_r <= 15);
-
-    _h << u_vx << u_vy << u_vz;
-    _h << u_p << u_q << u_r;
-
-    if (_Q.getNumCols() != 6 || _Q.getNumRows() != 6)
-    {
-      std::cout << "Weight matrix size is not suitable for this model" << std::endl;
-    }
+//    DifferentialState phi, theta, psi;
+//
+//    // x, y, z : position
+//    // vx, vy, vz : linear velocity
+//    // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
+//
+//    Control u_vx, u_vy, u_vz, u_p, u_q, u_r; // Linear and angular velocity
+//
+//    _f << dot(x) == u_vx;
+//    _f << dot(y) == u_vy;
+//    _f << dot(z) == u_vz;
+//    _f << dot(phi) == u_p + sin(phi) * tan(theta) * u_q + cos(phi) * tan(theta) * u_r;
+//    _f << dot(theta) == cos(phi) * u_q - sin(phi) * u_r;
+//    _f << dot(psi) == sin(phi) / cos(theta) * u_q + cos(phi) / cos(theta) * u_r;
+//    // Quid ? Pas de variable ax, ay, az ?
+////        _f << ax == dot(u_vx);
+////        _f << ay == dot(u_vy);
+////        _f << az == dot(u_vz);
+//
+//    _ocp->subjectTo(-15 <= u_p <= 15);
+//    _ocp->subjectTo(-15 <= u_q <= 15);
+//    _ocp->subjectTo(-15 <= u_r <= 15);
+//
+//    _h << u_vx << u_vy << u_vz;
+//    _h << u_p << u_q << u_r;
+//
+//    if (_Q.getNumCols() != 6 || _Q.getNumRows() != 6)
+//    {
+//      std::cout << "Weight matrix size is not suitable for this model" << std::endl;
+//    }
 
   }
 
@@ -167,8 +165,6 @@ bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request 
 
   // SETTING UP THE SIMULATION ENVIRONMENT:
   // --------------------------------------
-  DVector u(4);
-  u.setZero();
   _controller->init(0., _xEst);
 
   _previousClock = ros::Time::now();
@@ -219,9 +215,7 @@ DVector Optcontrol::solveOptimalControl()
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
 //  DVector refVecN(10, refT);
-  ROS_INFO( "Time is: %f", _t );
-  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 0.1, 2});
-  ROS_INFO( "Grid says: %f, %f", referenceVG.getFirstTime(), referenceVG.getLastTime() );
+  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 0.02, 2});
   //referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
 //  setrefVec(refVecN);
@@ -241,7 +235,6 @@ X = Y.getLastVector();
 
 // MPC step
 // compute the command
-  ROS_INFO( "x: %f, y:%f, z:%f", _xEst[ 0 ], _xEst[ 1 ], _xEst[ 2 ] );
   bool success = _controller->step(_t, _xEst);
 
   if (success != 0)
