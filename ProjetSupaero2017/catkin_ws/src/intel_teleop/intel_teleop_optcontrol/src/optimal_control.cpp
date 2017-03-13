@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   Q(2,2) = 10;
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
   Q(7,7) = Q(8,8) = 1;
-  Q(9,9) = Q(10,10) = Q(11,11) = 0.05;
+  Q(9,9) = Q(10,10) = Q(11,11) = 0.05; //0.05
   //Q(10,10) = Q(11,11) = 1e-1;
 
   // Cmd ?
@@ -69,12 +69,11 @@ int main(int argc, char **argv) {
 
   // Ajouter un topic pour envoyer les commandes de vol.
   ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 1 );
-//    ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/penis", 100 );
 
   sleep( 5 );
 
 
-  ros::Rate loop_rate( 25 );
+  ros::Rate loop_rate( 50 );
 
   std::vector< unsigned char > cmdVec( 4, 0 );
 
