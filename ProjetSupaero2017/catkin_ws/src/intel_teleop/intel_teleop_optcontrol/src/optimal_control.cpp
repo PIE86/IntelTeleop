@@ -27,10 +27,11 @@ int main(int argc, char **argv) {
 
   // Ponderations
   DMatrix Q(12,12);
-  Q(0,0) = Q(1,1) = Q(2,2) = 1e-9;
+  Q(0,0) = Q(1,1) = 5;
+  Q(2,2) = 10;
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
-  Q(7,7) = Q(8,8) = 10;
-  Q(9,9) = Q(10,10) = Q(11,11) = 0.5;
+  Q(7,7) = Q(8,8) = 1;
+  Q(9,9) = Q(10,10) = Q(11,11) = 0.05;
   //Q(10,10) = Q(11,11) = 1e-1;
 
   // Cmd ?
@@ -73,9 +74,12 @@ int main(int argc, char **argv) {
   sleep( 5 );
 
 
-  ros::Rate loop_rate( 50 );
+  ros::Rate loop_rate( 25 );
 
   std::vector< unsigned char > cmdVec( 4, 0 );
+
+  int i{ 0 };
+
 
   while( ros::ok() )
   {
@@ -85,6 +89,11 @@ int main(int argc, char **argv) {
     ros::spinOnce();
 
     auto cmd = optControl.solveOptimalControl();
+    if( ++i == 200 )
+    {
+      i = 0;
+      optControl.reset();
+    }
 
     hector_uav_msgs::MotorPWM cmdMsg;
     cmdVec[ 0 ] = static_cast< unsigned char >( cmd( 0 ) );//* 0 + 90;

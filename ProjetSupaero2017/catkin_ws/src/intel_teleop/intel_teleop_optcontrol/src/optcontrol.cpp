@@ -49,8 +49,8 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
   // Introducing constants
   const double c = 0.000005;
-  const double Cf = 0.0003; // Plutôt mettre vers 0.0003
-  const double d = 0.5;
+  const double Cf = 0.00025; // Plutôt mettre vers 0.0003
+  const double d = 0.4;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
   const double Jz = 0.0218;
@@ -72,12 +72,12 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     Control u1, u2, u3, u4;
 
 
-    _f << dot(x) == 0;//vx;
-    _f << dot(y) == 0;//vy;
-    _f << dot(z) == 0;//vz;
-    _f << dot(vx) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
-    _f << dot(vy) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
-    _f << dot(vz) == 0;//Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(phi) * cos(theta) / m - g;
+    _f << dot(x) == vx;
+    _f << dot(y) == vy;
+    _f << dot(z) == vz;
+    _f << dot(vx) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (cos(psi) * sin(theta) * cos(phi) + sin(psi) * sin(phi)) / m;
+    _f << dot(vy) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * (sin(psi) * sin(theta) * cos(phi) - cos(psi) * sin(phi)) / m;
+    _f << dot(vz) == Cf * (u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4) * cos(phi) * cos(theta) / m - g;
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
     _f << dot(theta) == cos(phi) * q - sin(phi) * r;
     _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
@@ -156,8 +156,9 @@ bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request 
   // SET UP THE MPC CONTROLLER:
   // --------------------------
   _alg = std::unique_ptr<RealTimeAlgorithm>(new RealTimeAlgorithm(*_ocp));
+  _alg->set(HESSIAN_APPROXIMATION, GAUSS_NEWTON );
   _alg->set(INTEGRATOR_TYPE, INT_RK45);
-  _alg->set(MAX_NUM_ITERATIONS, 3);
+  _alg->set(MAX_NUM_ITERATIONS, 1);
   _alg->set(PRINT_COPYRIGHT, false);
   _alg->set(DISCRETIZATION_TYPE, MULTIPLE_SHOOTING);
 
@@ -215,7 +216,7 @@ DVector Optcontrol::solveOptimalControl()
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
 //  DVector refVecN(10, refT);
-  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 0.02, 2});
+  VariablesGrid referenceVG(_refVec, Grid{_t, _t + 0.04, 2});
   //referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
 //  setrefVec(refVecN);
@@ -378,4 +379,9 @@ void Optcontrol::setGroundTruth(const nav_msgs::Odometry::ConstPtr &groundTruth)
   _xEst[ 9 ] = groundTruth->twist.twist.angular.x;
   _xEst[ 10 ] = groundTruth->twist.twist.angular.y;
   _xEst[ 11 ] = groundTruth->twist.twist.angular.z;
+}
+
+void Optcontrol::reset()
+{
+  _controller->init(_t, _xEst);
 }

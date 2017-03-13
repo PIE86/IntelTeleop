@@ -76,5 +76,5 @@ public:
 
     void setrefVec(DVector &refVec);
 
-
+    void reset();
 };
