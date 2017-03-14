@@ -16,20 +16,17 @@
 #include "../lib/rtwtypes.h"
 
 
-#ifndef STRUCT_POINT3D
-  #define STRUCT_POINT3D
+#ifndef STRUCT_ELLIPSOID
+  #define STRUCT_ELLIPSOID
 
-  struct Point3D
+  struct Ellipsoid
   {
-    double x;
-    double y;
-    double z;
-    Point3D (): x(0.0), y(0.0), z(0.0) {}
-    Point3D ( double _x, double _y, double _z ): x(_x), y(_y), z(_z) {}
-
+    std::vector<double> centre;
+    std::vector< std::vector<double> > A;
+    Ellipsoid ( std::vector<double> _centre, std::vector< std::vector<double> > _A) : centre(_centre), A(_A) {}
   };
 #endif
 
-bool GetMinVollEllipsoid(std::vector<Point3D>, double tolerance);
+Ellipsoid GetMinVolEllipsoid(std::vector< std::vector<double> > points, double tolerance);
 
 #endif

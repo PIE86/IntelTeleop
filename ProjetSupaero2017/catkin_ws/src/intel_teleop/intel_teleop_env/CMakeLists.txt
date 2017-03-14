@@ -4,48 +4,23 @@ project(intel_teleop_env)
 find_package(roscpp REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
   rospy
   std_msgs
   std_srvs
   intel_teleop_msgs
 )
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
 add_definitions(-std=c++11)
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
-
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
-
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
 
 ###################################
 ## catkin specific configuration ##
