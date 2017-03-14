@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <ctime>
+#include <cmath>
 
 #include "optcontrol.hpp"
 
@@ -187,16 +188,13 @@ DVector Optcontrol::solveOptimalControl()
   double angle{ std::atan2( _xEst[ 1 ] - 0., _xEst[ 0 ] - 5. ) };
   double speed{ std::sqrt( std::pow( localRef[ 0 ], 2. ) + std::pow( localRef[ 1 ], 2. ) ) };
 
-  if( dist < 1. )
+  if( dist < 3. )
   {
-    localRef[ 0 ] += speed * cos( angle );
-    localRef[ 1 ] += speed * sin( angle );
+    localRef[ 1 ] += std::max( 1., 3. - dist ) * speed * cos( angle );
+    localRef[ 0 ] += std::max( 1., 3. - dist ) * speed * sin( angle );
   }
-  else if( dist < 2. )
-  {
-    localRef[ 0 ] += ( 2. - dist ) * speed * cos( angle );
-    localRef[ 1 ] += ( 2. - dist ) * speed * sin( angle );
-  }
+
+  ROS_INFO( "Traj : %f, %f", localRef[ 0 ], localRef[ 1 ] );
 
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
@@ -230,9 +228,6 @@ X = Y.getLastVector();
     return 1;
   }
   DVector u(4);
-  u.init();
-
-  u.setZero();
 
   _controller->getU(u);
 
@@ -324,7 +319,7 @@ void Optcontrol::setRefVec(const geometry_msgs::Twist::ConstPtr &refVec)
   _refVec[ 0 ] = refVec->linear.x;
   _refVec[ 1 ] = refVec->linear.y;
   _refVec[ 2 ] = refVec->linear.z;
-  _refVec[ 9 ] = refVec->angular.z;
+  _refVec[ 11 ] = refVec->angular.z;
 }
 
 void Optcontrol::setGroundTruth(const nav_msgs::Odometry::ConstPtr &groundTruth)
@@ -361,12 +356,13 @@ void Optcontrol::setGroundTruth(const nav_msgs::Odometry::ConstPtr &groundTruth)
   _xEst[ 6 ] = std::atan2( t3, t4 );
   ROS_INFO( "YAW : %f", _xEst[ 6 ] );
 
-  _xEst[ 9 ] = groundTruth->twist.twist.angular.x;
-  _xEst[ 10 ] = groundTruth->twist.twist.angular.y;
-  _xEst[ 11 ] = groundTruth->twist.twist.angular.z;
+//  _xEst[ 9 ] = groundTruth->twist.twist.angular.x;
+//  _xEst[ 10 ] = groundTruth->twist.twist.angular.y;
+//  _xEst[ 11 ] = groundTruth->twist.twist.angular.z;
 }
 
 void Optcontrol::reset()
 {
-  _controller->init(_t, _xEst);
+  if( _t > 0.5 )
+    _controller->init(_t, _xEst);
 }
