@@ -1,43 +1,34 @@
 #include "ros/ros.h"
+#include "ros/package.h"
 #include "std_msgs/String.h"
+#include <string>
 
-#include <intel_teleop_msgs/UserInput.h>
-#include <intel_teleop_msgs/DroneState.h>
-#include <intel_teleop_msgs/SpeedControl.h>
 
-void estimated_state_feedback(const intel_teleop_msgs::DroneState state)
+#include "intel_teleop_msgs/addCylinderOptControl.h"
+
+
+std::string folderPath{};
+
+bool addCylinder( intel_teleop_msgs::addCylinderOptControl::Request  &req,
+                  intel_teleop_msgs::addCylinderOptControl::Response &answer)
 {
-  //ROS_INFO("Ground heard drone state estimation");
-  ROS_INFO("Drone state estimate: [x,y,z]=[%lf,%lf,%lf] ; [roll,pitch,yaw]=[%lf,%lf,%lf]", 
-		state.x, state.y, state.z, state.roll, state.pitch, state.yaw);
+  system( std::string( "rosrun xacro xacro " + folderPath + "/Objects/cylinder.xacro x:=5 y:=3 radius:=1 length:=5 > " + folderPath + "/object.urdf\n" ).c_str() );
+  system( std::string( "rosrun gazebo_ros spawn_model -urdf -file " + folderPath + "/object.urdf -model model" ).c_str() );
+
+  return true;
 }
 
-void user_input_feedback(const intel_teleop_msgs::UserInput input)
-{
-  //ROS_INFO("Ground heard user input");
-  ROS_INFO("User input: [x,y,z]=[%lf,%lf,%lf] ; [roll,pitch,yaw]=[%lf,%lf,%lf]", 
-		input.x, input.y, input.z, input.roll, input.pitch, input.yaw);
-}
-
-void speed_control_feedback(const intel_teleop_msgs::SpeedControl speedCtrl)
-{
-  //ROS_INFO("Ground heard speed control");
-  ROS_INFO("Speed control: [vx,vy,vz]=[%lf,%lf,%lf] ; [vroll,vpitch,vyaw]=[%lf,%lf,%lf]", 
-		speedCtrl.v_x, speedCtrl.v_y, speedCtrl.v_z, speedCtrl.v_roll, speedCtrl.v_pitch, speedCtrl.v_yaw);
-}
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "ground");
   ros::NodeHandle n;
-  
-  ros::Subscriber estimated_state_feedback_topic = n.subscribe("estimated_state", 1000, estimated_state_feedback);
-  ros::Subscriber user_input_feedback_topic = n.subscribe("user_input", 1000, user_input_feedback);
-  ros::Subscriber speed_control_feedback_topic = n.subscribe("speed_control", 1000, speed_control_feedback);
 
-  
+  auto serv = n.advertiseService("addCylinderOptControl", &addCylinder );
+
+  folderPath = ros::package::getPath( "intel_teleop_ground" );
+
   ros::Rate loop_rate(10);
-
   loop_rate.sleep();
 
   while (ros::ok())

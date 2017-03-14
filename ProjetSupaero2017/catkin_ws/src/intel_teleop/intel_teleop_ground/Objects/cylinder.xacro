@@ -53,6 +53,7 @@
   </link>
   <gazebo reference="my_cylinder">
     <static>true</static>
+    <turnGravityOff>true</turnGravityOff>
     <material>Gazebo/Blue</material>
   </gazebo>
 

@@ -32,15 +32,14 @@ int main(int argc, char **argv) {
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
   Q(7,7) = Q(8,8) = 1;
   Q(9,9) = Q(10,10) = Q(11,11) = 0.1; //0.05
-  //Q(10,10) = Q(11,11) = 1e-1;
 
-  // Cmd ?
+
   Optcontrol optControl{ Q, 0., 0.04, 0.04 };
 
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;
 
-  servers.push_back( n.advertiseService("addCylinderOptControl", &Optcontrol::addCylinder, &optControl ) );
+//  servers.push_back( n.advertiseService("addCylinderOptControl", &Optcontrol::addCylinder, &optControl ) );
   servers.push_back( n.advertiseService("addEllipseOptControl", &Optcontrol::addEllipse, &optControl ) );
   servers.push_back( n.advertiseService("startOptControl", &Optcontrol::completeSimulation, &optControl ) );
 
@@ -55,7 +54,7 @@ int main(int argc, char **argv) {
   // velocity : msg.vector.x, y, z
   // pose : msg.position.x, y, z
   // pose : msg.orientation.x, y, z, w (convertir)
-  // AJOUTER hector_quadrotor_pose_estimator nrstiuers
+  // AJOUTER hector_quadrotor_pose_estimator
   auto imuSub = n.subscribe< sensor_msgs::Imu >( "/raw_imu", 1, &Optcontrol::setAngularVelocities, &optControl );
 //  auto poseSub = n.subscribe< geometry_msgs::PoseStamped >( "/pose", 1, &Optcontrol::setPose, &optControl );
 //  auto velSub = n.subscribe< geometry_msgs::Vector3Stamped >( "/velocity", 1, &Optcontrol::setVelocities,
