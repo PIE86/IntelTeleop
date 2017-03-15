@@ -11,37 +11,33 @@
 #include <acado_optimal_control.hpp>
 
 
-Optcontrol::Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD)
+Optcontrol::Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const double dt)
     : _t{ -1. }, _xEst{ 12 }
 {
-  init(Q, t_in, t_fin, dt, isPWD);
+  init(Q, t_in, t_fin, dt);
 };
 
-bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &c,
+bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &cyl,
                              intel_teleop_msgs::addCylinderOptControl::Response &answer)
 {
   if ( _t > -0.5 )
     return false;
 
-  _ocp->subjectTo(pow(c.radius + 1, 2) <=
-                  (pow((y - c.y1) * (c.z2 - c.z1) - (c.y2 - c.y1) * (z - c.z1), 2) +
-                   pow((z - c.z1) * (c.x2 - c.x1) - (c.z2 - c.z1) * (x - c.x1), 2) +
-                   pow((x - c.x1) * (c.y2 - c.y1) - (c.x2 - c.x1) * (y - c.y1), 2)) /
-                  (pow(c.x2 - c.x1, 2) + pow(c.y2 - c.y1, 2) + pow(c.z2 - c.z1, 2)));
+  _cylinders.emplace_back( cyl.radius, cyl.x1, cyl.y1, cyl.z1, cyl.x2, cyl.y2, cyl.z2 );
 
   return true;
 }
 
-bool Optcontrol::addEllipse(intel_teleop_msgs::addEllipseOptControl::Request &req,
-                            intel_teleop_msgs::addEllipseOptControl::Response &ans)
-{
-  if ( _t > -0.5 )
-    return false;
-  // Quid ?
-  return false;
-}
+//bool Optcontrol::addEllipse(intel_teleop_msgs::addEllipseOptControl::Request &req,
+//                            intel_teleop_msgs::addEllipseOptControl::Response &ans)
+//{
+//  if ( _t > -0.5 )
+//    return false;
+//  // Quid ?
+//  return false;
+//}
 
-void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD)
+void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const double dt)
 {
 
   _Q = Q;
@@ -61,8 +57,6 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
   _ocp = std::unique_ptr<OCP>(new OCP(t_in, t_fin, static_cast< int >((t_fin - t_in) / dt )));
 
 
-  if (isPWD)
-  {
     DifferentialState vx, vy, vz, psi, theta, phi, p, q, r;
 
     // x, y, z : position
@@ -112,49 +106,10 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     }
 
 
-  } else
-  {
-
-//    DifferentialState phi, theta, psi;
-//
-//    // x, y, z : position
-//    // vx, vy, vz : linear velocity
-//    // phi, theta, psi : orientation (Yaw-Pitch-Roll = Euler(3,2,1))
-//
-//    Control u_vx, u_vy, u_vz, u_p, u_q, u_r; // Linear and angular velocity
-//
-//    _f << dot(x) == u_vx;
-//    _f << dot(y) == u_vy;
-//    _f << dot(z) == u_vz;
-//    _f << dot(phi) == u_p + sin(phi) * tan(theta) * u_q + cos(phi) * tan(theta) * u_r;
-//    _f << dot(theta) == cos(phi) * u_q - sin(phi) * u_r;
-//    _f << dot(psi) == sin(phi) / cos(theta) * u_q + cos(phi) / cos(theta) * u_r;
-//    // Quid ? Pas de variable ax, ay, az ?
-////        _f << ax == dot(u_vx);
-////        _f << ay == dot(u_vy);
-////        _f << az == dot(u_vz);
-//
-//    _ocp->subjectTo(-15 <= u_p <= 15);
-//    _ocp->subjectTo(-15 <= u_q <= 15);
-//    _ocp->subjectTo(-15 <= u_r <= 15);
-//
-//    _h << u_vx << u_vy << u_vz;
-//    _h << u_p << u_q << u_r;
-//
-//    if (_Q.getNumCols() != 6 || _Q.getNumRows() != 6)
-//    {
-//      std::cout << "Weight matrix size is not suitable for this model" << std::endl;
-//    }
-
-  }
-
   _ocp->minimizeLSQ(_Q, _h, _refVec);
   _ocp->subjectTo(_f);
-}
 
-bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request &req,
-                                    intel_teleop_msgs::startOptControl::Response &ans)
-{
+
   // SET UP THE MPC CONTROLLER:
   // --------------------------
   _alg = std::unique_ptr<RealTimeAlgorithm>(new RealTimeAlgorithm(*_ocp));
@@ -172,10 +127,37 @@ bool Optcontrol::completeSimulation(intel_teleop_msgs::startOptControl::Request 
 
   _previousClock = ros::Time::now();
   _t = 0.;
-
-  return true;
 }
 
+
+double Optcontrol::distCyl(const Cylinder &cyl, double x, double y, double z)
+{
+  double length{ std::sqrt( std::pow( cyl.c1.x - cyl.c2.x, 2. ) +
+                            std::pow( cyl.c1.y - cyl.c2.y, 2. ) +
+                            std::pow( cyl.c1.z - cyl.c2.z, 2. ) ) };
+
+  std::array< double, 3 > V{ ( cyl.c2.x - cyl.c1.x ) / length, ( cyl.c2.y - cyl.c1.y ) / length, ( cyl.c2.z - cyl.c1.z ) / length };
+
+  double distOrtho{ std::sqrt( std::pow( ( x - cyl.c1.x ) * V[ 1 ] - ( y - cyl.c1.y ) * V[ 0 ], 2. ) +
+                               std::pow( ( y - cyl.c1.y ) * V[ 2 ] - ( z - cyl.c1.z ) * V[ 1 ], 2. ) +
+                               std::pow( ( z - cyl.c1.z ) * V[ 0 ] - ( x - cyl.c1.x ) * V[ 2 ], 2. ) ) };
+
+  double k{ ( V[ 0 ] * ( x - cyl.c1.x ) + V[ 1 ] * ( y - cyl.c1.y ) + V[ 2 ] * ( z - cyl.c1.z ) ) /
+            ( std::pow( V[ 0 ], 2.0) + std::pow( V[ 1 ], 2.0) + std::pow( V[ 2 ], 2.0) ) };
+
+  if( k < 0.0 )
+    return std::sqrt( std::pow( k, 2. ) + std::pow( distOrtho, 2. ) );
+  else if( k > length )
+    return std::sqrt( std::pow( k - length, 2. ) + std::pow( distOrtho, 2. ) );
+  else
+    return distOrtho;
+}
+
+
+DVector Optcontrol::avoidance()
+{
+
+}
 
 DVector Optcontrol::solveOptimalControl()
 {
@@ -184,17 +166,6 @@ DVector Optcontrol::solveOptimalControl()
 
   auto localRef = _refVec;
 
-  double dist{ std::sqrt( std::pow( _xEst[ 0 ] - 5., 2. ) + std::pow( _xEst[ 1 ] - 0., 2. ) ) };
-  double angle{ std::atan2( _xEst[ 1 ] - 0., _xEst[ 0 ] - 5. ) };
-  double speed{ std::sqrt( std::pow( localRef[ 0 ], 2. ) + std::pow( localRef[ 1 ], 2. ) ) };
-
-  if( dist < 3. )
-  {
-    localRef[ 1 ] += std::max( 1., 3. - dist ) * speed * cos( angle );
-    localRef[ 0 ] += std::max( 1., 3. - dist ) * speed * sin( angle );
-  }
-
-  ROS_INFO( "Traj : %f, %f", localRef[ 0 ], localRef[ 1 ] );
 
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};

@@ -39,21 +39,39 @@ private:
 
     DVector _currentState;
 
+    struct Point3D
+    {
+        double x, y, z;
+        Point3D( double x, double y, double z ) : x{ x }, y{ y }, z{ z } {}
+    };
+    struct Cylinder
+    {
+        double radius;
+        Point3D c1, c2;
+        Cylinder( double radius, double x1, double y1, double z1, double x2, double y2, double z2 )
+            : radius{ radius }, c1{ x1, y1, z1 }, c2{ x2, y2, z2 }
+        {}
+    };
+
+    std::vector< Cylinder > _cylinders;
+
+    double distCyl( const Cylinder& cyl, double x, double y, double z );
+
+    DVector avoidance();
+
+
 public:
 
-    Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD = true);
+    Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const double dt);
 
 
-    void init( DMatrix &Q, const double t_in, const double t_fin, const double dt, bool isPWD );
+    void init( DMatrix &Q, const double t_in, const double t_fin, const double dt );
 
-    bool addCylinder( intel_teleop_msgs::addCylinderOptControl::Request &c,
+    bool addCylinder( intel_teleop_msgs::addCylinderOptControl::Request &cyl,
                       intel_teleop_msgs::addCylinderOptControl::Response &answer );
 
-    bool addEllipse( intel_teleop_msgs::addEllipseOptControl::Request &req,
-                     intel_teleop_msgs::addEllipseOptControl::Response &ans );
-
-    bool completeSimulation( intel_teleop_msgs::startOptControl::Request &req,
-                             intel_teleop_msgs::startOptControl::Response &ans );
+//    bool addEllipse( intel_teleop_msgs::addEllipseOptControl::Request &req,
+//                     intel_teleop_msgs::addEllipseOptControl::Response &ans );
 
     DVector solveOptimalControl( );
 

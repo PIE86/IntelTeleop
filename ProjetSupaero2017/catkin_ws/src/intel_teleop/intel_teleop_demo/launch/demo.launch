@@ -29,12 +29,13 @@
   <!-- Optimal Control -->
   <node name="opt_control" pkg="intel_teleop_optcontrol" type="optimal_control" output="screen" />
 
+  <!-- Environment -->
+  <node name="" pkg="intel_teleop_ground" type="ground" />
 
   <!-- intel teleop nodes
   <node name="" pkg="intel_teleop_" type="" />
   <node name="" pkg="intel_teleop_controller" type="" />
   <node name="" pkg="intel_teleop_estimator" type="" />
-  <node name="" pkg="intel_teleop_ground" type="" />
   <node name="" pkg="intel_teleop_optcontrol" type="" />
   <node name="" pkg="intel_teleop_ui" type="" /> -->
 

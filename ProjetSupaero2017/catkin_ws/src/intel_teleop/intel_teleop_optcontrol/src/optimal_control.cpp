@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;
 
-//  servers.push_back( n.advertiseService("addCylinderOptControl", &Optcontrol::addCylinder, &optControl ) );
-  servers.push_back( n.advertiseService("addEllipseOptControl", &Optcontrol::addEllipse, &optControl ) );
-  servers.push_back( n.advertiseService("startOptControl", &Optcontrol::completeSimulation, &optControl ) );
+  servers.push_back( n.advertiseService("addCylinderOptControl", &Optcontrol::addCylinder, &optControl ) );
+//  servers.push_back( n.advertiseService("addEllipseOptControl", &Optcontrol::addEllipse, &optControl ) );
+//  servers.push_back( n.advertiseService("startOptControl", &Optcontrol::completeSimulation, &optControl ) );
 
   // Ajouter un topic pour récupérer la clock de gazebo.
   // /clock -> publication tick gazebo pour connaître le t entre deux pas de simulation.
@@ -94,13 +94,10 @@ int main(int argc, char **argv) {
     }
 
     hector_uav_msgs::MotorPWM cmdMsg;
-    cmdVec[ 0 ] = static_cast< unsigned char >( cmd( 0 ) );//* 0 + 90;
-    cmdVec[ 1 ] = static_cast< unsigned char >( cmd( 1 ) );// * 0 + 90;
-    cmdVec[ 2 ] = static_cast< unsigned char >( cmd( 2 ) );// * 0 + 90;
-    cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );// * 0 + 90;
-
-    if( cmdVec[ 0 ] == 0 )
-      cmdVec[ 1 ] = cmdVec[ 3 ] = cmdVec[ 0 ] = cmdVec[ 2 ] = 0;
+    cmdVec[ 0 ] = static_cast< unsigned char >( cmd( 0 ) );
+    cmdVec[ 1 ] = static_cast< unsigned char >( cmd( 1 ) );
+    cmdVec[ 2 ] = static_cast< unsigned char >( cmd( 2 ) );
+    cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );
 
     cmdMsg.pwm = cmdVec;
     motor_command.publish( cmdMsg ); // Publish msg
