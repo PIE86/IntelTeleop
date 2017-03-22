@@ -57,7 +57,7 @@ private:
 
     double distCyl( const Cylinder& cyl, double x, double y, double z );
 
-    DVector avoidance();
+    DVector avoidance( DVector& localRef );
 
 
 public:

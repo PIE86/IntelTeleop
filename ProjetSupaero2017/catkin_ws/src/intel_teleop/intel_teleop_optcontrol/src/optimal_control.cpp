@@ -27,14 +27,14 @@ int main(int argc, char **argv) {
 
   // Ponderations
   DMatrix Q(12,12);
-  Q(0,0) = Q(1,1) = 5;
+  Q(0,0) = Q(1,1) = 1.5;
   Q(2,2) = 10;
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
   Q(7,7) = Q(8,8) = 1;
-  Q(9,9) = Q(10,10) = Q(11,11) = 0.1; //0.05
+  Q(9,9) = Q(10,10) = Q(11,11) = 0.3; //0.05
 
 
-  Optcontrol optControl{ Q, 0., 0.04, 0.04 };
+  Optcontrol optControl{ Q, 0., 0.6, 0.1 };
 
   // Advertises the services used by the simulation.
   std::vector< ros::ServiceServer > servers;
@@ -86,19 +86,25 @@ int main(int argc, char **argv) {
     // Gets subscriptions.
     ros::spinOnce();
 
-    auto cmd = optControl.solveOptimalControl();
     if( ++i == 200 )
     {
       i = 0;
       optControl.reset();
     }
 
-    hector_uav_msgs::MotorPWM cmdMsg;
-    cmdVec[ 0 ] = static_cast< unsigned char >( cmd( 0 ) );
-    cmdVec[ 1 ] = static_cast< unsigned char >( cmd( 1 ) );
-    cmdVec[ 2 ] = static_cast< unsigned char >( cmd( 2 ) );
-    cmdVec[ 3 ] = static_cast< unsigned char >( cmd( 3 ) );
+//    if( i % 2 == 0 )
+//    {
+      auto cmd = optControl.solveOptimalControl();
 
+      cmdVec[0] = static_cast< unsigned char >( cmd(0));
+      cmdVec[1] = static_cast< unsigned char >( cmd(1));
+      cmdVec[2] = static_cast< unsigned char >( cmd(2));
+      cmdVec[3] = static_cast< unsigned char >( cmd(3));
+//    }
+
+//    cmdVec[ 3 ] = cmdVec[ 2 ] = cmdVec[ 1 ] = cmdVec[ 0 ];
+
+    hector_uav_msgs::MotorPWM cmdMsg;
     cmdMsg.pwm = cmdVec;
     motor_command.publish( cmdMsg ); // Publish msg
 

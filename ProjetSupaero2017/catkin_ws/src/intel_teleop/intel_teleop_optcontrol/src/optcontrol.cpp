@@ -23,7 +23,7 @@ bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &
   if ( _t > -0.5 )
     return false;
 
-  _cylinders.emplace_back( cyl.radius, cyl.x1, cyl.y1, cyl.z1, cyl.x2, cyl.y2, cyl.z2 );
+  _cylinders.push_back( Cylinder{ cyl.radius, cyl.x1, cyl.y1, cyl.z1, cyl.x2, cyl.y2, cyl.z2 } );
 
   return true;
 }
@@ -42,12 +42,13 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
   _Q = Q;
   _refVec = DVector{ 12 };
-  _refVec[ 3 ] = _refVec[ 4 ] = _refVec[ 5 ] = _refVec[ 6 ] = 119;
+  _refVec[ 3 ] = _refVec[ 4 ] = _refVec[ 5 ] = _refVec[ 6 ] = 122;
+  _lastU = DVector{ 4 };
 
   // Introducing constants
-  const double c = 0.000005;
-  const double Cf = 0.00025; // Plutôt mettre vers 0.0003
-  const double d = 0.4;
+  const double c = 0.000025;
+  const double Cf = 0.000246;
+  const double d = 0.250;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
   const double Jz = 0.0218;
@@ -76,10 +77,9 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     _f << dot(psi) == sin(phi) / cos(theta) * q + cos(phi) / cos(theta) * r;
     _f << dot(theta) == cos(phi) * q - sin(phi) * r;
     _f << dot(phi) == p + sin(phi) * tan(theta) * q + cos(phi) * tan(theta) * r;
-    _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx; // OK au coef près
-    _f << dot(q) == -(d * Cf * (u1 * u1 - u3 * u3) + (Jz - Jx) * p * r) / Jy; // OK au coef près
-    _f << dot(r) == -(c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz; // OK au coef c près
-
+    _f << dot(p) == (d * Cf * (u4 * u4 - u2 * u2) + (Jy - Jz) * q * r) / Jx;
+    _f << dot(q) == -(d * Cf * (u1 * u1 - u3 * u3) + (Jx - Jz) * p * r) / Jy;
+    _f << dot(r) == -(c * (-u1 * u1 + u2 * u2 - u3 * u3 + u4 * u4) + (Jx - Jy) * p * q) / Jz;
 
 
 
@@ -90,9 +90,9 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
     _ocp->subjectTo(25 <= u4 <= 180);
 //    _ocp->subjectTo( u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4 == 40000 );
     // Constraint to avoid singularity
-    _ocp->subjectTo(-1. <= theta <= 1.);
+    _ocp->subjectTo(-1.5 <= theta <= 1.5);
     // Trying to save the day
-    _ocp->subjectTo(-1. <= phi <= 1.);
+    _ocp->subjectTo(-1.5 <= phi <= 1.5);
 
 
     _h << vx << vy << vz;
@@ -115,7 +115,7 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
   _alg = std::unique_ptr<RealTimeAlgorithm>(new RealTimeAlgorithm(*_ocp));
   _alg->set(HESSIAN_APPROXIMATION, GAUSS_NEWTON );
   _alg->set(INTEGRATOR_TYPE, INT_RK45);
-  _alg->set(MAX_NUM_ITERATIONS, 1);
+  _alg->set(MAX_NUM_ITERATIONS, 3);
   _alg->set(PRINT_COPYRIGHT, false);
   _alg->set(DISCRETIZATION_TYPE, MULTIPLE_SHOOTING);
 
@@ -154,9 +154,22 @@ double Optcontrol::distCyl(const Cylinder &cyl, double x, double y, double z)
 }
 
 
-DVector Optcontrol::avoidance()
+DVector Optcontrol::avoidance( DVector& localRef )
 {
+  for( int i{ 0 } ; i < _cylinders.size() ; i++ )
+  {
+    double dist{std::sqrt(std::pow(_xEst[0] - _cylinders[ i ].c1.x, 2.) + std::pow(_xEst[1] - _cylinders[ i ].c1.y, 2.))};
+    double angle{std::atan2(_xEst[1] - 0., _xEst[0] - 5.)};
+    double speed{std::sqrt(std::pow(localRef[0], 2.) + std::pow(localRef[1], 2.))};
 
+    if( dist < 4. )
+    {
+     localRef[ 0 ] = -speed * cos( angle );
+     localRef[ 1 ] = -speed * sin( angle );
+    }
+  }
+
+  return localRef;
 }
 
 DVector Optcontrol::solveOptimalControl()
@@ -164,15 +177,17 @@ DVector Optcontrol::solveOptimalControl()
   if( _t < -0.5 )
     return DVector{ 4 };
 
-  auto localRef = _refVec;
+  auto localRef = avoidance( _refVec );
 
 
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};
 //  DVector refVecN(10, refT);
-  VariablesGrid referenceVG( localRef, Grid{_t, _t + 0.04, 2});
+  VariablesGrid referenceVG( localRef, Grid{_t, _t + 0.6, static_cast< int >( 0.6 / 0.1 )});
+  referenceVG.setVector( 0, _lastRefVec );
   //referenceVG.setVector(0, _refVec);
   _alg->setReference(referenceVG);
+  _lastRefVec = localRef;
 //  setrefVec(refVecN);
 
 
@@ -201,7 +216,6 @@ X = Y.getLastVector();
   DVector u(4);
 
   _controller->getU(u);
-
 
   auto currentClock{ ros::Time::now() };
   double dt{ ( currentClock - _previousClock ).toSec() };
