@@ -20,7 +20,7 @@ Optcontrol::Optcontrol(DMatrix &Q, const double t_in, const double t_fin, const 
 bool Optcontrol::addCylinder(intel_teleop_msgs::addCylinderOptControl::Request &cyl,
                              intel_teleop_msgs::addCylinderOptControl::Response &answer)
 {
-  if ( _t > -0.5 )
+  if ( _t < 0.5 )
     return false;
 
   _cylinders.push_back( Cylinder{ cyl.radius, cyl.x1, cyl.y1, cyl.z1, cyl.x2, cyl.y2, cyl.z2 } );
@@ -43,12 +43,11 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
   _Q = Q;
   _refVec = DVector{ 12 };
   _refVec[ 3 ] = _refVec[ 4 ] = _refVec[ 5 ] = _refVec[ 6 ] = 122;
-  _lastU = DVector{ 4 };
 
   // Introducing constants
   const double c = 0.000025;
   const double Cf = 0.000246;
-  const double d = 0.250;
+  const double d = 0.275;
   const double Jx = 0.01152;
   const double Jy = 0.01152;
   const double Jz = 0.0218;
@@ -84,15 +83,17 @@ void Optcontrol::init(DMatrix &Q, const double t_in, const double t_fin, const d
 
 
     // Constraints on the velocity of each propeller
-    _ocp->subjectTo(25 <= u1 <= 180); // Ne pas mettre le min à 0, l'optimisation a tendance à garder cette valeur et il n'y a plus que u1 qui travaille.
-    _ocp->subjectTo(25 <= u2 <= 180);
-    _ocp->subjectTo(25 <= u3 <= 180);
-    _ocp->subjectTo(25 <= u4 <= 180);
-//    _ocp->subjectTo( u1 * u1 + u2 * u2 + u3 * u3 + u4 * u4 == 40000 );
+    _ocp->subjectTo(25 <= u1 <= 225);
+    _ocp->subjectTo(25 <= u2 <= 225);
+    _ocp->subjectTo(25 <= u3 <= 225);
+    _ocp->subjectTo(25 <= u4 <= 225);
+
     // Constraint to avoid singularity
-    _ocp->subjectTo(-1.5 <= theta <= 1.5);
-    // Trying to save the day
-    _ocp->subjectTo(-1.5 <= phi <= 1.5);
+    _ocp->subjectTo(-1.25 <= theta <= 1.25);
+    // Constraint to avoid flipping over.
+    _ocp->subjectTo(-1.25 <= phi <= 1.25);
+
+
 
 
     _h << vx << vy << vz;
@@ -159,13 +160,23 @@ DVector Optcontrol::avoidance( DVector& localRef )
   for( int i{ 0 } ; i < _cylinders.size() ; i++ )
   {
     double dist{std::sqrt(std::pow(_xEst[0] - _cylinders[ i ].c1.x, 2.) + std::pow(_xEst[1] - _cylinders[ i ].c1.y, 2.))};
-    double angle{std::atan2(_xEst[1] - 0., _xEst[0] - 5.)};
+    double angle{std::atan2(_xEst[1] - _cylinders[ i ].c1.y, _xEst[0] - _cylinders[ i ].c1.x )};
     double speed{std::sqrt(std::pow(localRef[0], 2.) + std::pow(localRef[1], 2.))};
 
-    if( dist < 4. )
+    // 0.75 is the approximate radius of the drone.
+    if( dist < _cylinders[ i ].radius + 0.75 )
     {
-     localRef[ 0 ] = -speed * cos( angle );
-     localRef[ 1 ] = -speed * sin( angle );
+      ROS_ERROR( "Collision" );
+    }
+    else if( dist < _cylinders[ i ].radius * 3. + 0.75 )
+    {
+      localRef[ 0 ] += ( 2. + speed ) * cos( angle );
+      localRef[ 1 ] += ( 2. + speed ) * sin( angle );
+    }
+    else if( dist < _cylinders[ i ].radius * 5. + 0.75 )
+    {
+      localRef[ 0 ] += ( 5. - dist ) / 2.5 * ( 2. + speed ) * cos( angle );
+      localRef[ 1 ] += ( 5. - dist ) / 2.5 * ( 2. + speed ) * sin( angle );
     }
   }
 
@@ -178,7 +189,27 @@ DVector Optcontrol::solveOptimalControl()
     return DVector{ 4 };
 
   auto localRef = avoidance( _refVec );
-
+//
+//  auto localRef = _refVec;
+//
+//  double dist{ std::sqrt( std::pow( _xEst[ 0 ] - 5., 2. ) + std::pow( _xEst[ 1 ] - 0., 2. ) ) };
+//  double angle{ std::atan2( _xEst[ 1 ] - 0., _xEst[ 0 ] - 5. ) };
+//  double speed{ std::sqrt( std::pow( localRef[ 0 ], 2. ) + std::pow( localRef[ 1 ], 2. ) ) };
+//
+//  if( dist < 1. )
+//  {
+//    ROS_ERROR( "Collision" );
+//  }
+//  else if( dist < 2. )
+//  {
+//    localRef[ 0 ] += ( 2. + speed ) * cos( angle );
+//    localRef[ 1 ] += ( 2. + speed ) * sin( angle );
+//  }
+//  else if( dist < 4. )
+//  {
+//    localRef[ 0 ] += ( 4. - dist ) / 2. * ( 1. + speed ) * cos( angle );
+//    localRef[ 1 ] += ( 4. - dist ) / 2. * ( 1. + speed ) * sin( angle );
+//  }
 
   //double refT[10] = {NewRefVec[0], NewRefVec[1], NewRefVec[2], 0., 0., 0., 0., 0., 0., 0.};
 //  double refT[10] = {0., 0., 1., 0., 0., 0., 0., 0., 0., 0.};

@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
   // Ponderations
   DMatrix Q(12,12);
-  Q(0,0) = Q(1,1) = 1.5;
+  Q(0,0) = Q(1,1) = 0.8;
   Q(2,2) = 10;
   Q(3,3) = Q(4,4) = Q(5,5) = Q(6,6) = 1e-6;
   Q(7,7) = Q(8,8) = 1;
