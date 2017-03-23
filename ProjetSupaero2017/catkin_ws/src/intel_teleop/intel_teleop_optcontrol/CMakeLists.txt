@@ -86,7 +86,7 @@ include_directories(include
 #add_library(baro src/baro.cpp)
 #target_link_libraries(baro ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(optcontrol src/optcontrol.cpp src/model.cpp)
+add_library(optcontrol src/optcontrol.cpp )
 target_link_libraries(optcontrol ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
 add_dependencies( optcontrol intel_teleop_msgs_generate_messages_cpp )
 

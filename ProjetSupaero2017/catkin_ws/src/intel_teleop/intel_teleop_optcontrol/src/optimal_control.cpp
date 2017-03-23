@@ -8,22 +8,38 @@
 #include <intel_teleop_msgs/SpeedControl.h>
 #include <intel_teleop_msgs/MotorControl.h>
 #include <intel_teleop_msgs/UserInput.h>
+#include <intel_teleop_msgs/enableMotors.h>
 
 #include "hector_uav_msgs/MotorPWM.h"
 
 
-// Service pour ajouter cylindre
+class EnableMotorsFunctor
+{
+    bool *_var;
 
-// Service pour ajouter cube (avec sphère == ellipse autour)
+public:
+    EnableMotorsFunctor( bool *var ){ _var = var; }
 
-// Service pour ajouter sphere (avec ellipse autour)
+    bool operator()( intel_teleop_msgs::enableMotors::Request &rq,
+                     intel_teleop_msgs::enableMotors::Response &answer )
+    {
+      *_var = rq.enable;
 
-// Callback du topic /clock pour déclencher la màj de l'opt-control.
+      if( *_var )
+        ROS_INFO( "Motors enabled." );
+      else
+        ROS_INFO( "Motors disabled." );
+
+      return true;
+    }
+};
 
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "optimal_control");
   ros::NodeHandle n;
+
+  bool enableMotors{ true };
 
   // Ponderations
   DMatrix Q(12,12);
@@ -41,7 +57,9 @@ int main(int argc, char **argv) {
 
   servers.push_back( n.advertiseService("addCylinderOptControl", &Optcontrol::addCylinder, &optControl ) );
 //  servers.push_back( n.advertiseService("addEllipseOptControl", &Optcontrol::addEllipse, &optControl ) );
-//  servers.push_back( n.advertiseService("startOptControl", &Optcontrol::completeSimulation, &optControl ) );
+  servers.push_back( n.advertiseService< intel_teleop_msgs::enableMotors::Request,
+                                         intel_teleop_msgs::enableMotors::Response >
+      ("enableMotors", EnableMotorsFunctor( &enableMotors ) ) );
 
   // Ajouter un topic pour récupérer la clock de gazebo.
   // /clock -> publication tick gazebo pour connaître le t entre deux pas de simulation.
@@ -72,7 +90,7 @@ int main(int argc, char **argv) {
   sleep( 5 );
 
 
-  ros::Rate loop_rate( 50 );
+  ros::Rate loop_rate( 25 );
 
   std::vector< unsigned char > cmdVec( 4, 0 );
 
@@ -102,7 +120,8 @@ int main(int argc, char **argv) {
       cmdVec[3] = static_cast< unsigned char >( cmd(3));
 //    }
 
-//    cmdVec[ 3 ] = cmdVec[ 2 ] = cmdVec[ 1 ] = cmdVec[ 0 ];
+    if( !enableMotors )
+      cmdVec[ 3 ] = cmdVec[ 2 ] = cmdVec[ 1 ] = cmdVec[ 0 ] = 0;
 
     hector_uav_msgs::MotorPWM cmdMsg;
     cmdMsg.pwm = cmdVec;

@@ -59,7 +59,7 @@ add_message_files(
    FILES
    addCylinderOptControl.srv
    addEllipseOptControl.srv
-   startOptControl.srv
+   enableMotors.srv
  )
 
 ## Generate actions in the 'action' folder

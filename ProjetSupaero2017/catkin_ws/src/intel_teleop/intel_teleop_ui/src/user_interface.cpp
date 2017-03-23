@@ -5,14 +5,14 @@
  * ROS package: intel_teleop_ui
  * Date:        05/03/2017
  */
- 
- 
+
+
 // Include the ROS C++ APIs
 #include "ros/ros.h"
 
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Twist.h>
-#include <hector_uav_msgs/EnableMotors.h>
+#include <intel_teleop_msgs/enableMotors.h>
 #include <termios.h>
 #include <signal.h>
 
@@ -68,7 +68,7 @@ void getKeyboardInput();
 bool enableMotors(bool enable);
 
 double getJoystickAxis(const sensor_msgs::JoyConstPtr &joy, const int &axis);
-  
+
 bool getJoystickButton(const sensor_msgs::JoyConstPtr &joy, const int &button);
 
 
@@ -79,11 +79,11 @@ bool getJoystickButton(const sensor_msgs::JoyConstPtr &joy, const int &button);
 int main(int argc, char **argv)
 {
 	ROS_INFO("Initializing UI");
-	
+
 	ros::init(argc, argv, "user_interface");
-	
-	initialize();	
-	
+
+	initialize();
+
 	ros::Rate loop_rate(50);
 
 	loop_rate.sleep();
@@ -108,22 +108,22 @@ int main(int argc, char **argv)
 // Function implementation
 
 void initialize()
-{	
+{
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_param("~");
-	
+
 	nh_param.param<bool>("joystick", js, false);
-        
-    nh_param.param<int>("x_axis", x_axis, 5);
-    nh_param.param<int>("y_axis", y_axis, 4);
-    nh_param.param<int>("z_axis", z_axis, 2);
-    nh_param.param<int>("yaw_axis", yaw_axis, 1);
-		
-    nh_param.param<int>("motor_on_button", motor_on_button, 3);
-    nh_param.param<int>("motor_off_button", motor_off_button, 2);
-	
+
+	nh_param.param<int>("x_axis", x_axis, 5);
+	nh_param.param<int>("y_axis", y_axis, 4);
+	nh_param.param<int>("z_axis", z_axis, 2);
+	nh_param.param<int>("yaw_axis", yaw_axis, 1);
+
+	nh_param.param<int>("motor_on_button", motor_on_button, 3);
+	nh_param.param<int>("motor_off_button", motor_off_button, 2);
+
 	// Initialize user input message
-		
+
 	input.linear.x = 0.0;
 	input.linear.y = 0.0;
 	input.linear.z = 0.0;
@@ -136,18 +136,18 @@ void initialize()
 	if(js)
 	{
 		ROS_INFO("Command interface: joystick");
-		
+
 		joystick_topic = nh.subscribe("joy", 10, joyCallback);
 	}
 	else
 	{
 		ROS_INFO("Command interface: keyboard");
 	}
-	
-	motor_enable_service = nh.serviceClient<hector_uav_msgs::EnableMotors>("enable_motors");
+
+	motor_enable_service = nh.serviceClient< intel_teleop_msgs::enableMotors >("enableMotors");
 
 	signal(SIGINT,quit);
-	
+
 	// * Change terminal mode *
 
 	tcgetattr(STDIN_FILENO, &old_terminal);                       // Save old settings
@@ -164,140 +164,140 @@ void initialize()
 void quit(int sig)
 {
 	(void)sig; // Unused parameter
-	
+
 	tcsetattr(STDIN_FILENO, TCSANOW, &old_terminal);
-		
+
 	if(js)
 	{
 		joystick_topic.shutdown();
 	}
-		
+
 	ROS_INFO("Exiting UI...");
-	
+
 	ros::shutdown();
-	
+
 	exit(0);
 }
 
 
 void joyCallback(const sensor_msgs::JoyConstPtr &joy)
-{	
-    input.linear.x = getJoystickAxis(joy, x_axis) * TRANS_STEP_JS;
-    input.linear.y = getJoystickAxis(joy, y_axis) * TRANS_STEP_JS;
-    input.linear.z = getJoystickAxis(joy, z_axis) * TRANS_STEP_JS;
-    
-    input.angular.x = 0.0;
-    input.angular.y = 0.0;
-    input.angular.z = getJoystickAxis(joy, yaw_axis) * ROT_STEP_JS;
-    
-    user_input_topic.publish(input);
-		
+{
+	input.linear.x = getJoystickAxis(joy, x_axis) * TRANS_STEP_JS;
+	input.linear.y = getJoystickAxis(joy, y_axis) * TRANS_STEP_JS;
+	input.linear.z = getJoystickAxis(joy, z_axis) * TRANS_STEP_JS;
+
+	input.angular.x = 0.0;
+	input.angular.y = 0.0;
+	input.angular.z = getJoystickAxis(joy, yaw_axis) * ROT_STEP_JS;
+
+	user_input_topic.publish(input);
+
 	if (getJoystickButton(joy, motor_off_button))
-    {
-      if(enableMotors(false))
-		ROS_INFO("Disable motors");
-	  else
-	    ROS_WARN("Failed to disable motors");
-    }
-    else if (getJoystickButton(joy, motor_on_button))
-    {
-      if(enableMotors(true))
-		ROS_INFO("Enable motors");
-	  else
-	    ROS_WARN("Failed to enable motors");
-    }
+	{
+		if(enableMotors(false))
+			ROS_INFO("Disable motors");
+		else
+			ROS_WARN("Failed to disable motors");
+	}
+	else if (getJoystickButton(joy, motor_on_button))
+	{
+		if(enableMotors(true))
+			ROS_INFO("Enable motors");
+		else
+			ROS_WARN("Failed to enable motors");
+	}
 }
 
 
 void getKeyboardInput()
 {
 	// Get the next event from the keyboard
-	
+
 	int input_char;
-	
+
 	fflush(STDIN_FILENO);
-	
+
 	if(read(STDIN_FILENO, &input_char, 1) < 0)
-    {
+	{
 		perror("read():");
 		exit(-1);
-    }
-    
-    // Modify input message
-    
-    switch(input_char)
-    {
-      case KEYCODE_FORWARD:
-        ROS_INFO("FORWARD");
-        input.linear.x += TRANS_STEP_KB;
-        break;
-      case KEYCODE_BACKWARD:
-        ROS_INFO("BACKWARD");
-        input.linear.x -= TRANS_STEP_KB;
-        break;
-      case KEYCODE_LEFT:
-        ROS_INFO("LEFT");
-        input.linear.y += TRANS_STEP_KB;
-        break;
-      case KEYCODE_RIGHT:
-        ROS_INFO("RIGHT");
-        input.linear.y -= TRANS_STEP_KB;
-        break;
-      case KEYCODE_UP:
-        ROS_INFO("UP");
-        input.linear.z += TRANS_STEP_KB;
-        break;
-      case KEYCODE_DOWN:
-        ROS_INFO("DOWN");
-        input.linear.z -= TRANS_STEP_KB;
-        break;
-      case KEYCODE_CLOCKWISE:
-        ROS_INFO("CLOCKWISE");
-        input.angular.z -= ROT_STEP_KB;
-        break;
-      case KEYCODE_COUNTERCLOCKWISE:
-        ROS_INFO("COUNTERCLOCKWISE");
-        input.angular.z += ROT_STEP_KB;
-        break;
-      case KEYCODE_RESET:
-		ROS_INFO("RESET");
-		input.linear.x = 0.0;
-		input.linear.y = 0.0;
-		input.linear.z = 0.0;
-		input.angular.z = 0.0;
-        break;
-    }
-    
-    user_input_topic.publish(input);
-			
+	}
+
+	// Modify input message
+
+	switch(input_char)
+	{
+		case KEYCODE_FORWARD:
+			ROS_INFO("FORWARD");
+			input.linear.x = std::min( 2., input.linear.x + TRANS_STEP_KB );
+			break;
+		case KEYCODE_BACKWARD:
+			ROS_INFO("BACKWARD");
+			input.linear.x = std::max( -2., input.linear.x - TRANS_STEP_KB );
+			break;
+		case KEYCODE_LEFT:
+			ROS_INFO("LEFT");
+			input.linear.y = std::min( 2., input.linear.y - TRANS_STEP_KB );
+			break;
+		case KEYCODE_RIGHT:
+			ROS_INFO("RIGHT");
+			input.linear.y = std::max( -2., input.linear.y - TRANS_STEP_KB );
+			break;
+		case KEYCODE_UP:
+			ROS_INFO("UP");
+			input.linear.z = std::min( 2., input.linear.z - TRANS_STEP_KB );
+			break;
+		case KEYCODE_DOWN:
+			ROS_INFO("DOWN");
+			input.linear.z = std::max( -2., input.linear.z - TRANS_STEP_KB );
+			break;
+		case KEYCODE_CLOCKWISE:
+			ROS_INFO("CLOCKWISE");
+			input.angular.z = std::max( -2., input.angular.z - ROT_STEP_KB );
+			break;
+		case KEYCODE_COUNTERCLOCKWISE:
+			ROS_INFO("COUNTERCLOCKWISE");
+			input.angular.z = std::min( 2., input.angular.z + ROT_STEP_KB );
+			break;
+		case KEYCODE_RESET:
+			ROS_INFO("RESET");
+			input.linear.x = 0.0;
+			input.linear.y = 0.0;
+			input.linear.z = 0.0;
+			input.angular.z = 0.0;
+			break;
+	}
+
+	user_input_topic.publish(input);
+
 	if (input_char == KEYCODE_OFF)
-    {
-      if(enableMotors(false))
-		ROS_INFO("Disable motors");
-	  else
-	    ROS_WARN("Failed to disable motors");
-    }
-    else if (input_char == KEYCODE_ON)
-    {
-      if(enableMotors(true))
-		ROS_INFO("Enable motors");
-	  else
-	    ROS_WARN("Failed to enable motors");
-    }
+	{
+		if(enableMotors(false))
+			ROS_INFO("Disable motors");
+		else
+			ROS_WARN("Failed to disable motors");
+	}
+	else if (input_char == KEYCODE_ON)
+	{
+		if(enableMotors(true))
+			ROS_INFO("Enable motors");
+		else
+			ROS_WARN("Failed to enable motors");
+	}
 }
 
 
 bool enableMotors(bool enable)
-{		
+{
 	if (!motor_enable_service.waitForExistence(ros::Duration(5.0)))
 	{
 		ROS_WARN("Motor enable service not found");
 		return false;
 	}
 
-	hector_uav_msgs::EnableMotors srv;
+	intel_teleop_msgs::enableMotors srv;
 	srv.request.enable = enable;
-	
+
 	return motor_enable_service.call(srv);
 }
 
@@ -315,7 +315,7 @@ double getJoystickAxis(const sensor_msgs::JoyConstPtr &joy, const int &axis)
 	return output;
 }
 
-  
+
 bool getJoystickButton(const sensor_msgs::JoyConstPtr &joy, const int &button)
 {
 	if (button <= 0 || button > joy->buttons.size())

@@ -305,20 +305,17 @@ void Optcontrol::setPose(const geometry_msgs::PoseStamped::ConstPtr &pose)
   double t0{ 2. * ( w * x + y * z) };
   double t1{ 1. - 2. * ( std::pow( x, 2. ) + std::pow( y, 2. ) ) };
   _xEst[ 8 ] = std::atan2( t0, t1 );
-  ROS_INFO( "ROLL : %f", _xEst[ 8 ] );
 
   // pitch (y-axis rotation)
   double t2{ 2. * ( w * y - z * x ) };
   t2 = t2 > 1. ? 1. : t2;
   t2 = t2 < -1. ? -1. : t2;
   _xEst[ 7 ] = std::asin( t2 );
-  ROS_INFO( "PITCH : %f", _xEst[ 7 ] );
 
   // yaw (z-axis rotation)
   double t3{ 2. * ( w * z + x * y ) };
   double t4{ 1. - 2. * ( std::pow( y, 2. ) + std::pow( z, 2. ) ) };
   _xEst[ 6 ] = std::atan2( t3, t4 );
-  ROS_INFO( "YAW : %f", _xEst[ 6 ] );
 }
 
 void Optcontrol::setVelocities(const geometry_msgs::Vector3Stamped::ConstPtr &vel)
@@ -357,20 +354,17 @@ void Optcontrol::setGroundTruth(const nav_msgs::Odometry::ConstPtr &groundTruth)
   double t0{ 2. * ( w * x + y * z) };
   double t1{ 1. - 2. * ( std::pow( x, 2. ) + std::pow( y, 2. ) ) };
   _xEst[ 8 ] = std::atan2( t0, t1 );
-  ROS_INFO( "ROLL : %f", _xEst[ 8 ] );
 
   // pitch (y-axis rotation)
   double t2{ 2. * ( w * y - z * x ) };
   t2 = t2 > 1. ? 1. : t2;
   t2 = t2 < -1. ? -1. : t2;
   _xEst[ 7 ] = std::asin( t2 );
-  ROS_INFO( "PITCH : %f", _xEst[ 7 ] );
 
   // yaw (z-axis rotation)
   double t3{ 2. * ( w * z + x * y ) };
   double t4{ 1. - 2. * ( std::pow( y, 2. ) + std::pow( z, 2. ) ) };
   _xEst[ 6 ] = std::atan2( t3, t4 );
-  ROS_INFO( "YAW : %f", _xEst[ 6 ] );
 
 //  _xEst[ 9 ] = groundTruth->twist.twist.angular.x;
 //  _xEst[ 10 ] = groundTruth->twist.twist.angular.y;

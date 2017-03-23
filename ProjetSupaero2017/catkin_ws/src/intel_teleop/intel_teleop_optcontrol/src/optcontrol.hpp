@@ -2,7 +2,7 @@
 
 #include <ros/ros.h>
 
-#include "model.hpp"
+#include <acado_toolkit.hpp>
 
 #include "intel_teleop_msgs/addCylinderOptControl.h"
 #include "intel_teleop_msgs/addEllipseOptControl.h"
@@ -14,6 +14,7 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 
+USING_NAMESPACE_ACADO
 
 class Optcontrol {
 
