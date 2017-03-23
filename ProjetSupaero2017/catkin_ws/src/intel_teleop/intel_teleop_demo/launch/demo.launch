@@ -1,5 +1,7 @@
 <launch>
   <!-- Launch Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+  
+  <!-- get user argument to use joystick or not (keyboard is default) -->
   <arg name="joystick" default="false"/>
 
   <!-- load world file -->
