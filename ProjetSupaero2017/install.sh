@@ -19,4 +19,3 @@ sudo apt-get install ros-kinetic-joy
 
 cd ..
 catkin_make
-source devel/setup.bash
