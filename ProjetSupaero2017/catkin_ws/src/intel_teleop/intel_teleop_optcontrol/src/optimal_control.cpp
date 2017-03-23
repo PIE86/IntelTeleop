@@ -8,7 +8,9 @@
 
 #include "hector_uav_msgs/MotorPWM.h"
 
-
+/// -------------------------
+/// Function to stop/start the motors
+/// -------------------------
 class EnableMotorsFunctor
 {
 	bool *_var;
@@ -41,43 +43,44 @@ int main( int argc, char **argv )
 
 	// Ponderations
 	DMatrix Q( 12, 12 );
-	Q( 0, 0 ) = Q( 1, 1 ) = 0.8;
-	Q( 2, 2 ) = 10;
-	Q( 3, 3 ) = Q( 4, 4 ) = Q( 5, 5 ) = Q( 6, 6 ) = 1e-6;
-	Q( 7, 7 ) = Q( 8, 8 ) = 1;
-	Q( 9, 9 ) = Q( 10, 10 ) = Q( 11, 11 ) = 0.3; //0.05
+	Q( 0, 0 ) = Q( 1, 1 ) = 0.8; // Velocites along X and Y axis
+	Q( 2, 2 ) = 10; // Velocity along Z axis
+	Q( 3, 3 ) = Q( 4, 4 ) = Q( 5, 5 ) = Q( 6, 6 ) = 1e-6; // Motors PWM
+	Q( 7, 7 ) = Q( 8, 8 ) = 1; // Phi and Theta: Attitude
+	Q( 9, 9 ) = Q( 10, 10 ) = Q( 11, 11 ) = 0.3; // Angular velocities
 
-
+	// Optimal Control during 0.6 second with steps lasting 0.1 second
 	Optcontrol optControl{ Q, 0., 0.6, 0.1 };
 
-	// Advertises the services used by the simulation.
-	std::vector <ros::ServiceServer> servers;
 
+	std::vector <ros::ServiceServer> servers;
 	servers.push_back( n.advertiseService( "addCylinderOptControl", &Optcontrol::addCylinder, &optControl ));
 	servers.push_back( n.advertiseService< intel_teleop_msgs::enableMotors::Request,
 			intel_teleop_msgs::enableMotors::Response >
 			                    ( "enableMotors", EnableMotorsFunctor( &enableMotors )));
 
+	// IMU to receive angular velocities in the drone body frame
 	auto imuSub = n.subscribe< sensor_msgs::Imu >( "/raw_imu", 1, &Optcontrol::setAngularVelocities, &optControl );
 
+	// Estimated linear velocities and pose of the drone. Noisy.
 //  auto poseSub = n.subscribe< geometry_msgs::PoseStamped >( "/pose", 1, &Optcontrol::setPose, &optControl );
 //  auto velSub = n.subscribe< geometry_msgs::Vector3Stamped >( "/velocity", 1, &Optcontrol::setVelocities, &optControl );
-	auto groundTruthSub = n
-			.subscribe< nav_msgs::Odometry >( "/ground_truth/state", 1, &Optcontrol::setGroundTruth, &optControl );
+	// Ground truth, no noise.
+	auto groundTruthSub = n.subscribe< nav_msgs::Odometry >
+			                       ( "/ground_truth/state", 1, &Optcontrol::setGroundTruth, &optControl );
 
+	// Topic to receive the commands from the user interface
 	auto cmdSub = n.subscribe< geometry_msgs::Twist >( "/command_velocity", 1, &Optcontrol::setRefVec,
 	                                                   &optControl );
 
-	// Ajouter un topic pour envoyer les commandes de vol.
+	// Topic to send the PWM commands to the drone.
 	ros::Publisher motor_command = n.advertise< hector_uav_msgs::MotorPWM >( "/motor_pwm", 1 );
 
 
-	sleep( 5 );
-
 	ros::Rate loop_rate( 25 );
+	loop_rate.sleep();
 
 	std::vector< unsigned char > cmdVec( 4, 0 );
-
 	int i{ 0 };
 
 	while( ros::ok())
@@ -87,6 +90,7 @@ int main( int argc, char **argv )
 		// Gets subscriptions.
 		ros::spinOnce();
 
+		// Periodically resets the control to avoid memory and cpu bloating
 		if( ++i == 200 )
 		{
 			i = 0;

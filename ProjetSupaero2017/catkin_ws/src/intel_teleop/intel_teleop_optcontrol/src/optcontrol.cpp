@@ -14,7 +14,7 @@
 Optcontrol::Optcontrol( DMatrix &Q, const double t_in, const double t_fin, const double dt )
 		: _xEst{ 12 }
 {
-	// Create the Optimal Control Process running from t_in (0s) to t_fin(0.6s for us), with steps of dt(0.1s for us)
+	// Create the Optimal Control Problem running from t_in (0s) to t_fin(0.6s for us), with steps of dt(0.1s for us)
 	_ocp = std::unique_ptr< OCP >( new OCP( t_in, t_fin, static_cast< int >(( t_fin - t_in ) / dt )));
 
 
@@ -235,27 +235,6 @@ DVector Optcontrol::solveOptimalControl()
 
 	return u;
 }
-
-DMatrix Optcontrol::getMatrixQ()
-{
-	return _Q;
-}
-
-void Optcontrol::setMatrixQ( DMatrix &Q )
-{
-	_Q = Q;
-}
-
-DVector Optcontrol::getrefVec()
-{
-	return _refVec;
-}
-
-void Optcontrol::setrefVec( DVector &refVec )
-{
-	_refVec = refVec;
-}
-
 
 void Optcontrol::setAngularVelocities( const sensor_msgs::Imu::ConstPtr &imu )
 {
