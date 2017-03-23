@@ -1,34 +1,31 @@
 <launch>
-  <!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+  <!-- Launch Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
   <arg name="joystick" default="false"/>
 
-  <!-- world file -->
+  <!-- load world file -->
   <include file="$(find intel_teleop_demo)/launch/demo_world.launch" >
   </include>
 
-  <!-- hector quadrotor -->
+  <!-- spawn hector quadrotor -->
   <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor.launch" >
   </include>
 
-  <!-- teleoperation -->
+  <!-- launch user interface node -->
   <include file="$(find intel_teleop_demo)/launch/command_interface.launch" >
     <arg name="joy_dev" value="/dev/input/js2" />
     <arg name="joystick" value="$(arg joystick)" />
   </include>
 
-  <!-- parameters -->
-  <include file="$(find intel_teleop_demo)/launch/parameters_demo.launch" />
-
-  <!-- script calling service to enable motors -->
+  <!-- call script calling service to enable motors -->
   <node name="enable_motors" pkg="intel_teleop_demo" type="enable_motors.sh" output="screen" />
 
-  <!-- Pose Estimator -->
+  <!-- launch Hector Quadrotor pose estimator node -->
   <node name="pose_estimator" pkg="hector_quadrotor_pose_estimation" type="hector_quadrotor_pose_estimation" output="screen" />
 
-  <!-- Optimal Control -->
+  <!-- launch IntelTeleop optimal control -->
   <node name="opt_control" pkg="intel_teleop_optcontrol" type="optimal_control" output="screen" />
 
-  <!-- start rviz visualization 
+  <!-- start rviz visualization - optional
   <node pkg="rviz" type="rviz" name="rviz" args="-f $(find hector_quadrotor_demo)/rviz_cfg/outdoor_flight.vcg" /> -->
 
 </launch>
