@@ -76,49 +76,56 @@ roslaunch intel_teleop_demo demo.launch
 roslaunch intel_teleop_demo demo.launch joystick:=true
 ```
 
-This will launch Gazebo. You will see the drone surrounded by a test environnement. A terminal with the control node will open from which you can control the drone using the keyboard or the joystick depending on your choice. You should see how the drone avoids the obstacles as it flies.
+This will launch Gazebo. You will see the drone in an empty environnement, with only the ground and no obstacle. A terminal with the control node will open from which you can control the drone using the keyboard or the joystick depending on your choice. You should be able to control the drone in altitude and in position. See following section to add obstacles.
 
-## Code architecture
+
+### Managing the environnement
+
+For now, you can only add vertical and infinite cylinders. To do so, during run-time, use the following command :
+
+```
+
+```
+
+
+## Developper guide
 
 ### Launch file description
 
-Launching the demo.launch file creates several nodes to simulate and control the drone. We can look more closely at the launch file :
+Launching the demo.launch file loads the environnement description (world file) and creates several nodes to simulate and control the drone.
 
 ```
 <launch>
-  <!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+  <!-- Launch Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+  
+  <!-- get user argument to use joystick or not (keyboard is default) -->
   <arg name="joystick" default="false"/>
 
-  <!-- world file -->
+  <!-- load world file -->
   <include file="$(find intel_teleop_demo)/launch/demo_world.launch" >
   </include>
 
-  <!-- hector quadrotor -->
+  <!-- spawn hector quadrotor -->
   <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor.launch" >
   </include>
 
-  <!-- teleoperation -->
+  <!-- launch user interface node -->
   <include file="$(find intel_teleop_demo)/launch/command_interface.launch" >
     <arg name="joy_dev" value="/dev/input/js2" />
     <arg name="joystick" value="$(arg joystick)" />
   </include>
 
-  <!-- parameters -->
-  <include file="$(find intel_teleop_demo)/launch/parameters_demo.launch" />
-
-  <!-- script calling service to enable motors -->
+  <!-- call script calling service to enable motors -->
   <node name="enable_motors" pkg="intel_teleop_demo" type="enable_motors.sh" output="screen" />
 
-  <!-- Pose Estimator -->
+  <!-- launch Hector Quadrotor pose estimator node -->
   <node name="pose_estimator" pkg="hector_quadrotor_pose_estimation" type="hector_quadrotor_pose_estimation" output="screen" />
 
-  <!-- Optimal Control -->
+  <!-- launch IntelTeleop optimal control -->
   <node name="opt_control" pkg="intel_teleop_optcontrol" type="optimal_control" output="screen" />
 
-  <!-- start rviz visualization 
+  <!-- start rviz visualization - optional
   <node pkg="rviz" type="rviz" name="rviz" args="-f $(find hector_quadrotor_demo)/rviz_cfg/outdoor_flight.vcg" /> -->
 
 </launch>
 ```
-
-
