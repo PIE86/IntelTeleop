@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="joystick" default="false"/>
+  <arg name="joy_dev" default="/dev/input/js2" />
+
+  <node name="intel_teleop_user_interface" pkg="intel_teleop_ui" type="intel_teleop_user_interface" output="screen" >
+    <param name="joystick" value="$(arg joystick)"/>
+    <param name="x_axis" value="5"/>
+    <param name="y_axis" value="4"/>
+    <param name="z_axis" value="2"/>
+    <param name="yaw_axis" value="1"/>
+    <param name="motor_on_button" value="3"/>
+    <param name="motor_off_button" value="2"/>
+  </node>
+
+  <group if="$(arg joystick)">
+    <node name="joy" pkg="joy" type="joy_node" output="screen" >
+      <param name="dev" value="$(arg joy_dev)" />
+      <param name="autorepeat_rate" value="50" />
+      <param name="coalesce_interval" value="0.02" />
+    </node>
+  </group>
+
+</launch>

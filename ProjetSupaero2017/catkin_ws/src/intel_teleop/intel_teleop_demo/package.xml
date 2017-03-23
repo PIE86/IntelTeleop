@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package>
+    <name>intel_teleop_demo</name>
+    <version>0.7.0</version>
+    <description>The intel_teleop_demo package</description>
+    <maintainer email="bertrand.suderie@isae.fr">Bertrand</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <export>
+    </export>
+</package>
