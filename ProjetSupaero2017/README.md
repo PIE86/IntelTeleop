@@ -59,13 +59,7 @@ echo 'source ~/path/to/IntelTeleop/ProjectSupaero2017/catkin_ws/devel/setup.bash
 
 ## Running the demo
 
-First, launch a roscore in a new terminal:
-
-```
-roscore
-```
-
-In another terminal, run on of the following commands to run the demo using the keyboard (default) or the joystick:
+In a terminal, run on of the following commands to run the demo using the keyboard (default) or the joystick:
 
 ```
 roslaunch intel_teleop_demo demo.launch 
