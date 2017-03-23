@@ -49,7 +49,13 @@ cd ProjetSupaero2017
 sh install.sh
 ```
 
-The script will setup your catkin workspace and will download the Hector Quadrotor package.
+The script will init the catkin_workspace, download the Hector Quadrotor package (which can take some time) then build everything.
+
+Now source your catkin workspace with the following command when in catkin_ws:
+
+```
+source devel/setup.bash
+```
 
 * You will have to source your catkin workspace with every new terminal. You can add it to your bashrc to make it automatic:
 
