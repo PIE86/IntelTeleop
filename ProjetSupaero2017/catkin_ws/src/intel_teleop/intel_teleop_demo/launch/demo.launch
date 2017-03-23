@@ -28,15 +28,6 @@
   <!-- Optimal Control -->
   <node name="opt_control" pkg="intel_teleop_optcontrol" type="optimal_control" output="screen" />
 
-
-  <!-- intel teleop nodes
-  <node name="" pkg="intel_teleop_" type="" />
-  <node name="" pkg="intel_teleop_controller" type="" />
-  <node name="" pkg="intel_teleop_estimator" type="" />
-  <node name="" pkg="intel_teleop_ground" type="" />
-  <node name="" pkg="intel_teleop_optcontrol" type="" />
-  <node name="" pkg="intel_teleop_ui" type="" /> -->
-
   <!-- start rviz visualization 
   <node pkg="rviz" type="rviz" name="rviz" args="-f $(find hector_quadrotor_demo)/rviz_cfg/outdoor_flight.vcg" /> -->
 
