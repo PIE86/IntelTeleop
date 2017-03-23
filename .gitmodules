@@ -1,0 +1,15 @@
+[submodule "ProjetSupaero2017/catkin_ws/src/hector_quadrotor"]
+	path = ProjetSupaero2017/catkin_ws/src/hector_quadrotor
+	url = https://github.com/tu-darmstadt-ros-pkg/hector_quadrotor
+[submodule "ProjetSupaero2017/catkin_ws/src/hector_localization"]
+	path = ProjetSupaero2017/catkin_ws/src/hector_localization
+	url = https://github.com/tu-darmstadt-ros-pkg/hector_localization
+[submodule "ProjetSupaero2017/catkin_ws/src/hector_gazebo"]
+	path = ProjetSupaero2017/catkin_ws/src/hector_gazebo
+	url = https://github.com/tu-darmstadt-ros-pkg/hector_gazebo
+[submodule "ProjetSupaero2017/catkin_ws/src/hector_models"]
+	path = ProjetSupaero2017/catkin_ws/src/hector_models
+	url = https://github.com/tu-darmstadt-ros-pkg/hector_models
+[submodule "ProjetSupaero2017/catkin_ws/src/hector_slam"]
+	path = ProjetSupaero2017/catkin_ws/src/hector_slam
+	url = https://github.com/tu-darmstadt-ros-pkg/hector_slam
