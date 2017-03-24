@@ -51,10 +51,10 @@ sh install.sh
 
 The script will setup your catkin workspace and will move 3 configuration files to Hector Quadrotor's submodules. Another way to do this would be to reference an updated fork of Hector containing the files, but we thought it would be a little overkill for the project.
 
-* You will have to source your catkin workspace with every new terminal. You can add it to your bashrc to make it automatic:
+Now source your catkin workspace with the following command when in catkin_ws:
 
 ```
-echo 'source ~/path/to/IntelTeleop/ProjectSupaero2017/catkin_ws/devel/setup.bash' >> ~/.bashrc
+source devel/setup.bash
 ```
 
 ## Running the demo
