@@ -81,12 +81,27 @@ This will launch Gazebo. You will see the drone in an empty environnement, with 
 
 ### Managing the environnement
 
-For now, you can only add vertical and infinite cylinders. To do so, during run-time, use the following command :
+For now, you can only add vertical and infinite (not visually) cylinders. To do so, during run-time, use the following command:
 
 ```
+rosservice call /addCylinder -- radius x1 y1 z1 x2 y2 z2
+```
+Where radius is the radius, x-y-z1 are the coordinates of the first circle of the cylinder and x-y-z2 the coordinates of the second circle. At the moment, you should only use it with vertical cylinders (x-y1 == x-y2 and z1 different from z2), because the internal avoidance algorithm is unaware of other types of cylinders.
+
+For example:
 
 ```
+rosservice call /addCylinder -- 1.0 10.0 0.0 0.0 10.0 0.0 5.0
+```
+Will create a 5m high cylinder with a 1m radius at the position 10, 0.
 
+You can also add wind to the simulation with the command:
+
+```
+rostopic pub -r 50 /wind geometry_msgs/Vector3 -- x y z
+```
+
+Which adds wind in the direction (x, y, z), with a force proportional to |(x, y, z)|.
 
 ## Developper guide
 
