@@ -10,18 +10,18 @@ using namespace std;
 void node_loop()
 {
     ROS_INFO("%s", "environment generator loop ");
-    vector<Point3D> points;
-    points.push_back(Point3D(1.0,1.0,1.0));
-    points.push_back(Point3D(1.0,3.0,3.0));
-    points.push_back(Point3D(3.0,1.0,1.0));
-    points.push_back(Point3D(3.0,3.0,3.0));
+    vector< vector<double> > points;
+    points.push_back(vector<double>{1.0,1.0,1.0});
+    points.push_back(vector<double>{1.0,3.0,3.0});
+    points.push_back(vector<double>{3.0,1.0,1.0});
+    points.push_back(vector<double>{3.0,3.0,3.0});
 
-    bool res = GetMinVollEllipsoid(points, 0.1);
+    Ellipsoid ellipse = GetMinVolEllipsoid(points, 0.1);
 }
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "environnement_generator");
+  ros::init(argc, argv, "environment_generator");
   ros::NodeHandle n;
 
   ros::Rate loop_rate(1);
