@@ -19,3 +19,7 @@ sudo apt-get install ros-kinetic-joy
 
 cd ..
 catkin_make
+
+/*** After the compilation, launch a roscore and test the installation:
+ *** roslaunch hector_quadrotor_demo outdoor_flight_gazebo.launch
+ ***/
