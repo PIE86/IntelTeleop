@@ -37,7 +37,7 @@ Le dossier ACADOtoolkit peut ensuite être supprimé.
 Download the IntelTeleop project from our github where you want it to be:
 
 ```
-git clone https://github.com/DianeBury/IntelTeleop.git
+git clone --recursive https://github.com/DianeBury/IntelTeleop.git
 ```
 
 ### Installing
@@ -49,18 +49,12 @@ cd ProjetSupaero2017
 sh install.sh
 ```
 
-The script will init the catkin_workspace, download the Hector Quadrotor package (which can take some time) then build everything.
+The script will setup your catkin workspace and will move 3 configuration files to Hector Quadrotor's submodules. Another way to do this would be to reference an updated fork of Hector containing the files, but we thought it would be a little overkill for the project.
 
 Now source your catkin workspace with the following command when in catkin_ws:
 
 ```
 source devel/setup.bash
-```
-
-* You will have to source your catkin workspace with every new terminal. You can add it to your bashrc to make it automatic:
-
-```
-echo 'source ~/path/to/IntelTeleop/ProjectSupaero2017/catkin_ws/devel/setup.bash' >> ~/.bashrc
 ```
 
 ## Running the demo
