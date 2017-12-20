@@ -40,7 +40,7 @@ Le dossier ACADOtoolkit peut ensuite être supprimé.
 Download the IntelTeleop project from our github where you want it to be:
 
 ```
-git clone --recursive https://github.com/DianeBury/IntelTeleop.git
+git clone --recursive https://github.com/PIE86/MemoryEnhancedPredictiveControl.git
 ```
 
 ### Installing
