@@ -1,10 +1,13 @@
-# IntelTeleop
+# IntelTeleop: a SUPAERO project
+
+This project was the subject of a university assignement. Two different teams of students developped different approaches to the project. The 2016 team developped a demonstrator, while the 2017 team developped a integrated simulation. 
+(This file contains the same instructions as the README.md in the ProjetSupaero2017 folder)
 
 This project implements optimal control for a smart teleoperation for a drone as ROS modules. It uses the Hector Quadrotor package for the simulation through Gazebo.
 
 ## Getting started
 
-Theses instructions will guide you through installing IntelTeleop
+Theses instructions will guide you through installing IntelTeleop.
 
 ### Prerequisites
 
@@ -37,7 +40,7 @@ Le dossier ACADOtoolkit peut ensuite être supprimé.
 Download the IntelTeleop project from our github where you want it to be:
 
 ```
-git clone --recursive https://github.com/DianeBury/IntelTeleop.git
+git clone --recursive https://github.com/PIE86/MemoryEnhancedPredictiveControl.git
 ```
 
 ### Installing
