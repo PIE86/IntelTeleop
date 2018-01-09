@@ -1,8 +1,7 @@
 TODO
 
 
-## Pense bête
-#### Ajouter le projet au ROS_PACKAGE_PATH: 
-Se placer dans catkin_ws du projet 2018 puis:
-`source devel/setup.bash`
+## Reminder
+#### Add project path to ROS_PACKAGE_PATH:
+In catkin_ws directory of 2018 project, run `source devel/setup.bash`
 
