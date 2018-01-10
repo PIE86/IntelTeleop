@@ -4,6 +4,8 @@
   <version>0.0.0</version>
   <description>The car_model_description package</description>
 
+  <license>TODO</license>
+
   <maintainer email="martin.renou@gmail.com">martinRenou</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
