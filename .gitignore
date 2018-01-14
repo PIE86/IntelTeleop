@@ -1,3 +1,5 @@
+*.pyc
+
 ProjetSupaero2016/build
 ProjetSupaero2016/build/*
 ACADOtoolkit
