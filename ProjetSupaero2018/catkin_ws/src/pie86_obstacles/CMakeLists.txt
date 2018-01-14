@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(roadmap)
+project(pie86_obstacles)
 
 
 ## Find catkin macros and libraries
@@ -48,8 +48,8 @@ find_package(catkin REQUIRED COMPONENTS
  add_service_files(
    FILES
    ReadObstacles.srv
-   PointValid.srv
-   ConnectionValid.srv
+   CheckPoint.srv
+   CheckConnection.srv
  )
 
 ## Generate actions in the 'action' folder
