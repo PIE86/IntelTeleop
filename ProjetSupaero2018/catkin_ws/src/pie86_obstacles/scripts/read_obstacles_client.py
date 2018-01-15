@@ -2,7 +2,7 @@
 
 import sys
 import rospy
-from pie86_obstacles.srv import *
+from obstacles.srv import *
 
 def read_obstacles_client(file_name):
     rospy.wait_for_service('read_obstacles')

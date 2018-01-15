@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>roadmap</name>
+  <name>pie86_obstacles</name>
   <version>0.0.0</version>
-  <description>The roadmap package</description>
+  <description>The obstacles package</description>
 
   <maintainer email="william.jussiau@supaero.isae.fr">William Jussiau</maintainer>
   <license>LGPLv3</license>
@@ -15,7 +15,6 @@
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-  <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   

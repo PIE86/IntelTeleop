@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-from pie86_obstacles.srv import *
+from obstacles.srv import *
 import rospy
-import read_obstacles
+import obstacles_functions
 
 def handle_obstacles(req):
     print "Returning obstacles from file [%s]"%(req.file)
-    vec, size = read_obstacles.read_obstacles_function(req.file)
+    vec, size = obstacles_functions.read_obstacles_function(req.file)
     
-    print "Obstacles read are : [%s]"%(vec)
+    print "Obstacles of size %s are : [%s]"%(size,vec)
     return ReadObstaclesResponse(size, vec)
 
 def read_obstacles_server():
