@@ -2,7 +2,7 @@
 
 import sys
 import rospy
-from obstacles.srv import *
+from pie86_obstacles.srv import *
 
 global SERVICE_NAME
 SERVICE_NAME = 'check_point'

@@ -1,4 +1,6 @@
 *.pyc
+**/.ipynb_checkpoints
+*.ipynb
 
 ProjetSupaero2016/build
 ProjetSupaero2016/build/*
@@ -32,3 +34,4 @@ ProjetSupaero2017/catkin_ws/src/hector_localization
 ProjetSupaero2018/catkin_ws/build/*
 ProjetSupaero2018/catkin_ws/devel/*
 ProjetSupaero2018/catkin_ws/src/CMakeLists.txt
+ProjetSupaero2018/catkin_ws/src/roadmap/data/
