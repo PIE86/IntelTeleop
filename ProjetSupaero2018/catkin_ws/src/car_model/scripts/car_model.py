@@ -23,7 +23,7 @@ if __name__ == '__main__':
         # Create the car model
         car_model = CarModel(0.0, 0.0)
 
-        publisher = rospy.Publisher('car_position', String)
+        publisher = rospy.Publisher('t_car_position', String)
         rospy.init_node('car_model', anonymous=True)
 
         # Publish rate in Hz
