@@ -44,8 +44,3 @@ if __name__ == "__main__":
         file_path = rospackage.get_path(PACKAGE_NAME) + '/resources/obstacles.obs' 
     check_point_server(file_path)
     
-    
-class Obstacles:
-    def __init__(self, vec=[], size=0):
-        self.vec = vec
-        self.size = size
