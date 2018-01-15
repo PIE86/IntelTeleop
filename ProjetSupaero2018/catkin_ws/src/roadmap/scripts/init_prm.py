@@ -2,10 +2,24 @@ import random
 import numpy as np
 import heapq
 
+import rospy
+from obstacles.srv import *
 
+CHECKPOINT_SERVICE = 'check_point'
 
 # node: index of a node
 # state: tuple representing the state associated or not with a node
+
+def main():
+    rospy.init_node('init_the_prm')
+    rospy.wait_for_service(CHECKPOINT_SERVICE)
+
+    state_space = StateSpace([(0, 10), (0, 5)])
+    nb_sample = 10
+    nb_connect = 3
+    graph = prm_init(state_space, nb_sample, nb_connect)
+    print(graph)
+
 
 def prm_init(state_space, nb_sample, nb_connect, nb_best=None):
     """
@@ -43,7 +57,13 @@ def prm_init(state_space, nb_sample, nb_connect, nb_best=None):
 
 
 def valid_state(s):
-    return s[0] + s[1] < 8 or s[0] + s[1] > 10
+    try:
+        get_if_valid = rospy.ServiceProxy(SERVICE_NAME, CheckPoint)
+        resp = get_if_valid(*s)
+        return resp.is_valid
+    except rospy.ServiceException, e:
+        print "Service call failed: %s"%e
+    # return s[0] + s[1] < 8 or s[0] + s[1] > 10
 
 
 def connection(node1, node2):
