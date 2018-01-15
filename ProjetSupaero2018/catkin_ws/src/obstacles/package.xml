@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pie86_obstacles</name>
+  <name>obstacles</name>
   <version>0.0.0</version>
   <description>The obstacles package</description>
 
