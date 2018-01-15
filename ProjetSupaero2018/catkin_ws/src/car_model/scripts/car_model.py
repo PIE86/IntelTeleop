@@ -21,7 +21,7 @@ class CarModel:
 if __name__ == '__main__':
     try:
         # Create the car model
-        car_model = CarModel()
+        car_model = CarModel(0.0, 0.0)
 
         publisher = rospy.Publisher('car_position', String)
         rospy.init_node('car_model', anonymous=True)
