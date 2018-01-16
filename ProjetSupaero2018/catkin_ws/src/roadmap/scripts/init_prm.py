@@ -11,8 +11,9 @@ except:
 
 import prm
 
-CHECKPOINT_SERVICE = 'check_point'
 PACKAGE_NAME = 'roadmap'
+CHECKPOINT_SERVICE = 'check_point'
+CHECKCONNECTION_SERVICE = 'check_connection'
 
 rospackage = rospkg.RosPack()
 PACKAGE_DATA_PATH = os.path.join(rospackage.get_path(PACKAGE_NAME), 'data')
@@ -27,7 +28,8 @@ NB_CONECT = 2
 def main():
     rospy.init_node('init_the_prm')
     rospy.loginfo('Init PRM initialized')
-    rospy.wait_for_service('check_point')
+    rospy.wait_for_service(CHECKPOINT_SERVICE)
+    rospy.wait_for_service(CHECKCONNECTION_SERVICE)
     rospy.loginfo('End of wait for check_point')
 
     state_space = prm.StateSpace([(0, 10), (0, 5)], seed=0)
@@ -84,8 +86,13 @@ def valid_state(s):
 
 
 def connection(s1, s2):
-    # dumb function, return a false
-    return (True, prm.euclid(s1, s2))
+    try:
+        get_if_valid = rospy.ServiceProxy(CHECKCONNECTION_SERVICE, CheckConnection)
+        resp = get_if_valid(s1[0], s1[1], s2[0], s2[1])
+    except rospy.ServiceException, e:
+        print "Service call failed: %s" % e
+    return (resp.is_valid, prm.euclid(s1, s2))
+    # return (True, prm.euclid(s1, s2))
 
 
 if __name__ == '__main__':
