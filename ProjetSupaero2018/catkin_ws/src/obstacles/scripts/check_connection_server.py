@@ -18,7 +18,7 @@ def check_if_valid(req):
     vec = rospy.get_param(PARAM_NAME_OBSTACLES)
     size = rospy.get_param(PARAM_NAME_SIZE)
     
-    is_valid = obstacles_functions.check_validity(req.x1, req.y1, req.x2, req.y2, vec, size)
+    is_valid = obstacles_functions.check_validity_connection(req.x1, req.y1, req.x2, req.y2, vec, size)
     print "Connection is valid: [%s]"%(is_valid)
     return CheckConnectionResponse(is_valid)
 

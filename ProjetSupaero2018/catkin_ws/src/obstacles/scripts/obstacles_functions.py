@@ -63,7 +63,7 @@ def check_validity(x, y, obstacles, size):
         
     return is_valid
 
-def check_validity(x1, y1, x2, y2, obstacles, size):
+def check_validity_connection(x1, y1, x2, y2, obstacles, size):
     """ Checks whether points (x1,y1) and (x2,y2) might be linked by 
     a straight line that would not be interrupted by an obstacle
     """
