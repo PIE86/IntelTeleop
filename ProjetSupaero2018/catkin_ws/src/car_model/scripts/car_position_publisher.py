@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# license removed for brevity
 import rospy
-from std_msgs.msg import String
+from car_model.msg import CarPositionMsg
 
 
 class CarModel:
@@ -23,16 +22,22 @@ if __name__ == '__main__':
         # Create the car model
         car_model = CarModel(0.0, 0.0)
 
-        publisher = rospy.Publisher('t_car_position', String, queue_size=10)
+        publisher = rospy.Publisher(
+            't_car_position', CarPositionMsg, queue_size=10)
         rospy.init_node('car_model', anonymous=True)
 
         # Publish rate in Hz
         rate = rospy.Rate(10)
 
+        car_position_msg = CarPositionMsg()
+
         while not rospy.is_shutdown():
+            car_position_msg.x = car_model.x
+            car_position_msg.y = car_model.y
+
             rospy.loginfo(
                 'car_position: {}, {}'.format(car_model.x, car_model.y))
-            publisher.publish('{},{}'.format(car_model.x, car_model.y))
+            publisher.publish(car_position_msg)
             rate.sleep()
 
     except rospy.ROSInterruptException:
