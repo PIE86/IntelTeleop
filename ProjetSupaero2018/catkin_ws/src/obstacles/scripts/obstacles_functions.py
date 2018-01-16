@@ -7,7 +7,6 @@ from cmath import sqrt
 def read_obstacles_function(obstacles_file):
     """ Reads obstacles from provided file
     """
-
     " An obstacle has fields (x,y,R) defining its spatial extent"
     """ The obstacles files should be located somewhere near
     the following location : './resources/obstacles.obs' """
@@ -22,24 +21,24 @@ def read_obstacles_function(obstacles_file):
     # for static obstacles : x, y, R -- size(obstacles)%3 == 0
     # for moving obstacles : add vx, vy -- size(obstacles)%5 == 0
     # no test is made in that sense for now
-    obstacles = []
+    obstacles_list = []
 
-    for i in range(0, len(root)):
-        this_obstacle = root[i].attrib
+    for index in range(0, len(root)):
+        this_obstacle = root[index].attrib
         # conversion from string to float
         # can be bypassed if the xml is defined with full tags
         x = float(this_obstacle['x'])
         y = float(this_obstacle['y'])
-        R = float(this_obstacle['R'])
+        r = float(this_obstacle['R'])
 
-        obstacles.append(x)
-        obstacles.append(y)
-        obstacles.append(R)
+        obstacles_list.append(x)
+        obstacles_list.append(y)
+        obstacles_list.append(r)
 
-    return obstacles, 3
+    return obstacles_list, 3
 
 
-def check_validity(x, y, obstacles, size):
+def check_validity(x, y, obstacles_list, obstacles_size):
     """ Checks whether point (x,y) lies in an obstacles
     """
 
@@ -50,25 +49,25 @@ def check_validity(x, y, obstacles, size):
       distance between (x,y) and the center of the obstacle is greater
       than the radius of said obstacle"""
 
-    obs_array = list_to_array(obstacles, size)
+    obs_array = list_to_array(obstacles_list, obstacles_size)
 
     is_valid = True
     for obs in obs_array:
         xo = obs[0]
         yo = obs[1]
         ro = obs[2]
-        if (pow(x - xo, 2) + pow(y - yo, 2) <= pow(ro, 2)):
+        if pow(x - xo, 2) + pow(y - yo, 2) <= pow(ro, 2):
             is_valid = False
 
     return is_valid
 
 
-def check_validity_connection(x1, y1, x2, y2, obstacles, size):
+def check_validity_connection(x1, y1, x2, y2, obstacles_list, obstacles_size):
     """ Checks whether points (x1,y1) and (x2,y2) might be linked by 
     a straight line that would not be interrupted by an obstacle
     """
 
-    obs_array = list_to_array(obstacles, size)
+    obs_array = list_to_array(obstacles_list, obstacles_size)
 
     is_valid = True
     for obs in obs_array:
@@ -85,39 +84,43 @@ def check_validity_connection(x1, y1, x2, y2, obstacles, size):
         dist_to_line = abs(a * xo + b * yo + c) / sqrt(pow(a, 2) + pow(b, 2))
 
         # check
-        if(dist_to_line <= ro):
+        if dist_to_line <= ro:
             is_valid = False
 
     return is_valid
 
 
-def plot_obstacles(obstacles_list, size, x_vec=[], y_vec=[]):
+def plot_obstacles(obstacles_list, obstacles_size, x_vec=None, y_vec=None):
     """ Plots given obstacles and points on map 
     """
-
     " obstacles_list : list of (x,y,R,x,y,R...) of given size "
     " x_vec, y_vec : lists of points to be plotted "
 
+    if x_vec is None:
+        x_vec = []
+    if y_vec is None:
+        y_vec = []
+
     # Set boundaries
-    xlim = 10
-    ylim = 5
+    x_lim = 10
+    y_lim = 5
 
     # Init figure
-    plt.figure(figsize=(xlim, ylim))
+    plt.figure(figsize=(x_lim, y_lim))
     ax = plt.gca()
-    ax.set_xlim((0, xlim))
-    ax.set_ylim((0, ylim))
+    ax.set_xlim((0, x_lim))
+    ax.set_ylim((0, y_lim))
 
-    # Draw each point with according color (valid/invalid)
+    # Draw each point with relevant color (green: valid/red: invalid)
     for i in range(len(x_vec)):
-        if check_validity(xvec[i], yvec[i], obstacles, size):
+        if check_validity(x_vec[i], y_vec[i], obstacles_list, obstacles_size):
             color = 'go'
         else:
             color = 'ro'
-        plt.plot(xvec[i], yvec[i], color, ms=10)
+        plt.plot(x_vec[i], y_vec[i], color, ms=10)
 
     # Draw each obstacle as a circle
-    obs_array = list_to_array(obstacles_list, size)
+    obs_array = list_to_array(obstacles_list, obstacles_size)
     for obs in obs_array:
         xy = (obs[0], obs[1])
         r = obs[2]
@@ -143,13 +146,14 @@ def list_to_array(vec, size):
 
 if __name__ == "__main__":
     # Perform checks with dummy files
-    file_path = '/home/chinch/MemoryEnhancedPredictiveControl/ProjetSupaero2018/catkin_ws/src/roadmap/resources/obstacles.obs'
+    file_path = '/home/chinch/MemoryEnhancedPredictiveControl/' \
+                'ProjetSupaero2018/catkin_ws/src/roadmap/' \
+                'resources/obstacles.obs'
     obstacles, size = read_obstacles_function(file_path)
-    l = 50
-    xvec = [1]  # np.linspace(0,10,l)
-    yvec = [1]  # np.linspace(0,5,l)
+    x_vec = [1]
+    y_vec = [1]
 
-    for i in range(len(xvec)):
-        print check_validity(xvec[i], yvec[i], obstacles, size)
+    for i in range(len(x_vec)):
+        print check_validity(x_vec[i], y_vec[i], obstacles, size)
 
-    plot_obstacles(obstacles, size, xvec, yvec)
+    plot_obstacles(obstacles, size, x_vec, y_vec)

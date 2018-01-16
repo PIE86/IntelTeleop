@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 import rospy
 from obstacles.srv import *
 
@@ -30,4 +29,4 @@ if __name__ == "__main__":
         sys.exit(1)
     print "Requesting check on point: %s %s" % (x, y)
     is_valid = check_point_client(x, y)
-    print "After checking point: point is valid? %s" % (is_valid)
+    print "After checking point: point is valid? %s" % is_valid

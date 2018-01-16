@@ -19,13 +19,13 @@ def check_if_valid(req):
     size = rospy.get_param(PARAM_NAME_SIZE)
 
     is_valid = obstacles_functions.check_validity(req.x, req.y, vec, size)
-    print "Point is valid: [%s]" % (is_valid)
+    print "Point is valid: [%s]" % is_valid
     return CheckPointResponse(is_valid)
 
 
 def check_point_server(file_path):
     rospy.init_node('check_point_server')
-    s = rospy.Service('check_point', CheckPoint, check_if_valid)
+    rospy.Service('check_point', CheckPoint, check_if_valid)
 
     # Store obstacles in Parameter Server
     vec, size = obstacles_functions.read_obstacles_function(file_path)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         file_path = str(sys.argv[1])
     else:
         # Try to reach obstacle file
-        rospackage = rospkg.RosPack()
-        file_path = rospackage.get_path(
+        ros_package = rospkg.RosPack()
+        file_path = ros_package.get_path(
             PACKAGE_NAME) + '/resources/obstacles.obs'
     check_point_server(file_path)

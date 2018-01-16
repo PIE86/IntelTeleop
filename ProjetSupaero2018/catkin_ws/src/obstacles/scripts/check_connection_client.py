@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 import rospy
 from obstacles.srv import *
 
@@ -15,7 +14,7 @@ def check_connection_client(x1, y1, x2, y2):
         resp = get_if_valid(x1, y1, x2, y2)
         return resp.is_valid
     except rospy.ServiceException, e:
-        rospy.loginfo("Service call failed: %s" % e)
+        print "Service call failed: %s" % e
 
 
 def usage():
@@ -31,6 +30,7 @@ if __name__ == "__main__":
     else:
         print usage()
         sys.exit(1)
-    print "Requesting check on connection between: (%s %s) - (%s %s)" % (x1, y1, x2, y2)
+    print "Requesting check on connection between: (%s %s) - (%s %s)" \
+          % (x1, y1, x2, y2)
     is_valid = check_connection_client(x1, y1, x2, y2)
-    print "After checking connection: connection is valid? %s" % (is_valid)
+    print "After checking connection: connection is valid? %s" % is_valid

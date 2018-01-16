@@ -33,3 +33,4 @@ ProjetSupaero2018/catkin_ws/src/CMakeLists.txt
 *.pydevproject
 *.project
 *.pyc
+*.idea

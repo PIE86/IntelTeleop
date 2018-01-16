@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import sys
 import rospy
 from obstacles.srv import *
+
 
 def read_obstacles_client(file_name):
     rospy.wait_for_service('read_obstacles')
@@ -11,10 +11,12 @@ def read_obstacles_client(file_name):
         resp = get_obstacles(file_name)
         return resp.vec, resp.size
     except rospy.ServiceException, e:
-        print "Service call failed: %s"%e
+        print "Service call failed: %s" % e
+
 
 def usage():
-    return "%s [file_name(.obs)]"%sys.argv[0]
+    return "%s [file_name(.obs)]" % sys.argv[0]
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
@@ -22,6 +24,6 @@ if __name__ == "__main__":
     else:
         print usage()
         sys.exit(1)
-    print "Requesting obstacles from file : %s"%(file_name)
+    print "Requesting obstacles from file : %s" % file_name
     vec, size = read_obstacles_client(file_name)
-    print "Read obstacles of size %s : %s"%(size, vec)
+    print "Read obstacles of size %s : %s" % (size, vec)

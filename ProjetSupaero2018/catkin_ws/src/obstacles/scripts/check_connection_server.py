@@ -12,7 +12,8 @@ PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def check_if_valid(req):
-    print "Checking if connection is valid between: (%s, %s) - (%s, %s)" % (req.x1, req.y1, req.x2, req.y2)
+    print "Checking if connection is valid between: (%s, %s) - (%s, %s)" \
+          % (req.x1, req.y1, req.x2, req.y2)
 
     # Retrieve obstacles from Parameter Server
     vec = rospy.get_param(PARAM_NAME_OBSTACLES)
@@ -20,13 +21,13 @@ def check_if_valid(req):
 
     is_valid = obstacles_functions.check_validity_connection(
         req.x1, req.y1, req.x2, req.y2, vec, size)
-    print "Connection is valid: [%s]" % (is_valid)
+    print "Connection is valid: [%s]" % is_valid
     return CheckConnectionResponse(is_valid)
 
 
 def check_connection_server(file_path):
     rospy.init_node('check_connection_server')
-    s = rospy.Service('check_connection', CheckConnection, check_if_valid)
+    rospy.Service('check_connection', CheckConnection, check_if_valid)
 
     # Store obstacles in Parameter Server
     vec, size = obstacles_functions.read_obstacles_function(file_path)
@@ -43,7 +44,7 @@ if __name__ == "__main__":
         file_path = str(sys.argv[1])
     else:
         # Try to reach obstacle file
-        rospackage = rospkg.RosPack()
-        file_path = rospackage.get_path(
+        ros_package = rospkg.RosPack()
+        file_path = ros_package.get_path(
             PACKAGE_NAME) + '/resources/obstacles.obs'
     check_connection_server(file_path)
