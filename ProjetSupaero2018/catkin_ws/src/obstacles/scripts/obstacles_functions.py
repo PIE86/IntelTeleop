@@ -2,6 +2,7 @@ import xml.etree.ElementTree as et
 import numpy as np
 import matplotlib.pyplot as plt
 from cmath import sqrt
+from os import path
 
 
 def read_obstacles_function(obstacles_file):
@@ -146,9 +147,11 @@ def list_to_array(vec, size):
 
 if __name__ == "__main__":
     # Perform checks with dummy files
-    file_path = '/home/chinch/MemoryEnhancedPredictiveControl/' \
-                'ProjetSupaero2018/catkin_ws/src/roadmap/' \
-                'resources/obstacles.obs'
+    file_path = path.join(
+        path.abspath(path.abspath(__file__)),
+        "resources",
+        "obstacles.obs"
+    )
     obstacles, size = read_obstacles_function(file_path)
     x_vec = [1]
     y_vec = [1]

@@ -17,16 +17,12 @@ def check_point_client(x, y):
         print "Service call failed: %s" % e
 
 
-def usage():
-    return "Expecting two arguments: point coordinates x y"
-
-
 if __name__ == "__main__":
     if len(sys.argv) == 3:
         x = float(sys.argv[1])
         y = float(sys.argv[2])
     else:
-        print usage()
+        print "Expecting two arguments: point coordinates x y"
         sys.exit(1)
     print "Requesting check on point: %s %s" % (x, y)
     is_valid = check_point_client(x, y)
