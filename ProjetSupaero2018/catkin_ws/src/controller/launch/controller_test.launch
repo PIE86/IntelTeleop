@@ -1,0 +1,8 @@
+<!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+<launch>
+
+  <!-- <arg name="init" default="true"/> -->
+  <node pkg="controller" type="controller.py" name="NameController"/>
+  <node pkg="controller" type="controller_client.py" name="NameControllerClient"/>
+
+</launch>
