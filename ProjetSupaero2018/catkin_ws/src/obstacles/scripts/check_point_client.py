@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from obstacles.srv import *
+import sys
+from obstacles.srv import CheckPoint
 
 SERVICE_NAME = 'check_point'
 

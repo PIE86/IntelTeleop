@@ -45,9 +45,9 @@ def check_validity(x, y, obstacles_list, obstacles_size):
     " x, y : coordinates of the point"
     " obstacles : a list containing the obstacles as a line (x,y,R,x,y,R...)"
     " size : the size of each obstacle. Might be used to resize [obstacles]"
-    """ For each obstacle in [obstacles], the function will check that the 
-      distance between (x,y) and the center of the obstacle is greater
-      than the radius of said obstacle"""
+    """ For each obstacle in [obstacles], the function will check that the
+    distance between (x,y) and the center of the obstacle is greater
+    than the radius of said obstacle"""
 
     obs_array = list_to_array(obstacles_list, obstacles_size)
 
@@ -63,7 +63,7 @@ def check_validity(x, y, obstacles_list, obstacles_size):
 
 
 def check_validity_connection(x1, y1, x2, y2, obstacles_list, obstacles_size):
-    """ Checks whether points (x1,y1) and (x2,y2) might be linked by 
+    """ Checks whether points (x1,y1) and (x2,y2) might be linked by
     a straight line that would not be interrupted by an obstacle
     """
 
@@ -91,7 +91,7 @@ def check_validity_connection(x1, y1, x2, y2, obstacles_list, obstacles_size):
 
 
 def plot_obstacles(obstacles_list, obstacles_size, x_vec=None, y_vec=None):
-    """ Plots given obstacles and points on map 
+    """ Plots given obstacles and points on map
     """
     " obstacles_list : list of (x,y,R,x,y,R...) of given size "
     " x_vec, y_vec : lists of points to be plotted "

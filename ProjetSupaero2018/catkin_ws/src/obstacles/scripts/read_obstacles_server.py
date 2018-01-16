@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from obstacles.srv import *
+from obstacles.srv import ReadObstacles, ReadObstaclesResponse
 import rospy
 import obstacles_functions
 

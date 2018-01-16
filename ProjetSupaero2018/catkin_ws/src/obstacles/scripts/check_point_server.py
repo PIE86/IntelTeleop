@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from obstacles.srv import *
+from obstacles.srv import CheckPoint, CheckPointResponse
 import rospy
+import sys
 import obstacles_functions
 import rospkg
 

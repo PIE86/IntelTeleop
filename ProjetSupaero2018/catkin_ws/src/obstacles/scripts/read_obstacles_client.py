@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from obstacles.srv import *
+from obstacles.srv import ReadObstacles
+import sys
 
 
 def read_obstacles_client(file_name):

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from obstacles.srv import *
+from obstacles.srv import CheckConnection
+import sys
 
 SERVICE_NAME = 'check_connection'
 

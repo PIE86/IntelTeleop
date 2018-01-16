@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from obstacles.srv import *
+from obstacles.srv import CheckConnection, CheckConnectionResponse
 import rospy
 import obstacles_functions
 import rospkg
+import sys
 
 PACKAGE_NAME = 'obstacles'
 
