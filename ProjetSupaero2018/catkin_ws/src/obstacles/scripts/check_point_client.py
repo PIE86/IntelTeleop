@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-<<<<<<< HEAD:ProjetSupaero2018/catkin_ws/src/pie86_obstacles/scripts/check_point_client.py
-from pie86_obstacles.srv import *
-=======
 import sys
 from obstacles.srv import CheckPoint
->>>>>>> wjussiau:ProjetSupaero2018/catkin_ws/src/obstacles/scripts/check_point_client.py
 
 SERVICE_NAME = 'check_point'
 

@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
 import rospy
-<<<<<<< HEAD:ProjetSupaero2018/catkin_ws/src/pie86_obstacles/scripts/read_obstacles_client.py
-from pie86_obstacles.srv import *
-=======
 from obstacles.srv import ReadObstacles
 import sys
 
->>>>>>> wjussiau:ProjetSupaero2018/catkin_ws/src/obstacles/scripts/read_obstacles_client.py
 
 def read_obstacles_client(file_name):
     rospy.wait_for_service('read_obstacles')

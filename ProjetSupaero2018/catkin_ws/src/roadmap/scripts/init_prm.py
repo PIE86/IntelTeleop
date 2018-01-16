@@ -5,7 +5,7 @@ import random
 try:
     import rospy
     import rospkg
-    from pie86_obstacles.srv import *
+    from obstacles.srv import *
 except:
     print('ROS not runnning')
 
@@ -20,8 +20,8 @@ PACKAGE_DATA_PATH = os.path.join(rospackage.get_path(PACKAGE_NAME), 'data')
 if not os.path.exists(PACKAGE_DATA_PATH):
     os.makedirs(PACKAGE_DATA_PATH)
 
-NB_SAMPLE = 100
-NB_CONECT = 2
+NB_SAMPLE = 1000
+NB_CONECT = 3
 # node: index of a node
 # state: tuple representing the state associated or not with a node
 
@@ -77,6 +77,7 @@ def prm_init(state_space, nb_sample, nb_connect, nb_best=None):
 
 def valid_state(s):
     try:
+        # asking a new proxy every time does not slow down the process
         get_if_valid = rospy.ServiceProxy(CHECKPOINT_SERVICE, CheckPoint)
         resp = get_if_valid(*s)
         return resp.is_valid
@@ -87,6 +88,7 @@ def valid_state(s):
 
 def connection(s1, s2):
     try:
+        # asking a new proxy every time does not slow down the process
         get_if_valid = rospy.ServiceProxy(CHECKCONNECTION_SERVICE, CheckConnection)
         resp = get_if_valid(s1[0], s1[1], s2[0], s2[1])
     except rospy.ServiceException, e:
