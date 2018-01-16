@@ -1,7 +1,3 @@
-*.pyc
-**/.ipynb_checkpoints
-*.ipynb
-
 ProjetSupaero2016/build
 ProjetSupaero2016/build/*
 ACADOtoolkit
@@ -35,3 +31,10 @@ ProjetSupaero2018/catkin_ws/build/*
 ProjetSupaero2018/catkin_ws/devel/*
 ProjetSupaero2018/catkin_ws/src/CMakeLists.txt
 ProjetSupaero2018/catkin_ws/src/roadmap/data/
+
+*.pydevproject
+*.project
+*.pyc
+*.idea
+**/.ipynb_checkpoints
+*.ipynb

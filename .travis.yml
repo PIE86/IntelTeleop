@@ -1,0 +1,10 @@
+language: python
+
+before_install:
+  # Install flake8 for python code checking
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq python-flake8
+
+script:
+  # Check python code 
+  - flake8 ProjetSupaero2018/catkin_ws/src/

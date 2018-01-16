@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
-import sys
 import rospy
+<<<<<<< HEAD:ProjetSupaero2018/catkin_ws/src/pie86_obstacles/scripts/read_obstacles_client.py
 from pie86_obstacles.srv import *
+=======
+from obstacles.srv import ReadObstacles
+import sys
+
+>>>>>>> wjussiau:ProjetSupaero2018/catkin_ws/src/obstacles/scripts/read_obstacles_client.py
 
 def read_obstacles_client(file_name):
     rospy.wait_for_service('read_obstacles')
@@ -11,17 +16,15 @@ def read_obstacles_client(file_name):
         resp = get_obstacles(file_name)
         return resp.vec, resp.size
     except rospy.ServiceException, e:
-        print "Service call failed: %s"%e
+        print "Service call failed: %s" % e
 
-def usage():
-    return "%s [file_name(.obs)]"%sys.argv[0]
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
         file_name = str(sys.argv[1])
     else:
-        print usage()
+        print "%s [file_name(.obs)]" % sys.argv[0]
         sys.exit(1)
-    print "Requesting obstacles from file : %s"%(file_name)
+    print "Requesting obstacles from file : %s" % file_name
     vec, size = read_obstacles_client(file_name)
-    print "Read obstacles of size %s : %s"%(size, vec)
+    print "Read obstacles of size %s : %s" % (size, vec)
