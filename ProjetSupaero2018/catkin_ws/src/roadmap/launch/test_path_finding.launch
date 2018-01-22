@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="roadmap" type="path_finding_service.py" name="NamePathFindingService"/>
+  <node pkg="roadmap" type="path_finding_client.py" name="NamePathFindingClient"/>
+
+</launch>
