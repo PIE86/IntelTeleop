@@ -2,6 +2,9 @@
 import rospy
 from geometry_msgs.msg import Point
 
+COMMAND_TOPIC = 't_car_command'
+CURRENT_POSITION_TOPIC = 't_car_position'
+
 
 class CarModel:
     def __init__(self, init_x, init_y):
@@ -23,7 +26,7 @@ if __name__ == '__main__':
         car_model = CarModel(0.0, 0.0)
 
         publisher = rospy.Publisher(
-            't_car_position', Point, queue_size=10)
+            CURRENT_POSITION_TOPIC, Point, queue_size=10)
         rospy.init_node('car_model', anonymous=True)
 
         # Publish rate in Hz
