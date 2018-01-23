@@ -1,0 +1,10 @@
+<!-- launches Hector Quadrotor simulation and IntelTeleop optimal control nodes -->
+<launch>
+
+  <!-- <arg name="init" default="true"/> -->
+  <node pkg="roadmap" type="init_prm.py" name="NameRoadMap"/>
+  <node pkg="obstacles" type="check_point_server.py" name="NameCheckPoint"/>
+  <node pkg="obstacles" type="check_connection_server.py" name="NameCheckConnection"/>
+
+
+</launch>

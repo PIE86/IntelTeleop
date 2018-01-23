@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
+
 from obstacles.srv import CheckPoint, CheckPointResponse
 import rospy
 import sys
 import obstacles_functions
 import rospkg
 
-PACKAGE_NAME = 'roadmap'
+PACKAGE_NAME = 'obstacles'
 
 PARAM_NAME_SIZE = '/' + PACKAGE_NAME + '/obstacles_size'
 PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
