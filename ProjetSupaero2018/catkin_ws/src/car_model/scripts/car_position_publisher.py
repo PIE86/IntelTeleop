@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from car_model.msg import CarPositionMsg
+from geometry_msgs.msg import Point
 
 
 class CarModel:
@@ -23,20 +23,21 @@ if __name__ == '__main__':
         car_model = CarModel(0.0, 0.0)
 
         publisher = rospy.Publisher(
-            't_car_position', CarPositionMsg, queue_size=10)
+            't_car_position', Point, queue_size=10)
         rospy.init_node('car_model', anonymous=True)
 
         # Publish rate in Hz
         rate = rospy.Rate(10)
 
-        car_position_msg = CarPositionMsg()
+        car_position_msg = Point()
+        car_position_msg.z = 0.0
 
         while not rospy.is_shutdown():
             car_position_msg.x = car_model.x
             car_position_msg.y = car_model.y
 
-            rospy.loginfo(
-                'car_position: {}, {}'.format(car_model.x, car_model.y))
+            rospy.loginfo('car_position: {}, {}, {}'.format(
+                car_position_msg.x, car_position_msg.y, car_position_msg.z))
             publisher.publish(car_position_msg)
             rate.sleep()
 
