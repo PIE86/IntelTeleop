@@ -45,6 +45,9 @@ class Graph:
         self.nodes[edge[1]][2].append(edge[0])
         self.edges[(edge[0], edge[1])] = edge[2]
 
+    def node_list_to_state_list(self, node_list):
+        return [self.nodes[node][0] for node in node_list]
+
     def closest_nodes(self, state, nb_connect, new=True):
         """
         new bool: enables to avoid comparing the new node with itself if True

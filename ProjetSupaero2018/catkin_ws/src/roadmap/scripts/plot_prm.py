@@ -13,6 +13,8 @@ graph.load('../data/')
 start = 100
 goal = 201
 shortest_path = prm.astar(start, goal, graph, prm.euclid)
+# shortest_path = []
+
 print('shortest_path: ', shortest_path)
 
 
@@ -47,5 +49,15 @@ for i in range(len(shortest_path)-1):
     s1, s2 = graph.nodes[n1][0], graph.nodes[n2][0]
     dot1, dot2 = (s1[0], s2[0]), (s1[1], s2[1])
     ax.plot(dot1, dot2, color='green', linewidth=lwidth)
+
+
+# To plot a and made state path
+#state_path = []
+
+for i in range(len(state_path)-1):
+    s1, s2 = state_path[i], state_path[i+1]
+    dot1, dot2 = (s1[0], s2[0]), (s1[1], s2[1])
+    ax.plot(dot1, dot2, color='red', linewidth=lwidth)
+
 
 plt.show()
