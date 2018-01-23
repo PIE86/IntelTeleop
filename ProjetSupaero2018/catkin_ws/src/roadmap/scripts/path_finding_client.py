@@ -15,15 +15,15 @@ def ask_path(s1, s2):
     try:
         find_path = rospy.ServiceProxy(SERVICE_NAME, PathFinding)
         resp = find_path(s1, s2)
-        print(resp)
-        print(resp[0])
-        print(resp[0].x)
-        print(resp[0].y)
-        return resp.vec, resp.size
+        resp_path = resp.path
+        state_path = [(p.x, p.y) for p in resp_path]
+        return state_path
     except rospy.ServiceException, e:
         print "Service call failed: %s" % e
 
 if __name__ == '__main__':
     s1 = Point(1., 4., 0)
     s2 = Point(6., 8., 0)
-    ask_path(s1, s2)
+    popo = ask_path(s1, s2)
+    print("Found path:")
+    print(popo)

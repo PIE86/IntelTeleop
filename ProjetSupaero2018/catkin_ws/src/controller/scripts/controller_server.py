@@ -1,28 +1,82 @@
 #!/usr/bin/env python
 
+import math
 import rospy
-from controller.msg import *
+from controller.msg import Command2D
+from roadmap.srv import PathFinding
+from geometry_msgs.msg import Point
 
-TOPIC = 'command'
+COMMAND_TOPIC = 't_car_command'
+CURRENT_POSITION_TOPIC = 't_car_position'
+PATH_FINDING_SERVICE = 'find_path'
 KP = 1
+THRES = 0.1
 
-def controller():
-    rospy.init_node('controller', anonymous=True)
-    pub = rospy.Publisher(TOPIC, Command2D, queue_size=10)
-    rate = rospy.Rate(10) # 10hz
-    dx, dy = 0.1, 0.2
-    i = 0
-    while not rospy.is_shutdown():
-        pub.publish(dx, dy)
-        rate.sleep()
-        i += 1
-        if i == 10:
-            i = 0
-            dx, dy = -dx, -dy
+S1 = Point(1., 3., 0)
+S2 = Point(8., 1., 0)
+
+
+def Controller:
+
+    def __init__(self, name):
+        self.name = name
+        self.sub = rospy.Subscriber(CURRENT_POSITION_TOPIC, Point, compute_cmd)
+        self.pub = rospy.Publisher(COMMAND_TOPIC, Command2D, queue_size=10)
+
+        rospy.wait_for_service(PATH_FINDING_SERVICE)
+        self.state_path = ask_path(S1, S2)
+
+        self.state = S1
+        self.goal = S2
+        self.next_state_idx = 1
+
+    def compute_cmd(self, state):
+        """
+        Callback of the current position topic, return a dx, dy command
+        when a new state is received
+        """
+        self.state = state
+        next_state = self.state_path[next_state_idx]
+        dist = math.sqrt((next_state.x - state.x)**2 + (next_state.x - state.x)**2)
+        if dist > THRES:
+            # Linear control
+            dx = KP*(next_state.x - state.x)
+            dy = KP*(next_state.y - state.y)
+            pub.publish(dx, dy)
+        else:
+            # if next state not last state
+            if self.next_state_idx < (len(self.state_path)-1):
+                self.next_state_idx += 1
+                next_state = self.state_path[next_state_idx]
+                # Linear control
+                dx = KP*(next_state.x - state.x)
+                dy = KP*(next_state.y - state.y)
+                pub.publish(dx, dy)
+
+    def ask_path(self, s1, s2):
+        try:
+            # try as an attribute
+            find_path = rospy.ServiceProxy(PATH_FINDING_SERVICE, PathFinding)
+            resp = find_path(s1, s2)
+            resp_path = resp.path
+            state_path = [(p.x, p.y) for p in resp_path]
+            return state_path
+        except rospy.ServiceException, e:
+            print "Service call failed: %s" % e
+
+
+def euclid_points(p1, p2):
+    """Take 2 geometry_msg.Point arguments and return euclidian distance"""
+    return math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2)
+
 
 
 if __name__ == '__main__':
     try:
-        controller()
+        rospy.init_node('controller', anonymous=True)
+        cont = Controller(rospy.get_name())
+        cont.server_launch()
+
+        # rospy.spin()
     except rospy.ROSInterruptException:
         pass
