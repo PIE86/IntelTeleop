@@ -53,6 +53,8 @@ class Controller:
                 if self.next_state_idx < (len(self.state_path)-1):
                     self.next_state_idx += 1
                     next_state = self.state_path[self.next_state_idx]
+                    print('######################')
+                    print('NEW NEXT STATE!', next_state, 'NB', self.next_state_idx)
                     # Linear control
                     dx = KP*(next_state.x - state.x)
                     dy = KP*(next_state.y - state.y)
