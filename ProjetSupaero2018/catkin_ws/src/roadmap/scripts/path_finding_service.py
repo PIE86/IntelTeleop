@@ -35,7 +35,6 @@ def find_path(s1, s2):
     n2 = graph.closest_nodes(s2, NB_CONNECT)[0]
     node_path = prm.astar(n1, n2, graph, prm.euclid)
     print('node_path:', node_path)
-    print('node_path type:', type(node_path))
     state_path = [s1] + graph.node_list_to_state_list(node_path) + [s2]
     point_path = [Point(s[0], s[1], 0.) for s in state_path]
 
