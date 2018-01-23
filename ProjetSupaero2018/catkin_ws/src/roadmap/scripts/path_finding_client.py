@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-import prm
-from roadmap.srv import PathFinding, PathFindingResponse
+from roadmap.srv import PathFinding
 from geometry_msgs.msg import Point
 
 
@@ -20,6 +19,7 @@ def ask_path(s1, s2):
         return state_path
     except rospy.ServiceException, e:
         print "Service call failed: %s" % e
+
 
 if __name__ == '__main__':
     s1 = Point(1., 4., 0)

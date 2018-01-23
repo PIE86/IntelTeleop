@@ -6,6 +6,7 @@ import heapq
 
 class Graph:
     save_fields = ('nodes', 'edges')
+
     def __init__(self, state_space, hdistance):
         self.state_space = state_space
         self.hdistance = hdistance
@@ -24,11 +25,11 @@ class Graph:
             'Nodes: ' + str(self.nodes) + '\n',
             'Edges: ' + str(self.edges)
         ]
-        return  '\n'.join(desc)
+        return '\n'.join(desc)
 
     def save(self, path):
         for field in self.save_fields:
-             np.save(pjoin(path, field+'.npy'),self.__dict__[field])
+            np.save(pjoin(path, field+'.npy'), self.__dict__[field])
 
     def load(self, path):
         for field in self.save_fields:
@@ -103,10 +104,11 @@ def astar(start, goal, graph, hdistance):
         # search in nodes linked_to
         for neigh in graph.nodes[current][1]:
             new_cost = cost_so_far[current] + graph.edges[(current, neigh)]
-            # If newly visited node or node already visited but with bigger cost
+            # If newly visited node or already visited but with bigger cost
             if neigh not in cost_so_far or new_cost < cost_so_far[neigh]:
                 cost_so_far[neigh] = new_cost
-                dist_goal = hdistance(graph.nodes[current][0], graph.nodes[goal][0])
+                dist_goal = hdistance(graph.nodes[current][0],
+                                      graph.nodes[goal][0])
                 anti_priority = new_cost + dist_goal
                 frontier.put(neigh, anti_priority)
                 came_from[neigh] = current
@@ -130,6 +132,7 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
+
 
 def euclid(s1, s2):
     return np.sqrt((s2[0]-s1[0])**2 + (s2[1]-s1[1])**2)

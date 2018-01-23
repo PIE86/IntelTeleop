@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 import os
-import random
 
 try:
     import rospy
     import rospkg
-    from obstacles.srv import *
-except:
+    from obstacles.srv import CheckPoint, CheckConnection
+except ImportError:
     print('ROS not runnning')
 
 import prm
 
 PACKAGE_NAME = 'roadmap'
-CHECKPOINT_SERVICE = 'check_point'
-CHECKCONNECTION_SERVICE = 'check_connection'
+CHECKPOINT_SRV = 'check_point'
+CHECKCONN_SRV = 'check_connection'
 
 rospackage = rospkg.RosPack()
 PACKAGE_DATA_PATH = os.path.join(rospackage.get_path(PACKAGE_NAME), 'data')
@@ -25,11 +24,12 @@ NB_CONECT = 3
 # node: index of a node
 # state: tuple representing the state associated or not with a node
 
+
 def main():
     rospy.init_node('init_the_prm')
     rospy.loginfo('Init PRM initialized')
-    rospy.wait_for_service(CHECKPOINT_SERVICE)
-    rospy.wait_for_service(CHECKCONNECTION_SERVICE)
+    rospy.wait_for_service(CHECKPOINT_SRV)
+    rospy.wait_for_service(CHECKCONN_SRV)
     rospy.loginfo('End of wait for check_point')
 
     state_space = prm.StateSpace([(0, 10), (0, 5)], seed=0)
@@ -78,18 +78,18 @@ def prm_init(state_space, nb_sample, nb_connect, nb_best=None):
 def valid_state(s):
     try:
         # asking a new proxy every time does not slow down the process
-        get_if_valid = rospy.ServiceProxy(CHECKPOINT_SERVICE, CheckPoint)
+        get_if_valid = rospy.ServiceProxy(CHECKPOINT_SRV, CheckPoint)
         resp = get_if_valid(*s)
         return resp.is_valid
     except rospy.ServiceException, e:
-        print "Service call failed: %s"%e
+        print "Service call failed: %s" % e
     # return s[0] + s[1] < 8 or s[0] + s[1] > 10
 
 
 def connection(s1, s2):
     try:
         # asking a new proxy every time does not slow down the process
-        get_if_valid = rospy.ServiceProxy(CHECKCONNECTION_SERVICE, CheckConnection)
+        get_if_valid = rospy.ServiceProxy(CHECKCONN_SRV, CheckConnection)
         resp = get_if_valid(s1[0], s1[1], s2[0], s2[1])
     except rospy.ServiceException, e:
         print "Service call failed: %s" % e

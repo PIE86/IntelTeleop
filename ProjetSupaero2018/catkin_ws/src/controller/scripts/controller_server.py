@@ -7,7 +7,7 @@ from roadmap.srv import PathFinding
 from geometry_msgs.msg import Point
 
 COMMAND_TOPIC = 't_car_command'
-CURRENT_POSITION_TOPIC = 't_car_position'
+CAR_POSI_TOPIC = 't_car_position'
 PATH_FINDING_SERVICE = 'find_path'
 KP = 0.1
 THRES = 0.1
@@ -23,7 +23,7 @@ class Controller:
         self.name = name
         rospy.wait_for_service(PATH_FINDING_SERVICE)
         self.state_path = []
-        self.sub = rospy.Subscriber(CURRENT_POSITION_TOPIC, Point, self.compute_cmd)
+        self.sub = rospy.Subscriber(CAR_POSI_TOPIC, Point, self.compute_cmd)
         self.pub = rospy.Publisher(COMMAND_TOPIC, Command2D, queue_size=10)
 
         self.state = S1
@@ -33,20 +33,20 @@ class Controller:
     def init_path(self, s1, s2):
         self.state_path = self.ask_path(s1, s2)
 
-    def compute_cmd(self, state):
+    def compute_cmd(self, s):
         """
         Callback of the current position topic, return a dx, dy command
         when a new state is received
         """
-        self.state = state
-        print('CURRENT STATE:', state)
+        self.state = s
+        print('CURRENT STATE:', s)
         if len(self.state_path) > 0:
             next_state = self.state_path[self.next_state_idx]
-            dist = math.sqrt((next_state.x - state.x)**2 + (next_state.x - state.x)**2)
+            dist = math.sqrt((next_state.x - s.x)**2 + (next_state.x - s.x)**2)
             if dist > THRES:
                 # Linear control
-                dx = KP*(next_state.x - state.x)
-                dy = KP*(next_state.y - state.y)
+                dx = KP*(next_state.x - s.x)
+                dy = KP*(next_state.y - s.y)
                 self.pub.publish(dx, dy)
             else:
                 # if next state not last state
@@ -54,12 +54,16 @@ class Controller:
                     self.next_state_idx += 1
                     next_state = self.state_path[self.next_state_idx]
                     print('######################')
-                    print('NEW NEXT STATE!', next_state, 'NB', self.next_state_idx)
+                    print('NEW NEXT STATE!', next_state,
+                          'NB', self.next_state_idx)
                     # Linear control
-                    dx = KP*(next_state.x - state.x)
-                    dy = KP*(next_state.y - state.y)
+                    dx = KP*(next_state.x - s.x)
+                    dy = KP*(next_state.y - s.y)
                     print('PUBLISH COMMAND:', dx, dy)
                     self.pub.publish(dx, dy)
+                else:
+                    print('######################')
+                    print('Last state reached')
 
     def ask_path(self, s1, s2):
         try:
@@ -74,7 +78,6 @@ class Controller:
 def euclid_points(p1, p2):
     """Take 2 geometry_msg.Point arguments and return euclidian distance"""
     return math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2)
-
 
 
 if __name__ == '__main__':

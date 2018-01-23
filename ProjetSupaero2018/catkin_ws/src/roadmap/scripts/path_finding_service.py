@@ -21,6 +21,7 @@ graph.load(GRAPH_DATA_PATH)
 
 NB_CONNECT = 10
 
+
 def callback(start_end):
     p1 = start_end.p1
     p2 = start_end.p2
@@ -46,6 +47,7 @@ def path_finding_service():
     rospy.Service('find_path', PathFinding, callback)
     print "Ready to find paths"
     rospy.spin()
+
 
 if __name__ == '__main__':
     path_finding_service()
