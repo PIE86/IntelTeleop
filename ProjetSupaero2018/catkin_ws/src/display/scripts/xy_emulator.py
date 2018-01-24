@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import rospy
-from rospy_tutorials.msg import Floats
+from geometry_msgs.msg import Point
 import numpy as np
 
 
 def talker():
     """ Emulates a topic giving a position on a clock
     """
-    pub = rospy.Publisher('t_car_position_emulator', Floats, queue_size=100)
+    pub = rospy.Publisher('t_car_position_emulator', Point, queue_size=100)
     rospy.init_node('xy_emulator', anonymous=True)
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(10)
 
     # Setup list of points to emulate
     count = 0
@@ -25,7 +25,9 @@ def talker():
         # New point to publish on loop
         xi, yi = points_list[0][count], points_list[1][count]
         # Create message
-        msg = [xi, yi]
+        msg = Point()
+        msg.x = xi
+        msg.y = yi
         rospy.loginfo(msg)
         # Publish message
         pub.publish(msg)
