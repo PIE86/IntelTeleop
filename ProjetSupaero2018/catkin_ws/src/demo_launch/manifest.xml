@@ -1,0 +1,14 @@
+<package>
+  <description brief="demo_launch">
+
+     demo_launch
+
+  </description>
+  <author>mfourmy</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/demo_launch</url>
+
+</package>
+
+
