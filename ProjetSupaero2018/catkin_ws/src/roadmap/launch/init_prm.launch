@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="roadmap" type="init_prm.py" name="NameRoadMap"/>
+  <node pkg="obstacles" type="check_point_server.py" name="NameCheckPoint"/>
+  <node pkg="obstacles" type="check_connection_server.py" name="NameCheckConnection"/>
+
+</launch>
