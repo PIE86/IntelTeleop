@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find display)/worlds/basic_car.world"/>
+  </include>
+  <!-- <node pkg="display" type="xy_emulator.py" name="xy_emulator"/> -->
+  <!-- <node pkg="display" type="gazebo_display.py" name="gazebo_display"/> -->
+</launch>
