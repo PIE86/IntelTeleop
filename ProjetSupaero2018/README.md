@@ -15,12 +15,13 @@ choose right repo for develop (default is Diane's repo)
 ## launch demo
 The demo for J1 might be launched using the following commands:
 
-### add the models directory to your GAZEBO_MODEL_PATH 
-export GAZEBO_MODEL_PATH=$HOME/MemoryEnhancedPredictiveControl/ProjetSupaero2018/catkin_ws/src/display/models:$GAZEBO_MODEL_PATH
-You might want to add this line to your bashrc
+### add the models directory to your Gazebo model path 
+export GAZEBO_MODEL_PATH=$(rospack find display)/models:$GAZEBO_MODEL_PATH
 
-## build your catkin_ws
+You might want to add this line to your bashrc, after sourcing the ROS environment. You can also specify the full path. In the future, we hope that we will be able to do otherwise (without being constraining for the user)
+
+### build your catkin_ws
 using catkin_make from the workspace
 
-## roslaunch
+### roslaunch
 roslaunch demo_launch jalon1_demo.launch
