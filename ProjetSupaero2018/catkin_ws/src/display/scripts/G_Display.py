@@ -72,6 +72,6 @@ if __name__ == '__main__':
     
     try:
         initWorld()
-        listener()
+        #listener()
     except rospy.ROSInterruptException:
          pass
