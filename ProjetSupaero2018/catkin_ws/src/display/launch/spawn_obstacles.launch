@@ -1,0 +1,10 @@
+<launch>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find display)/worlds/basic_car.world"/>
+  </include>
+  <node pkg="obstacles" type="read_obstacles_server.py" name="read_obs"/>
+  <node pkg="display" type="spawn_cylinder_server.py" name="spawn_obs"/>
+  <node pkg="display" type="spawn_all_cylinders.py" name="spawn_all"/>
+  
+</launch>

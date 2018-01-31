@@ -16,8 +16,11 @@ def check_if_valid(req):
     print "Checking if point is valid: [%s %s]" % (req.x, req.y)
 
     # Retrieve obstacles from Parameter Server
-    vec = rospy.get_param(PARAM_NAME_OBSTACLES)
-    size = rospy.get_param(PARAM_NAME_SIZE)
+    try:
+        vec = rospy.get_param(PARAM_NAME_OBSTACLES)
+        size = rospy.get_param(PARAM_NAME_SIZE)
+    except KeyError:
+        rospy.logerr('Parameter not set')
 
     is_valid = obstacles_functions.check_validity(req.x, req.y, vec, size)
     print "Point is valid: [%s]" % is_valid

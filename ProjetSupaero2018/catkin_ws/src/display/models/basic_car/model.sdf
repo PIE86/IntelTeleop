@@ -2,7 +2,7 @@
 <sdf version="1.5">
 	<model name="basic_car">
 	  <link name="sphere">
-		<pose>0 0 1 0 0 0</pose>
+		<pose>0 0 0.2 0 0 0</pose>
 		
 		<inertial>
 			<mass>1</mass>
@@ -19,7 +19,7 @@
 		<collision name="car_collision">
 		  <geometry>
 			<sphere>
-				<radius>1</radius>
+				<radius>0.2</radius>
 			</sphere>
 		  </geometry>
 		  
@@ -39,7 +39,7 @@
 		<visual name="car_visual">
 		  <geometry>
 			<sphere>
-				<radius>1</radius>
+				<radius>0.2</radius>
 			</sphere>
 		  </geometry>
 		</visual>
