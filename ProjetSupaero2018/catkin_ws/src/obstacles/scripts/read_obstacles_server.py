@@ -27,7 +27,7 @@ def read_obstacles_server():
     vec, size = obstacles_functions.read_obstacles_function(file_path)
     rospy.set_param(PARAM_NAME_OBSTACLES, vec)
     rospy.set_param(PARAM_NAME_SIZE, size)
-    
+
     rospy.spin()
 
 
@@ -36,6 +36,3 @@ if __name__ == "__main__":
     file_path = ros_package.get_path(
         PACKAGE_NAME) + '/resources/obstacles.obs'
     read_obstacles_server()
-
-
-

@@ -27,8 +27,3 @@ if __name__ == "__main__":
         y = obstacle[1]
         r = obstacle[2]
         spawn_cylinder_client.spawn_cylinder_client(x, y, r)
-
-
-
-
-
