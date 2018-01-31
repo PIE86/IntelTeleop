@@ -34,3 +34,4 @@ ProjetSupaero2018/catkin_ws/src/CMakeLists.txt
 *.project
 *.pyc
 *.idea
+*.sdf.swp
