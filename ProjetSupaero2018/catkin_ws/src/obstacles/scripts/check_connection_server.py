@@ -17,8 +17,11 @@ def check_if_valid(req):
           % (req.x1, req.y1, req.x2, req.y2)
 
     # Retrieve obstacles from Parameter Server
-    vec = rospy.get_param(PARAM_NAME_OBSTACLES)
-    size = rospy.get_param(PARAM_NAME_SIZE)
+    try:
+        vec = rospy.get_param(PARAM_NAME_OBSTACLES)
+        size = rospy.get_param(PARAM_NAME_SIZE)
+    except KeyError:
+        rospy.logerr('Parameter not set')
 
     is_valid = obstacles_functions.check_validity_connection(
         req.x1, req.y1, req.x2, req.y2, vec, size)
