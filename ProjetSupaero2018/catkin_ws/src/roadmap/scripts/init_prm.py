@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+"""Create a PRM for a simple 2D state space. Exercice to get started with
+ROS as part of the jalon 1."""
+
 import os
 
 try:
@@ -76,6 +80,7 @@ def prm_init(state_space, nb_sample, nb_connect, nb_best=None):
 
 
 def valid_state(s):
+    """Call valid state service to check if the state is not in an obstacle"""
     try:
         # asking a new proxy every time does not slow down the process
         get_if_valid = rospy.ServiceProxy(CHECKPOINT_SRV, CheckPoint)
@@ -87,6 +92,8 @@ def valid_state(s):
 
 
 def connection(s1, s2):
+    """Call valid connection service to check if the connection
+    between the 2 states is possible"""
     try:
         # asking a new proxy every time does not slow down the process
         get_if_valid = rospy.ServiceProxy(CHECKCONN_SRV, CheckConnection)
