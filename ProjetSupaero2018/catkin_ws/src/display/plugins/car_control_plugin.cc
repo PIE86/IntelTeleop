@@ -56,15 +56,15 @@ namespace gazebo
     public: void SetOrientation(const float &_theta)
     {
 
-    	this->orientation.Set(0,0,_theta);
-    	math::Pose initPose(this->model->GetWorldPose().pos, math::Quaternion(0, 0, _theta));
+    	this->orientation.Set(0,0,_theta *PI/180.0);
+    	math::Pose initPose(this->model->GetWorldPose().pos, math::Quaternion(0, 0, _theta *PI/180.0));
 		this->model->SetWorldPose(initPose);
 		gzmsg << "Orientation set to: " << _theta << "\n";
     }
 
     public: void OnRosMsg(const display::ControlConstPtr &_msg)
 	{
-		this->SetOrientation(_msg->theta *PI/180.0);
+		this->SetOrientation(_msg->theta);
 		this->velocity.Set(_msg->velocity*cos(_msg->theta *PI/180.0), _msg->velocity*sin(_msg->theta *PI/180.0), 0);
     	this->SetVelocity(this->velocity);
 	}
