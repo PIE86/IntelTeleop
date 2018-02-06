@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Example script to demonstrate how to call the path_finding service"""
+
 import rospy
 from roadmap.srv import PathFinding
 from geometry_msgs.msg import Point

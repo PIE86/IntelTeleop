@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""A path_finding service used in jalon 1 to generate trajectories.
+Retrieves information from data files to build the prm graph and then
+use astar on it."""
+
 import os
 import rospy
 import rospkg
@@ -32,6 +36,10 @@ def callback(start_end):
 
 
 def find_path(s1, s2):
+    """
+    Given 2 states, compute the shortest path from the 2 closest nodes  in the
+    graph using astar and return the complete path.
+    """
     n1 = graph.closest_nodes(s1, NB_CONNECT)[0]
     n2 = graph.closest_nodes(s2, NB_CONNECT)[0]
     node_path = prm.astar(n1, n2, graph, prm.euclid)

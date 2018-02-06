@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+	<model name="basic_car">
+	  <link name="sphere">
+		<pose>0 0 0.2 0 0 0</pose>
+		
+		<inertial>
+			<mass>1</mass>
+			<inertia>
+				<ixx>0.4</ixx> <!-- inertia is 2/5*M*R2 -->
+				<iyy>0.4</iyy>
+				<izz>0.4</izz>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyz>0</iyz>
+			</inertia>
+		</inertial>
+				
+		<collision name="car_collision">
+		  <geometry>
+			<sphere>
+				<radius>0.2</radius>
+			</sphere>
+		  </geometry>
+		  
+		  <!--
+		  <surface>
+		  	<friction>
+		  		<ode>
+		  			<mu>0</mu>
+		  			<mu2>0</mu2>
+		  			<slip1>1.0</slip1>
+		  			<slip2>1.0</slip2>
+		  		</ode>
+		  	</friction>
+		  </surface> -->
+		</collision>
+
+		<visual name="car_visual">
+		  <geometry>
+			<sphere>
+				<radius>0.2</radius>
+			</sphere>
+		  </geometry>
+		</visual>
+	  </link>
+	</model>
+</sdf>	
