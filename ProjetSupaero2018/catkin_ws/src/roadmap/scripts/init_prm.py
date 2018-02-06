@@ -42,43 +42,6 @@ def main():
     graph.save(os.path.join(PACKAGE_DATA_PATH))
 
 
-def prm_init(state_space, nb_sample, nb_connect, nb_best=None):
-    """
-    nb_sample: number of sample take from the state space
-    nb_connect: number of nearest state to try to connect with
-    nb_best: number of the best edges to keep
-    """
-
-    graph = prm.Graph(state_space, prm.euclid)
-    for _ in range(nb_sample):
-        node, s = graph.new_node()
-        if valid_state(s):
-            graph.add_node(node, s)
-        else:
-            continue
-
-        closest_nodes = graph.closest_nodes(s, nb_connect)
-        new_edges = []
-        for close_node in closest_nodes:
-            # !! with Acado, to be done in the 2 ways !!
-            s = graph.nodes[node][0]
-            close_s = graph.nodes[close_node][0]
-            conn = connection(s, close_s)
-            if conn[0]:
-                new_edges.append((node, close_node, conn[1]))
-            conn = connection(close_s, s)
-            if conn[0]:
-                new_edges.append((close_node, node, conn[1]))
-
-        if nb_best:
-            # best edges: the longest ones
-            new_edges = sorted(new_edges, key=lambda edge: edge[2])[:nb_best]
-        for edge in new_edges:
-            graph.add_edge(edge)
-
-    return graph
-
-
 def valid_state(s):
     """Call valid state service to check if the state is not in an obstacle"""
     try:

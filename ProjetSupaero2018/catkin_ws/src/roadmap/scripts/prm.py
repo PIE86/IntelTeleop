@@ -1,21 +1,70 @@
 from os.path import join as pjoin
-import random
 import numpy as np
 import heapq
+
+
+class PRM:
+    """
+    Simple generic PRM implementation using the Graph structure
+
+    sample: generate a random state in the admissible state space
+    connect: determines if 2 states are connectable and return the edges
+             between the 2 nodes
+    nb_sample: number of sample take from the state space
+    nb_connect: number of nearest state to try to connect with
+    nb_best: number of the best edges to keep
+    """
+
+    def __init__(self, sample, connect, nb_sample, nb_connect, nb_best=None):
+        self.sample = sample
+        self.connect = connect
+        self.nb_sample = nb_sample
+        self.nb_connect = nb_connect
+        self.nb_best = nb_best
+        self.graph = Graph()
+
+    def build_graph(self, hdistance):
+        """Build the prm graph"""
+        for _ in range(self.nb_sample):
+            node = self.graph.new_node()
+            s = self.sample()
+            nearest_nodes = self.graph.nearest_nodes(s, hdistance,
+                                                     self.nb_connect)
+            new_edges = []
+            for close_node in nearest_nodes:
+                # !! with Acado, to be done in the 2 ways !!
+                s = self.graph.nodes[node][0]
+                close_s = self.graph.nodes[close_node][0]
+                success, X, U, cost = self.connect(s, close_s)
+                if success:
+                    new_edges.append(((node, close_node), (X, U, cost)))
+                success, X, U, cost = self.connect(close_s, s)
+                if success:
+                    new_edges.append(((close_node, node), (X, U, cost)))
+
+            if self.nb_best:
+                # best edges: the longest ones
+                new_edges = sorted(new_edges, lambda e: e[1][2])[:self.nb_best]
+            for edge in new_edges:
+                self.graph.add_edge(edge)
+
+
+def connect(s1, s2):
+    """Send a request to Acado optimizer service.
+    Warm start argument?
+    """
+    pass
 
 
 class Graph:
     save_fields = ('nodes', 'edges')
 
-    def __init__(self, state_space, hdistance):
-        self.state_space = state_space
-        self.hdistance = hdistance
-
+    def __init__(self):
         # idx_node: (state, linked_to, linked_from)
         # 4: ((0.56, 4.2), [4, 12, 5], [4, 12])
         self.nodes = {}
-        # (idx_node1, idx_node2): distance
-        # (4, 2): 2.5
+        # (idx_node1, idx_node2): (state_trajectory, cmd_trajectory, cost)
+        # (4, 2): ([(1, 2), (1, 2), (1, 2)], [(1, 2), (1, 2), (1, 2)], 12)
         self.edges = {}
 
     def __str__(self):
@@ -38,8 +87,8 @@ class Graph:
             self.__dict__[field] = np.load(pjoin(directory, field)+'.npy')[()]
 
     def new_node(self):
-        """Generate a random state from the state space"""
-        return len(self.nodes), self.state_space.rdm_state()
+        """Return new node index"""
+        return len(self.nodes)
 
     def add_node(self, idx, state):
         """Add a node to the graph with a defined state and no linked nodes"""
@@ -57,14 +106,14 @@ class Graph:
         """
         return [self.nodes[node][0] for node in node_list]
 
-    def closest_nodes(self, state, nb_connect, new=True):
+    def nearest_nodes(self, state, hdistance, nb_connect, new=True):
         """
         Return at max the nb_connect nodes close to the state.
         new bool: enables to avoid comparing the new node with itself if True
         """
         # -1 to avoid comparing the new node with itself but dirty
         existing_nodes = list(range(len(self.nodes) - 1*new))
-        distances = [self.hdistance(state, self.nodes[node_g][0])
+        distances = [hdistance(state, self.nodes[node_g][0])
                      for node_g in existing_nodes]
         nb_connect = min(nb_connect, len(distances))
         # argpartition: return a list of node indices, the n first of which
@@ -73,16 +122,6 @@ class Graph:
             return existing_nodes
 
         return np.argpartition(distances, nb_connect)[:nb_connect]
-
-
-class StateSpace:
-    def __init__(self, bounds, seed=None):
-        self.bounds = bounds
-        random.seed(seed)
-
-    def rdm_state(self):
-
-        return [b[0] + random.random()*(b[1] - b[0]) for b in self.bounds]
 
 
 def astar(start, goal, graph, hdistance):

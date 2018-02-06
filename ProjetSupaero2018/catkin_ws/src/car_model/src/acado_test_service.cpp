@@ -2,6 +2,9 @@
 #include <acado_optimal_control.hpp>
 #include "ros/ros.h"
 #include "car_model/OptControl.h"
+#include "geometry_msgs/Point.h"
+
+
 
 bool solve(car_model::OptControl::Request &req,
            car_model::OptControl::Response &res)
@@ -47,6 +50,17 @@ bool solve(car_model::OptControl::Request &req,
     parameters.print();
     controls.print();
 
+    ROS_INFO("COUCOU");
+    ROS_INFO("COUCOU");
+    ROS_INFO("COUCOU");
+    Vector toto = states.getVector(0);
+    toto.printToString()
+    ROS_INFO("COUCOU");
+
+    // res.states = states
+    // res.controls = controls
+    // res.success = 1
+
     return true;
 }
 
@@ -56,7 +70,7 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
 
   ros::ServiceServer service = n.advertiseService("solve_rocket", solve);
-  ROS_INFO("Ready to add two ints.");
+  ROS_INFO("Ready to do Rocket Science.");
   ros::spin();
 
   return 0;
