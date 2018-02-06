@@ -12,10 +12,10 @@ class Graph:
         self.hdistance = hdistance
 
         # idx_node: (state, linked_to, linked_from)
-        # ex: 4: ((0.56, 4.2), [4, 12, 5], [4, 12])
+        # 4: ((0.56, 4.2), [4, 12, 5], [4, 12])
         self.nodes = {}
         # (idx_node1, idx_node2): distance
-        # ex: (4, 2): 2.5
+        # (4, 2): 2.5
         self.edges = {}
 
     def __str__(self):
@@ -27,30 +27,39 @@ class Graph:
         ]
         return '\n'.join(desc)
 
-    def save(self, path):
+    def save(self, directory):
+        """Save the graphs attributes to files in the directory"""
         for field in self.save_fields:
-            np.save(pjoin(path, field+'.npy'), self.__dict__[field])
+            np.save(pjoin(directory, field+'.npy'), self.__dict__[field])
 
-    def load(self, path):
+    def load(self, directory):
+        """Load the graphs attributes from files in the directory"""
         for field in self.save_fields:
-            self.__dict__[field] = np.load(pjoin(path, field)+'.npy')[()]
+            self.__dict__[field] = np.load(pjoin(directory, field)+'.npy')[()]
 
     def new_node(self):
+        """Generate a random state from the state space"""
         return len(self.nodes), self.state_space.rdm_state()
 
     def add_node(self, idx, state):
+        """Add a node to the graph with a defined state and no linked nodes"""
         self.nodes[idx] = (state, [], [])
 
     def add_edge(self, edge):
+        """Add an edge to the graph. The nodes in the edge argument must
+        be already in the graph."""
         self.nodes[edge[0]][1].append(edge[1])
         self.nodes[edge[1]][2].append(edge[0])
         self.edges[(edge[0], edge[1])] = edge[2]
 
     def node_list_to_state_list(self, node_list):
+        """Given a list of node indices, return the list of associated states
+        """
         return [self.nodes[node][0] for node in node_list]
 
     def closest_nodes(self, state, nb_connect, new=True):
         """
+        Return at max the nb_connect nodes close to the state.
         new bool: enables to avoid comparing the new node with itself if True
         """
         # -1 to avoid comparing the new node with itself but dirty
@@ -77,7 +86,12 @@ class StateSpace:
 
 
 def astar(start, goal, graph, hdistance):
-    """Find the shortest between two nodes in the graph"""
+    """
+    Find the shortest between two nodes in the graph.
+    start and goal are both indices of nodes that should be in the graph.
+    hdistance: heuristic distance used in the algorithm (euclidian, Value f)
+    """
+
     if start not in graph.nodes:
         raise ValueError('node ' + str(start) + ' not in the graph')
     if goal not in graph.nodes:
