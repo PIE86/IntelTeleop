@@ -21,7 +21,10 @@ def check_if_valid(req):
         vec = rospy.get_param(PARAM_NAME_OBSTACLES)
         size = rospy.get_param(PARAM_NAME_SIZE)
     except KeyError:
-        rospy.logerr('Parameter not set')
+        rospy.logerr('Obstacles parameters not set - '
+                     'You may have to launch a server that reads obstacles '
+                     'from an input file '
+                     '(see obstacles/check_point_server)')
         return
 
     is_valid = obstacles_functions.check_validity(req.x, req.y, vec, size)

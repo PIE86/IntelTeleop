@@ -3,6 +3,7 @@
 import rospy
 import numpy as np
 import spawn_cylinder_client
+import sys
 
 PARAM_NAME_SIZE = '/obstacles/obstacles_size'
 PARAM_NAME_OBSTACLES = '/obstacles/obstacles_vec'
@@ -17,8 +18,11 @@ if __name__ == "__main__":
         vec = rospy.get_param(PARAM_NAME_OBSTACLES)
         size = rospy.get_param(PARAM_NAME_SIZE)
     except KeyError:
-        rospy.logerr('Parameter not set')
-        return
+        rospy.logerr('Obstacles parameters not set - '
+                     'You may have to launch a server that reads obstacles '
+                     'from an input file '
+                     '(see obstacles/read_obstacles_server)')
+        sys.exit(1)
 
     n = len(vec) / size
     arr = np.reshape(np.array(vec), (n, size))
