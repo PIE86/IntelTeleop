@@ -22,6 +22,7 @@ def check_if_valid(req):
         size = rospy.get_param(PARAM_NAME_SIZE)
     except KeyError:
         rospy.logerr('Parameter not set')
+        return
 
     is_valid = obstacles_functions.check_validity_connection(
         req.x1, req.y1, req.x2, req.y2, vec, size)

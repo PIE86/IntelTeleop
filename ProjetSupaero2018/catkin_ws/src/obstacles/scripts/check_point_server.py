@@ -22,6 +22,7 @@ def check_if_valid(req):
         size = rospy.get_param(PARAM_NAME_SIZE)
     except KeyError:
         rospy.logerr('Parameter not set')
+        return
 
     is_valid = obstacles_functions.check_validity(req.x, req.y, vec, size)
     print "Point is valid: [%s]" % is_valid

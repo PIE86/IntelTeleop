@@ -18,6 +18,7 @@ if __name__ == "__main__":
         size = rospy.get_param(PARAM_NAME_SIZE)
     except KeyError:
         rospy.logerr('Parameter not set')
+        return
 
     n = len(vec) / size
     arr = np.reshape(np.array(vec), (n, size))
