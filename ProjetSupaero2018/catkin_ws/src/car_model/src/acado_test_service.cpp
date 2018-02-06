@@ -47,7 +47,7 @@ bool solve(car_model::OptControl::Request &req,
     parameters.print();
     controls.print();
 
-    return bool;
+    return true;
 }
 
 int main(int argc, char **argv)
