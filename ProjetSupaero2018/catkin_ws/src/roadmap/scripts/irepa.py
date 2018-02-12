@@ -7,7 +7,7 @@ from networks import Dataset, Networks
 
 # --- HYPER PARAMS
 # True PRM should be computed, False if  loaded from file
-INIT_PRM = False
+INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 5
 NB_SAMPLE = 3
@@ -27,6 +27,15 @@ def irepa():
     print(len(prm.graph.edges), 'edges')
     # TODO: Connexify PRM -> nodes couples tried several times?
     # TODO: Densify PRM
+
+    #test
+    print("/n Initial value of estimated X trajectory:")
+    dataset = Dataset(prm.graph)
+    batch = random.sample(range(len(dataset.us)), 1)
+    x0 = dataset.x1s[batch, :].T
+    x1 = dataset.x2s[batch, :].T
+    print(nets.test(x0,x1))
+    
     # dataset = Dataset(prm.graph)
     for i in range(IREPA_ITER):
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
@@ -34,6 +43,12 @@ def irepa():
         nets.train(dataset)
         prm.improve(nets)
 
+    #test
+    print("/n Final value of estimated X trajectory:")
+    batch = random.sample(range(len(dataset.us)), 1)
+    x0 = dataset.x1s[batch, :].T
+    x1 = dataset.x2s[batch, :].T
+    print(nets.test(x0,x1))
 
 # TODO: another file
 def connect(s1, s2):
@@ -46,8 +61,8 @@ def connect(s1, s2):
                    (1, 6, 4), (2, 9, 9), (6, 5, 1), (1, 6, 4), (2, 9, 9),
                    ])
     U = np.vstack([(1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
-                  (1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
-                  (1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
+                   (1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
+                   (1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
                    ])
     T = 10
     return success, X, U, T

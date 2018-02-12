@@ -4,7 +4,6 @@ from numpy.linalg import norm as npnorm
 import tensorflow as tf
 import tflearn
 
-
 '''
 Implementation of the networks trained from the dataset.  The networks are used
 to approximate 3 functions: the value function V(a,b) which is the minimal cost
@@ -43,13 +42,19 @@ class Networks:
         self.sess = tf.InteractiveSession()
         tf.global_variables_initializer().run()
 
-    def train(self, dataset, nets=None, nepisodes=int(1e4), track=False):
+    def train(self, dataset, nets=None, nepisodes=int(1e2), track=True):
         if nets is None:
             nets = [self.value, self.ptrajx, self.ptraju]
 
         if track:
             hist = []
-            refbatch = random.sample(range(len(dataset.us)), self.BATCH_SIZE*16)
+            try:
+                refbatch = random.choices(
+                    range(len(dataset.us)), k=self.BATCH_SIZE*16)
+            except:
+                print(range(len(dataset.us)), self.BATCH_SIZE*16)
+                raise
+
             xref = np.hstack([dataset.x1s[refbatch, :],
                               dataset.x2s[refbatch, :]])
             vref = dataset.vs[refbatch, :]
@@ -60,14 +65,15 @@ class Networks:
             batch = random.sample(range(len(dataset.us)), self.BATCH_SIZE)
             xbatch = np.hstack([dataset.x1s[batch, :],
                                 dataset.x2s[batch, :]])
+
             self.sess.run([p.optim for p in nets],
                           feed_dict={
-                            self.value.x: xbatch,
-                            self.value.uref: dataset.vs[batch, :],
-                            self.ptrajx.x: xbatch,
-                            self.ptrajx.uref: dataset.trajxs[batch, :],
-                            self.ptraju.x: xbatch,
-                            self.ptraju.uref: dataset.trajus[batch, :]})
+                self.value.x: xbatch,
+                self.value.uref: dataset.vs[batch, :],
+                self.ptrajx.x: xbatch,
+                self.ptrajx.uref: dataset.trajxs[batch, :],
+                self.ptraju.x: xbatch,
+                self.ptraju.uref: dataset.trajus[batch, :]})
 
             if track and not episode % 50:
                 v = self.sess.run(self.value.policy,
@@ -79,6 +85,7 @@ class Networks:
                 hist.append([npnorm(v - vref) / len(refbatch),
                              npnorm(us - usref) / len(refbatch),
                              npnorm(xs - xsref) / len(refbatch)])
+                #print(npnorm(v - vref) / len(refbatch))
 
         if track:
             return hist
@@ -96,6 +103,9 @@ class Networks:
         T = self.sess.run(self.value.policy, feed_dict={self.value.x: x})[0, 0]
 
         return X, U, T
+
+    def test(self, x0, x1):
+        return self.ptrajx.connect(self.sess, x0, x1)
 
 
 UPDATE_RATE = 5e-3
@@ -137,19 +147,19 @@ class NN:
 
     def withUmax(self, umax):
         if umax is None:
-            print 'umax none'
+            print('umax none')
             return
         umax = np.matrix(umax)
         self.head = self.policy
         if umax.shape == (1, 1):
-            print 'umax float'
+            print('umax float')
             self.policy = self.policy * umax[0, 0]
         elif umax.shape == (1, 2):
-            print 'umax pair'
+            print('umax pair')
             self.policy = (
                 self.policy * (umax[0, 1] - umax[0, 0]) + umax[0, 0] + umax[0, 1]) / 2
         elif umax.shape == (2, self.output_size):
-            print 'umax list'
+            print('umax list')
             l, u = umax
             self.policy = (tf.multiply(self.policy, u - l) + l + u) / 2
 
@@ -185,6 +195,16 @@ class NN:
              for target, ref in zip(self.variables, nominalNet.variables)]
         return self
 
+    def connect(self, session, x0, x1):
+        '''Returns a triplet X,U,T (ie a vector sampling the time function) to go
+        from x0 to x1, computed from the networks (global variable).'''
+        x0 = x0.T if x0 is not None else env.sample().T
+        x1 = x1.T if x1 is not None else env.sample().T
+        x = np.hstack([x0, x1])
+        Y = session.run(self.policy, feed_dict={self.x: x})
+
+        return Y
+
 
 class Dataset:
     def __init__(self, graph):
@@ -203,7 +223,7 @@ class Dataset:
         print('Load dataset ')
         # for every edge trajectory
         for (p1, p2), (X, U, T) in self.graph.edges.items():
-            print '.',
+            print('.',)
             DT = T / (len(X) - 1)
             # for every instant of the trajectory
             for k, (x1, u1) in enumerate(zip(X, U)):
@@ -223,7 +243,7 @@ class Dataset:
                     trajus.append(np.ravel(resample(U[k:k+di+2], 20)))
                     self.indexes.append([p1, p2, k, di])
 
-        print '\n'
+        print('\n')
         self.x1s = np.vstack(x1s)
         self.x2s = np.vstack(x2s)
         self.vs = np.vstack(vs)
