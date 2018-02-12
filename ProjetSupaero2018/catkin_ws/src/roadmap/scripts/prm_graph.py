@@ -68,7 +68,7 @@ class PRM:
             s2 = self.graph.nodes[i2][0]
             Tp = self.graph.edges[i1, i2][2]
             try:
-                X, U, T = nets.traj(s1, s2)
+                X, U, T = nets.trajectories(s1, s2)
                 Xa, Ua, Ta = self.connect(s1, s2, init=(X, U, T))
             # TODO: No connection available Exception
             except Exception:
@@ -94,7 +94,7 @@ class PRM:
                     print '#%d: Connecting %d to %d' % (i, i1, i2)
                 try:
                     # TODO: Not done initially in the irepa code
-                    X, U, T = nets.traj(s1, s2)
+                    X, U, T = nets.trajectories(s1, s2)
                     sucess, Xa, Ua, Ta = self.connect(s1, s2, init=(X, U, T))
                 # TODO: No connection available Exception
                 except Exception:
