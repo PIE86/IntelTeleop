@@ -91,7 +91,7 @@ class PRM:
             s1, s2 = self.graph.nodes[i1][0], self.graph.nodes[i2][0]
             if i2 not in self.graph.nodes[i1][1]:
                 if verbose:
-                    print '#%d: Connecting %d to %d' % (i, i1, i2)
+                    print('#%d: Connecting %d to %d' % (i, i1, i2))
                 try:
                     # TODO: Not done initially in the irepa code
                     X, U, T = nets.trajectories(s1, s2)
@@ -104,7 +104,6 @@ class PRM:
                     self.graph.add_edge(new_edge)
                     if verbose:
                         print('\t\t... Yes!')
-
 
 class Graph:
     save_fields = ('nodes', 'edges')
