@@ -1,5 +1,6 @@
-from os.path import join as pjoin
+import random
 import numpy as np
+from os.path import join as pjoin
 import heapq
 
 
@@ -28,6 +29,7 @@ class PRM:
         for _ in range(self.nb_sample):
             node = self.graph.new_node()
             s = self.sample()
+            self.graph.add_node(node, s)
             nearest_nodes = self.graph.nearest_nodes(s, hdistance,
                                                      self.nb_connect)
             new_edges = []
@@ -48,12 +50,60 @@ class PRM:
             for edge in new_edges:
                 self.graph.add_edge(edge)
 
+    def improve(self, nets):
+        """Improve the prm using the approximators:
+        - Replace some edges with betters paths
+        - Tries to connect unconnected states
+        """
+        self.graph.edges.update(self.better_edges(nets))
+        self.expand(nets, 20)
 
-def connect(s1, s2):
-    """Send a request to Acado optimizer service.
-    Warm start argument?
-    """
-    pass
+    def better_edges(self, nets, verbose=True):
+        '''Return a patch that improve the PRM edge cost.'''
+        EPS = 0.05
+
+        edges_patch = {}
+        for i1, i2 in self.graph.edges:
+            s1 = self.graph.nodes[i1][0]
+            s2 = self.graph.nodes[i2][0]
+            Tp = self.graph.edges[i1, i2][2]
+            try:
+                X, U, T = nets.traj(s1, s2)
+                Xa, Ua, Ta = self.connect(s1, s2, init=(X, U, T))
+            # TODO: No connection available Exception
+            except Exception:
+                continue
+            if Ta < (1 - EPS) * Tp:
+                if verbose:
+                    print("Better connection: %d to %d (%.2f vs %.2f)" % (
+                                                    i1, i2, Ta, Tp))
+                edges_patch[(i1, i2)] = (Xa, Ua, Ta)
+        return edges_patch
+
+    def expand(self, nets, n=10, verbose=True):
+        """Try to connect more nodes using the NN approx.
+        - nets: approximators
+        - n: number of trials"""
+        # TODO: Not really an expansion since no new node is added to the graph
+        for i in range(n):
+            # TODO: maybe something better than just random? Least connected?
+            i1, i2 = random.choice(list(self.graph.edges.keys()))
+            s1, s2 = self.graph.nodes[i1][0], self.graph.nodes[i2][0]
+            if i2 not in self.graph.nodes[i1][1]:
+                if verbose:
+                    print '#%d: Connecting %d to %d' % (i, i1, i2)
+                try:
+                    # TODO: Not done initially in the irepa code
+                    X, U, T = nets.traj(s1, s2)
+                    sucess, Xa, Ua, Ta = self.connect(s1, s2, init=(X, U, T))
+                # TODO: No connection available Exception
+                except Exception:
+                    success = False
+                if success:
+                    new_edge = ((i1, i2), (X, U, T))
+                    self.graph.add_edge(new_edge)
+                    if verbose:
+                        print('\t\t... Yes!')
 
 
 class Graph:
@@ -64,6 +114,7 @@ class Graph:
         # 4: ((0.56, 4.2), [4, 12, 5], [4, 12])
         self.nodes = {}
         # (idx_node1, idx_node2): (state_trajectory, cmd_trajectory, cost)
+        # (i1, i2): (X, U, T)
         # (4, 2): ([(1, 2), (1, 2), (1, 2)], [(1, 2), (1, 2), (1, 2)], 12)
         self.edges = {}
 
@@ -94,12 +145,13 @@ class Graph:
         """Add a node to the graph with a defined state and no linked nodes"""
         self.nodes[idx] = (state, [], [])
 
-    def add_edge(self, edge):
+    def add_edge(self, e):
         """Add an edge to the graph. The nodes in the edge argument must
-        be already in the graph."""
-        self.nodes[edge[0]][1].append(edge[1])
-        self.nodes[edge[1]][2].append(edge[0])
-        self.edges[(edge[0], edge[1])] = edge[2]
+        already be in the graph.
+        edge -> ((i1, i2), (X, U, T))"""
+        self.nodes[e[0][0]][1].append(e[0][1])
+        self.nodes[e[0][1]][2].append(e[0][0])
+        self.edges[e[0]] = e[1]
 
     def node_list_to_state_list(self, node_list):
         """Given a list of node indices, return the list of associated states
@@ -185,7 +237,3 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
-
-
-def euclid(s1, s2):
-    return np.sqrt((s2[0]-s1[0])**2 + (s2[1]-s1[1])**2)
