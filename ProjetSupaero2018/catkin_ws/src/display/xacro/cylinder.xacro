@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cylinder">
+
+<!-- Useful values -->
+<xacro:property name="DegToRad" value="0.017453293"/>
+<xacro:property name="RadToDeg" value="57.295779513"/>
+
+<!-- Values defining the box -->
+<xacro:arg name="x" default="0" />
+<xacro:property name="x" value="$(arg x)" />
+<xacro:arg name="y" default="0" />
+<xacro:property name="y" value="$(arg y)" />
+<xacro:arg name="z" default="0.5" />
+<xacro:property name="z" value="$(arg z)" />
+<xacro:arg name="roll" default="0" />
+<xacro:property name="roll" value="$(arg roll)" />
+<xacro:arg name="yaw" default="0" />
+<xacro:property name="yaw" value="$(arg yaw)" />
+<xacro:arg name="radius" default="1" />
+<xacro:property name="radius" value="$(arg radius)" />
+<xacro:arg name="length" default="1" />
+<xacro:property name="length" value="$(arg length)" />
+
+<!-- Macro to place the cylinder -->
+<!-- ^ means: use the value of the variable with the same name already defined -->
+<xacro:macro name="Origin" params="x:=^ y:=^ z:=^ roll:=^ yaw:=^">
+  <origin xyz="${x} ${y} ${z}" rpy="${roll} 0 ${yaw}" />
+</xacro:macro>
+
+<!-- Macro to create the cylinder -->
+<xacro:macro name="Cylinder" params="radius:=^ length:=^">
+  <geometry>
+		<cylinder radius="${radius}" length="${length}" />
+  </geometry>
+</xacro:macro>
+
+
+<!-- Cylinder ! -->
+  <link name="my_cylinder">
+    <inertial>
+      <xacro:Origin/>
+      <mass value="1e3" />
+      <inertia  ixx="1e3" ixy="1e3"  ixz="1e3"  iyy="1e3"  iyz="1e3"  izz="1e3" />
+    </inertial>
+    <visual>
+      <xacro:Origin/>
+      <xacro:Cylinder/>
+    </visual>
+    <collision>
+      <xacro:Origin/>
+      <xacro:Cylinder/>
+    </collision>
+  </link>
+  <gazebo reference="my_cylinder">
+    <static>true</static>
+    <turnGravityOff>true</turnGravityOff>
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+</robot>

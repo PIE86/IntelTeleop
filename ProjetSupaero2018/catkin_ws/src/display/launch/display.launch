@@ -5,4 +5,6 @@
     <arg name="verbose" value="true"/>
     <!-- more default parameters can be changed here -->
   </include>
+  <node pkg = "display" name = "Init_World" type = "Init_world.py" output = "screen">
+  </node>
 </launch>

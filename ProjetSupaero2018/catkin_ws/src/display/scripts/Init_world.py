@@ -2,9 +2,11 @@
 import rospy
 import tf
 from rospy_tutorials.msg import Floats
-from utils.ros_com.msg import Command
+from utils.msg import Command
 from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Point, Quaternion, Pose
+
+import os
 
 _car_name = 'my_car'
 
@@ -37,13 +39,14 @@ def listener():
 
 def initWorld():
 
+    pkg_path = os.path.realpath(__file__).split("scripts")[0]
     # rospy.wait_for_service("gazebo/delete_sdf_model")
     rospy.wait_for_service("gazebo/spawn_sdf_model")
 
     # delete_sdf_model=rospy.ServicePoxy("gazebo/delete_sdf_model",DeleteModel)
     spawn_sdf_model = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
 
-    with open("src/display/models/my_car/model.sdf", "r") as f:
+    with open(pkg_path + "models/my_car/model.sdf", "r") as f:
         product_xml = f.read()
 
     angle = tf.transformations.quaternion_from_euler(0, 0, 0)
