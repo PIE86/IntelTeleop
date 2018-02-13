@@ -1,8 +1,13 @@
+#include <iomanip>
+#include <iostream>
+
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
+
 #include "ros/ros.h"
-#include "opt_control/OptControl.h"
 #include "geometry_msgs/Point.h"
+
+#include "opt_control/OptControl.h"
 
 
 bool solve(opt_control::OptControl::Request &req,
@@ -41,20 +46,15 @@ bool solve(opt_control::OptControl::Request &req,
 
     VariablesGrid states, parameters, controls;
 
-    algorithm.getDifferentialStates(states    );
-    algorithm.getParameters        (parameters);
-    algorithm.getControls          (controls  );
+    algorithm.getDifferentialStates(states);
+    algorithm.getParameters(parameters);
+    algorithm.getControls(controls);
 
-    states.print();
-    parameters.print();
-    controls.print();
-
-    // Vector toto = states.getVector(0);
-    // toto.printToString()
-
-    // res.states = states
-    // res.controls = controls
-    // res.success = 1
+    // Print each tuple [time, value] of control
+    for(unsigned t = 0; t < controls.getNumPoints(); t++)
+      std::cout << std::setprecision(8) << controls.getTime(t) << ", "
+        << controls.getVector(t)[0] << std::endl;
+    std::cout << std::endl;
 
     return true;
 }
