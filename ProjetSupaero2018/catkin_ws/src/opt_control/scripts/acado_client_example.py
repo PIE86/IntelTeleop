@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from car_model.srv import OptControl
+from opt_control.srv import OptControl
 from geometry_msgs.msg import Point
 
 rospy.init_node('acado_client')
