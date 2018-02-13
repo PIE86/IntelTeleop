@@ -35,7 +35,7 @@ def irepa():
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
     print(nets.test(x0,x1))
-    
+
     # dataset = Dataset(prm.graph)
     for i in range(IREPA_ITER):
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
@@ -50,21 +50,26 @@ def irepa():
     x1 = dataset.x2s[batch, :].T
     print(nets.test(x0,x1))
 
-# TODO: another file
-def connect(s1, s2):
+
+def connect_test(s1, s2):
     """Send a request to Acado optimizer service.
     Warm start argument?
     """
+    trajlength = random.randint(10, 30)
     success = True
-    X = np.vstack([(1, 6, 4), (2, 9, 9), (6, 5, 1), (1, 6, 4), (2, 9, 9),
-                   (1, 6, 4), (2, 9, 9), (6, 5, 1), (1, 6, 4), (2, 9, 9),
-                   (1, 6, 4), (2, 9, 9), (6, 5, 1), (1, 6, 4), (2, 9, 9),
-                   ])
-    U = np.vstack([(1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
-                   (1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
-                   (1, 6), (5, 2), (4, 1), (1, 6), (5, 2),
-                   ])
-    T = 10
+
+    sxarr = np.array([s1[0], s2[0]])
+    syarr = np.array([s1[1], s2[1]])
+    sthetaarr = np.array([s1[2], s2[2]])
+
+    Xx = np.linspace(s1[0], s2[0], trajlength)
+    Xy = np.interp(Xx, sxarr, syarr)
+    Xtheta = np.interp(Xx, sxarr, sthetaarr)
+
+    X = np.vstack([Xx, Xy, Xtheta]).T
+    U = X.copy()
+    T = euclid(s1, s2)
+
     return success, X, U, T
 
 
