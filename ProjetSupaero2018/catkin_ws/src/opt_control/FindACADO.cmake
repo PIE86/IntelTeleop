@@ -154,4 +154,3 @@ IF( ACADO_INCLUDE_DIRS_FOUND AND ACADO_LIBRARY_DIRS_FOUND
 ENDIF()
 
 MESSAGE( STATUS "********************************************************************************" )
-
