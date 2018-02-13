@@ -104,8 +104,11 @@ class Networks:
 
         return X, U, T
 
-    def test(self, x0, x1):
-        return self.ptrajx.connect(self.sess, x0, x1)
+    def connect_test(self, x0, x1):
+        return self.ptrajx.predict(self.sess, x0, x1)
+
+    def connect(self,state):
+        pass
 
 
 UPDATE_RATE = 5e-3
@@ -195,7 +198,7 @@ class NN:
              for target, ref in zip(self.variables, nominalNet.variables)]
         return self
 
-    def connect(self, session, x0, x1):
+    def predict(self, session, x0, x1):
         '''Returns a triplet X,U,T (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).'''
         x0 = x0.T if x0 is not None else env.sample().T

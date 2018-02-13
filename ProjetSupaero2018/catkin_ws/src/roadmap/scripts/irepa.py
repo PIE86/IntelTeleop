@@ -20,7 +20,7 @@ CONTROL_SIZE = 2
 
 def irepa():
     nets = Networks(STATE_SIZE, CONTROL_SIZE)
-    prm = PRM(sample, connect, NB_SAMPLE, NB_CONNECT)
+    prm = PRM(sample, connect_test, NB_SAMPLE, NB_CONNECT)
     prm.build_graph(euclid)
     print('PRM initialized')
     print(len(prm.graph.nodes), 'nodes')
@@ -34,8 +34,9 @@ def irepa():
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
-    print(nets.test(x0,x1))
 
+    print(nets.connect_test(x0,x1))
+    
     # dataset = Dataset(prm.graph)
     for i in range(IREPA_ITER):
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
@@ -48,7 +49,13 @@ def irepa():
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
-    print(nets.test(x0,x1))
+    print(nets.connect_test(x0,x1))
+
+# TODO: another file
+
+# Placeholder
+def connect(s1,s2):
+    pass
 
 
 def connect_test(s1, s2):
