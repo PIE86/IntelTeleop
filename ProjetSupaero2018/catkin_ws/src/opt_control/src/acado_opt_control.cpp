@@ -1,6 +1,5 @@
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
-#include <vector.hpp>
 #include "ros/ros.h"
 #include "opt_control/OptControl.h"
 #include "geometry_msgs/Point.h"
@@ -50,8 +49,8 @@ bool solve(opt_control::OptControl::Request &req,
     parameters.print();
     controls.print();
 
-    Vector toto = states.getVector(0);
-    toto.printToString()
+    // Vector toto = states.getVector(0);
+    // toto.printToString()
 
     // res.states = states
     // res.controls = controls
