@@ -43,6 +43,6 @@ include_directories(
   ${ACADO_INCLUDE_DIRS}
 )
 
-add_executable(acado_test_service src/acado_opt_control.cpp)
-target_link_libraries(acado_test_service ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
-add_dependencies(acado_test_service ${catkin_EXPORTED_TARGETS})
+add_executable(acado_opt_control src/acado_opt_control.cpp)
+target_link_libraries(acado_opt_control ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
+add_dependencies(acado_opt_control ${catkin_EXPORTED_TARGETS})
