@@ -1,4 +1,5 @@
 import random
+from itertools import permutations
 import numpy as np
 from os.path import join as pjoin
 import heapq
@@ -36,19 +37,16 @@ class PRM:
             state = self.sample()
             node_index = self.graph.add_node(state)
 
-        self.expand(n=self.nb_connect)
-
-        """
+        for node_idex, state in self.graph.nodes.items():
             nearest_nodes = self.graph.nn_from_state(state, hdistance,
                                                      self.nb_connect)
             new_edges = []
             for nn_node_index in nearest_nodes:
-
                 success, X, U, V = self.ACADO_connect(
                     self.graph.nodes[node_index],
                     self.graph.nodes[nn_node_index])
-                ## If successing while attempting to connect the two nodes
-                ## then add the new edge to the graph
+                # If successing while attempting to connect the two nodes
+                # then add the new edge to the graph
                 if success:
                     new_edges.append([(node_index, nn_node_index),
                                       Graph.new_path([X, U, V])])
@@ -56,8 +54,8 @@ class PRM:
                 success, X, U, V = self.ACADO_connect(
                     self.graph.nodes[nn_node_index],
                     self.graph.nodes[node_index])
-                ## If successing while attempting to connect the two nodes
-                ## in reverse order then add the new edge to the graph
+                # If successing while attempting to connect the two nodes
+                # in reverse order then add the new edge to the graph
                 if success:
                     new_edges.append([(nn_node_index, node_index),
                                       Graph.new_path([X, U, V])])
@@ -81,7 +79,6 @@ class PRM:
                 new_edge[1].X,
                 new_edge[1].U,
                 new_edge[1].V) for new_edge in new_edges]
-        """
 
     def improve(self, nets):
         """Improve the prm using the approximators:
@@ -89,7 +86,9 @@ class PRM:
         - Tries to connect unconnected states
         """
         self.graph.edges.update(self.better_edges(nets))
+        # TODO: expand can be viewed as a Densify?
         self.expand(nets, 20)
+        self.connexify(nets, 5)
 
     def better_edges(self, nets, verbose=True):
         '''Return a ditc of edges that improve the PRM edge cost.'''
@@ -116,19 +115,23 @@ class PRM:
 
         return edges_patch
 
-    def expand(self, estimator=None, n=10, verbose=True, max_iter=10):
+    def expand(self, estimator=None, n=10, max_iter=10, verbose=True):
         """Try to connect more nodes using the NN approx.
-        - nets: approximators
-        - n: number of trials"""
-        # TODO: Not really an expansion since no new node is added to the graph
+        Randomly select n nodes in the graph and try to connect them
+        to any other node of the graph.
+
+        - estimator: networks estimating trajectories and value function
+        - n: number of nodes to connect
+        - max_iter: max number of connection attempt from each chose node
+        """
 
         for i in range(n):
             # TODO: maybe something better than just random? Least connected?
+            # use the V-value for a horizon limited vue?
             success = False
             areConnected = True
             iteration = 0
 
-            # TODO: use the V-value for a horizon limited vue
             # Selects two random nodes until it finds two unconnected nodes
             # or exceeds the max_iter iterations
             while areConnected and iteration < max_iter:
@@ -149,15 +152,9 @@ class PRM:
                                                         nodes_indexes[1]))
 
                 # Tries to optimally connect the two nodes
-                    # TODO: Not done initially in the irepa code
-                if estimator:
-                    X_est, U_est, V_est = estimator.connect(states)
-                    init_path = (X_est, U_est, V_est)
-                else:
-                    init_path = None
-                print(f"\t\t Trying...")
-                success, X_opt, U_opt, V_opt = self.ACADO_connect(
-                    states[0], states[1], init=init_path)
+                # TODO: Not done initially in the irepa code
+                success, X_opt, U_opt, V_opt = self.opt_trajectories(states,
+                                                                     estimator)
             # TODO: except ACADOerror
 
             # If an optimal path between the two nodes was found, then adds it
@@ -174,13 +171,39 @@ class PRM:
 
         return
 
-    # TODO
-    def connexify(self):
+    def connexify(self, estimator, nb_connect=5):
+        """
+        For every pair of connex components in the graph, tries to connect
+        nb_connect pairs of nodes.
+        """
         connex_groups_id = list(self.graph.connex_groups)
-        if len(connex_groups_id) > 1:
-            for id in connex_groups:
-                if id in self.graph.connex_groups:
-                    pass
+        connex_pairs = permutations(connex_groups_id, 2)
+        new_edges = []
+        for conidx1, conidx2 in connex_pairs:
+            for _ in range(nb_connect):
+                node_idx1 = random.choice(self.graph.connex_groups[conidx1])
+                node_idx2 = random.choice(self.graph.connex_groups[conidx2])
+                state1 = self.graph.nodes[node_idx1]
+                state2 = self.graph.nodes[node_idx2]
+                success, X_opt, U_opt, V_opt = self.opt_trajectories(
+                                               (state1, state2), estimator)
+                if success:
+                    new_edges.append(((node_idx1, node_idx2),
+                                      X_opt, U_opt, V_opt))
+
+        for edge in new_edges:
+            self.graph.add_edge(*edge)
+
+    def opt_trajectories(self, states, estimator=None):
+        """Make an estimate of the trajectories to warm up the optimizer or
+        just call the optimizer if no estimator"""
+        if estimator:
+            X_est, U_est, V_est = estimator.trajectories(*states)
+            init_path = (X_est, U_est, V_est)
+        else:
+            init_path = None
+        print(f"\t\t Trying...")
+        return self.ACADO_connect(states[0], states[1], init=init_path)
 
 
 class Graph:

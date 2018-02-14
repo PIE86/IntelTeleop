@@ -22,7 +22,7 @@ class Networks:
     BATCH_SIZE = 128
 
     def __init__(self, state_size, control_size):
-        TRAJLENGTH = 20
+        self.TRAJLENGTH = 20
         # bx = [10., 10., 10., 1.4, 1.4, 10., 10., 10., 2., 2.]
         # bx = bx * TRAJLENGTH
         # bx = [[-x for x in bx], bx]
@@ -30,14 +30,14 @@ class Networks:
         # Represent the states composants boundaries?
         self.state_size = state_size
         self.control_size = control_size
-        bx = np.vstack([np.hstack([xmin, xmax])]*TRAJLENGTH).T
+        bx = np.vstack([np.hstack([xmin, xmax])] * self.TRAJLENGTH).T
         self.bx = bx
 
         # 2 is for the 2 concatenated states: beginning and end
         self.value = NN(state_size * 2, 1).setupOptim('direct')
-        self.ptrajx = NN(state_size * 2, state_size * TRAJLENGTH,
+        self.ptrajx = NN(state_size * 2, state_size * self.TRAJLENGTH,
                          umax=bx).setupOptim('direct')
-        self.ptraju = NN(state_size * 2, control_size * TRAJLENGTH,
+        self.ptraju = NN(state_size * 2, control_size * self.TRAJLENGTH,
                          umax=umax).setupOptim('direct')
 
         self.sess = tf.InteractiveSession()
@@ -96,13 +96,12 @@ class Networks:
     def trajectories(self, x1=None, x2=None):
         '''Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).'''
-        x = np.hstack([x1, x2])
+        # print(x1)
+        # print(x2)
+        x = np.hstack([x1, x2]).reshape((1, 2*self.state_size))
         X = self.sess.run(self.ptrajx.policy, feed_dict={self.ptrajx.x: x})
-        # TODO: might be simplified: max is here if we do not know the
-        # orientation of X
-        X = np.reshape(X, [max(X.shape)/self.state_size, self.state_size])
         U = self.sess.run(self.ptraju.policy, feed_dict={self.ptraju.x: x})
-        U = np.reshape(U, [max(U.shape)/self.control_size, self.control_size])
+        U = U.reshape((self.TRAJLENGTH, self.control_size))
         V = self.sess.run(self.value.policy, feed_dict={self.value.x: x})[0, 0]
 
         return X, U, V
@@ -110,7 +109,7 @@ class Networks:
     def connect_test(self, x0, x1):
         return self.ptrajx.predict(self.sess, x0, x1)
 
-    def connect(self, state):
+    def connect(self, x0, x1):
         pass
 
 

@@ -10,12 +10,14 @@ from networks import Dataset, Networks
 INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 5
-NB_SAMPLE = 3
+NB_SAMPLE = 15
 NB_CONNECT = 3
 
 # TODO: To get from Model node
 STATE_SIZE = 3
 CONTROL_SIZE = 2
+
+random.seed(42)
 
 
 def irepa():
@@ -54,15 +56,16 @@ def irepa():
     print(nets.connect_test(x0, x1))
 
 
-def connect(s1, s2, init):
+def connect(s1, s2, init=None):
+    """Tries to connect 2 sets by calling the Acado optimizer service.
+    If init trajectory is passed, warm start of the optimization process"""
     pass
 
 
 # Placeholder
-def connect_test(s1, s2, init):
-    """Send a request to Acado optimizer service.
-    Warm start argument?
-    """
+def connect_test(s1, s2, init=None):
+    success = random.randint(0, 1)
+
     trajlength = random.randint(10, 30)
 
     sxarr = np.array([s1[0], s2[0]])
@@ -77,7 +80,7 @@ def connect_test(s1, s2, init):
     U = X.copy()[:, 0:2]
     V = euclid(s1, s2)
 
-    return True, X, U, V
+    return success, X, U, V
 
 
 def sample():
