@@ -48,12 +48,8 @@ class Networks:
 
         if track:
             hist = []
-            try:
-                refbatch = random.choices(
-                    range(len(dataset.us)), k=self.BATCH_SIZE*16)
-            except:
-                print(range(len(dataset.us)), self.BATCH_SIZE*16)
-                raise
+            refbatch = random.choices(
+                range(len(dataset.us)), k=self.BATCH_SIZE*16)
 
             xref = np.hstack([dataset.x1s[refbatch, :],
                               dataset.x2s[refbatch, :]])
@@ -62,7 +58,8 @@ class Networks:
             usref = dataset.trajus[refbatch, :]
 
         for episode in range(nepisodes):
-            batch = random.sample(range(len(dataset.us)), self.BATCH_SIZE)
+            batch = random.choices(
+                range(len(dataset.us)), k=self.BATCH_SIZE*16)
             xbatch = np.hstack([dataset.x1s[batch, :],
                                 dataset.x2s[batch, :]])
 
@@ -73,6 +70,11 @@ class Networks:
                 self.ptrajx.x: xbatch,
                 self.ptrajx.uref: dataset.trajxs[batch, :],
                 self.ptraju.x: xbatch,
+                # FIXME
+                """
+                ValueError: Cannot feed value of shape (2048, 60) 
+                for Tensor 'Placeholder_2:0', which has shape '(?, 40)'
+                """
                 self.ptraju.uref: dataset.trajus[batch, :]})
 
             if track and not episode % 50:
@@ -91,7 +93,7 @@ class Networks:
             return hist
 
     def trajectories(self, x1=None, x2=None):
-        '''Returns a triplet X,U,T (ie a vector sampling the time function) to go
+        '''Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).'''
         x = np.hstack([x1, x2])
         X = self.sess.run(self.ptrajx.policy, feed_dict={self.ptrajx.x: x})
@@ -100,14 +102,14 @@ class Networks:
         X = np.reshape(X, [max(X.shape)/self.state_size, self.state_size])
         U = self.sess.run(self.ptraju.policy, feed_dict={self.ptraju.x: x})
         U = np.reshape(U, [max(U.shape)/self.control_size, self.control_size])
-        T = self.sess.run(self.value.policy, feed_dict={self.value.x: x})[0, 0]
+        V = self.sess.run(self.value.policy, feed_dict={self.value.x: x})[0, 0]
 
-        return X, U, T
+        return X, U, V
 
     def connect_test(self, x0, x1):
         return self.ptrajx.predict(self.sess, x0, x1)
 
-    def connect(self,state):
+    def connect(self, state):
         pass
 
 
@@ -160,7 +162,8 @@ class NN:
         elif umax.shape == (1, 2):
             print('umax pair')
             self.policy = (
-                self.policy * (umax[0, 1] - umax[0, 0]) + umax[0, 0] + umax[0, 1]) / 2
+                self.policy * (umax[0, 1]
+                               - umax[0, 0]) + umax[0, 0] + umax[0, 1]) / 2
         elif umax.shape == (2, self.output_size):
             print('umax list')
             l, u = umax
@@ -199,10 +202,10 @@ class NN:
         return self
 
     def predict(self, session, x0, x1):
-        '''Returns a triplet X,U,T (ie a vector sampling the time function) to go
+        '''Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).'''
-        x0 = x0.T if x0 is not None else env.sample().T
-        x1 = x1.T if x1 is not None else env.sample().T
+        x0 = x0.T if x0 is not None else env.sample().V
+        x1 = x1.T if x1 is not None else env.sample().V
         x = np.hstack([x0, x1])
         Y = session.run(self.policy, feed_dict={self.x: x})
 
@@ -225,9 +228,9 @@ class Dataset:
 
         print('Load dataset ')
         # for every edge trajectory
-        for (p1, p2), (X, U, T) in self.graph.edges.items():
+        for (p1, p2), (X, U, V) in self.graph.edges.items():
             print('.',)
-            DT = T / (len(X) - 1)
+            DV = V / (len(X) - 1)
             # for every instant of the trajectory
             for k, (x1, u1) in enumerate(zip(X, U)):
                 # Create subtrajectory of minimum size 7 to the end of the traj
@@ -239,7 +242,7 @@ class Dataset:
                     x1s.append(x1)
                     x2s.append(x2)
                     us.append(u1)
-                    vs.append(DT * (di + 1))
+                    vs.append(DV * (di + 1))
                     # np.ravel -> flatten any array in a 1D array
 
                     trajxs.append(np.ravel(resample(X[k:k+di+2], 20)))

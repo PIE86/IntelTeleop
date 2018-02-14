@@ -5,6 +5,10 @@ import heapq
 
 from collections import namedtuple
 
+
+Path = namedtuple('Path', ['X', 'U', 'V'])
+
+
 class PRM:
     """
     Simple generic PRM implementation using the Graph structure
@@ -28,28 +32,47 @@ class PRM:
     def build_graph(self, hdistance):
         """Build the prm graph"""
         for _ in range(self.nb_sample):
-            node_new = self.sample()
-            self.graph.add_node(node_new)
-            nearest_nodes = self.graph.nearest_nodes(s, hdistance,
+
+            state = self.sample()
+            node_index = self.graph.add_node(state)
+            nearest_nodes = self.graph.nn_from_state(state, hdistance,
                                                      self.nb_connect)
             new_edges = []
-            for close_node in nearest_nodes:
-                # !! with Acado, to be done in the 2 ways !!
-                close_s = self.graph.nodes[close_node][0]
-                success, X, U, cost = self.connect(s, close_s)
+            for nn_node_index in nearest_nodes:
+
+                success, X, U, V = self.ACADO_connect(self.graph.nodes[node_index],
+                                                      self.graph.nodes[nn_node_index])
+                """ If successing while attempting to connect the two nodes
+                then add the new edge to the graph"""
                 if success:
-                    new_edges.append(Graph.new_stateEdge(
-                        [node, close_node], [X, U, cost]))
-                success, X, U, cost = self.connect(close_s, s)
+                    new_edges.append([(node_index, nn_node_index),
+                                      Graph.new_path([X, U, V])])
+
+                success, X, U, V = self.ACADO_connect(self.graph.nodes[nn_node_index],
+                                                      self.graph.nodes[node_index])
+                """ If successing while attempting to connect the two nodes
+                in reverse order then add the new edge to the graph"""
                 if success:
-                    new_edges.append(Graph.new_stateEdge(
-                        [clode_node, node], [X, U, cost]))
+                    new_edges.append([(nn_node_index, node_index),
+                                      Graph.new_path([X, U, V])])
 
             if self.nb_best:
+                # TODO: explain to Guillermo why best = longest
                 # best edges: the longest ones
-                new_edges = sorted(new_edges, lambda e: e[1][2])[:self.nb_best]
-            for edge in new_edges:
-                self.graph.add_edge(edge)
+                new_edges_states_array = np.array(
+                    [edge[0] for edge in new_edges])
+                new_edges_V_array = np.array([edge[1].V for edge in new_edges])
+
+                best_edges_indexes = np.argpartition(new_edges_V_array,
+                                                     self.nb_best)[:-(self.nb_best+1):-1]
+
+                new_edges = [[new_edges_states_array[index], new_edges[index][1]]
+                             for index in best_edges_indexes]
+
+            return [self.graph.add_edge(new_edge[0],
+                                        new_edge[1].X,
+                                        new_edge[1].U,
+                                        new_edge[1].V) for new_edge in new_edges]
 
     def improve(self, nets):
         """Improve the prm using the approximators:
@@ -60,25 +83,28 @@ class PRM:
         self.expand(nets, 20)
 
     def better_edges(self, nets, verbose=True):
-        '''Return a patch that improve the PRM edge cost.'''
+        '''Return a ditc of edges that improve the PRM edge cost.'''
         EPS = 0.05
 
         edges_patch = {}
-        for i1, i2 in self.graph.edges:
-            s1 = self.graph.nodes[i1][0]
-            s2 = self.graph.nodes[i2][0]
-            Tp = self.graph.edges[i1, i2][2]
-            try:
-                X, U, T = nets.trajectories(s1, s2)
-                Xa, Ua, Ta = self.connect(s1, s2, init=(X, U, T))
-            # TODO: No connection available Exception
-            except Exception:
-                continue
-            if Ta < (1 - EPS) * Tp:
-                if verbose:
-                    print("Better connection: %d to %d (%.2f vs %.2f)" % (
-                        i1, i2, Ta, Tp))
-                edges_patch[(i1, i2)] = (Xa, Ua, Ta)
+        for node0_index, node1_index in self.graph.edges:
+            state0 = self.graph.nodes[node0_index]
+            state1 = self.graph.nodes[node1_index]
+
+            V_prm = self.graph.edges[node0_index, node1_index].V
+
+            X_est, U_est, V_est = nets.trajectories(state0, state1)
+            success, X, U, V = self.ACADO_connect(
+                state0, state1, init=(X_est, U_est, V_est))
+
+            if success:
+                if V < (1 - EPS) * V_prm:
+                    if verbose:
+                        print("Better connection: %d to %d (%.2f vs %.2f)" % (
+                            node0_index, node1_index, V, V_prm))
+                    edges_patch[(node0_index, node1_index)
+                                ] = Graph.new_path([X, U, V])
+
         return edges_patch
 
     def expand(self, nets, n=10, verbose=True):
@@ -86,41 +112,50 @@ class PRM:
         - nets: approximators
         - n: number of trials"""
         # TODO: Not really an expansion since no new node is added to the graph
+
         for i in range(n):
             # TODO: maybe something better than just random? Least connected?
             success = False
             areNotConnected = True
+
+            # TODO: use the V-value for a horizon limited vue
+            # Selects two random nodes until it finds two unconnected nodes
             while areNotConnected:
                 node_index = random.choices(list(self.graph.nodes), k=2)
                 areNotConnected = node_index not in self.graph.edges.keys()
 
-            state = self.graph.nodes[node_index[0]
-                                     ].state, self.graph.nodes[node_index[1]].state
+            state = (self.graph.nodes[node_index[0]].state,
+                     self.graph.nodes[node_index[1]].state)
 
             if verbose:
                 print('#%d: Connecting %d to %d' % (i, i1, i2))
+
+            # Tries to optimally connect the two nodes
             try:
                 # TODO: Not done initially in the irepa code
-                X, U, T = nets.connect(state)
+                X, U, V = nets.connect(state)
+                sucess, Xa, Ua, Va = self.ACADO_connect(s1, s2, init=(X, U, V))
+            # TODO: except ACADOerror
+            except:
+                raise
 
-                sucess, Xa, Ua, Ta = self.ACADO_connect(s1, s2, init=(X, U, T))
-
-            # TODO: No connection available Exception
+            # If an optimal path between the two nodes was found, then adds it
+            # to the graph as a new edge
             if success:
-                new_edge = self.graph.new_edge([i1, i2], [X, U, T])
-                self.graph.add_edge([i1, i2], [X, U, T])
+                self.graph.add_edge([i1, i2], [X, U, V])
                 if verbose:
                     print('\t\t... Yes!')
 
+        return
+
 
 class Graph:
+
     save_fields = ('nodes', 'edges')
 
     def __init__(self):
 
         # NamedTuple representing a path between two nodes
-        self.Path = namedtuple('Path', ['X', 'U', 'V'])
-
         # nodes = {node_id: state0}
         self.nodes = {}
 
@@ -146,22 +181,27 @@ class Graph:
             self.__dict__[field] = np.load(pjoin(directory, field)+'.npy')[()]
 
     def add_node(self, state):
-        """Add a node to the graph with a defined state and no linked nodes"""
-        self.nodes[len(self.nodes)] = state
+        """
+        Add a node to the graph with a defined state and no linked nodes
+        Return index of note
+        """
+        node_index = len(self.nodes)
+        self.nodes[node_index] = state
+        return node_index
 
-    def new_path(self, edge):
-        """Return an Edge named tuple, edge is [X,U,V] """
-        return self.Path(edge[0], edge[1], edge[2])
+    @staticmethod
+    def new_path(path):
+        """Return an Edge named tuple, path is [X,U,V] """
+        return Path(path[0], path[1], path[2])
 
     def add_edge(self, nodes, X, U, V):
         """Add an edge to the graph. The nodes in the edge argument must
         already be in the graph.
         """
-
         assert(nodes[0] in self.nodes)
         assert(nodes[1] in self.nodes)
 
-        self.edges[nodes] = new_path(X,U,V)
+        self.edges[nodes] = Graph.new_path([X, U, V])
 
     # FIXME
     def node_list_to_state_list(self, node_list):
@@ -172,18 +212,18 @@ class Graph:
     # TODO finalize
     def nn_from_state(self, state, hdistance, max_nn=1):
         """
-        Return at max the nb_connect nodes close to the state.
+        Return the max_nn nearest neighbours nodes indexes of state.
         """
 
-        distances = [[node_index, hdistance(
-            state, node)] for node_index, node in self.nodes.item() if node != state]
+        distances = np.array([[node_index, hdistance(
+            state, node)] for node_index, node in self.nodes.items() if node != state])
 
-        # TODO delete
-        max_nn = min(max_nn, len(distances))
-        # argpartition: return a list of node indices, the n first of which
-        # correspond to the n lowest distance unsorted
         if len(distances) <= max_nn:
-            return existing_nodes
+            return self.nodes.keys()
+
+        """ np.argpartition([hdistance],max_nn)[:max_nn] returns an unsorted 
+        list of node indices for the max_nn nearest neighbours nodes of state """
+        nn_indexes = np.argpartition(distances[:, 1], max_nn)[:max_nn]
 
         # FIXME
-        return np.argpartition(distances, max_nn)[:max_nn]
+        return distances[nn_indexes, 0]

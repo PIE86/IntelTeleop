@@ -74,10 +74,11 @@ def connect_test(s1, s2):
     Xtheta = np.interp(Xx, sxarr, sthetaarr)
 
     X = np.vstack([Xx, Xy, Xtheta]).T
+    # FIXME: U has different shape than X
     U = X.copy()
-    T = euclid(s1, s2)
+    V = euclid(s1, s2)
 
-    return success, X, U, T
+    return success, X, U, V
 
 
 def sample():
