@@ -4,6 +4,7 @@ from numpy.linalg import norm as npnorm
 import tensorflow as tf
 import tflearn
 
+
 '''
 Implementation of the networks trained from the dataset.  The networks are used
 to approximate 3 functions: the value function V(a,b) which is the minimal cost
@@ -65,7 +66,7 @@ class Networks:
 
             # FIXME
             """
-            ValueError: Cannot feed value of shape (2048, 60) 
+            ValueError: Cannot feed value of shape (2048, 60)
             for Tensor 'Placeholder_2:0', which has shape '(?, 40)'
             """
             self.sess.run([p.optim for p in nets],
@@ -87,7 +88,7 @@ class Networks:
                 hist.append([npnorm(v - vref) / len(refbatch),
                              npnorm(us - usref) / len(refbatch),
                              npnorm(xs - xsref) / len(refbatch)])
-                #print(npnorm(v - vref) / len(refbatch))
+                # print(npnorm(v - vref) / len(refbatch))
 
         if track:
             return hist
@@ -229,7 +230,7 @@ class Dataset:
         print('Load dataset ')
         # for every edge trajectory
         for (p1, p2), (X, U, V) in self.graph.edges.items():
-            print('.',)
+            print('.', end='')
             DV = V / (len(X) - 1)
             # for every instant of the trajectory
             for k, (x1, u1) in enumerate(zip(X, U)):

@@ -134,9 +134,9 @@ class PRM:
             while areConnected and iteration < max_iter:
                 iteration += 1
                 nodes_indexes = random.choices(list(self.graph.nodes), k=2)
-                areConnected = (tuple(nodes_indexes) 
-                    in self.graph.edges.keys()
-                    or nodes_indexes[0] == nodes_indexes[1])
+                areConnected = (tuple(nodes_indexes)
+                                in self.graph.edges.keys()
+                                or nodes_indexes[0] == nodes_indexes[1])
 
             if not areConnected:
 
@@ -182,6 +182,7 @@ class PRM:
                 if id in self.graph.connex_groups:
                     pass
 
+
 class Graph:
 
     save_fields = ('nodes', 'edges')
@@ -202,8 +203,8 @@ class Graph:
         self.connex_elements = {}
 
     def __str__(self):
-        return f"""{len(self.nodes)} nodes, {len(self.edges)} edges \n 
-                Nodes: {self.nodes} \n 
+        return f"""{len(self.nodes)} nodes, {len(self.edges)} edges \n
+                Nodes: {self.nodes} \n
                 Edges: {self.edges}"""
 
     def save(self, directory):
@@ -287,8 +288,9 @@ class Graph:
         if len(distances) <= max_nn:
             return self.nodes.keys()
 
-        """ np.argpartition([hdistance],max_nn)[:max_nn] returns an unsorted 
-        list of node indices for the max_nn nearest neighbours nodes of state """
+        """ np.argpartition([hdistance],max_nn)[:max_nn] returns an unsorted
+        list of node indices for the max_nn nearest neighbours nodes of state
+        """
         nn_indexes = np.argpartition(distances[:, 1], max_nn)[:max_nn]
 
         # FIXME

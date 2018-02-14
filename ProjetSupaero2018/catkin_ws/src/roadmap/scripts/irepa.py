@@ -23,13 +23,13 @@ def irepa():
     prm.build_graph(euclid)
     print('PRM initialized')
     print(len(prm.graph.nodes), 'nodes:')
-    print(list(prm.graph.nodes),'\n')
+    print(list(prm.graph.nodes), '\n')
     print(len(prm.graph.edges), 'edges:')
-    print(list(prm.graph.edges),'\n')
+    print(list(prm.graph.edges), '\n')
     # TODO: Connexify PRM -> nodes couples tried several times?
     # TODO: Densify PRM
 
-    #test
+    # test
     nets = Networks(STATE_SIZE, CONTROL_SIZE)
     print("\n Initial value of estimated X trajectory:")
     dataset = Dataset(prm.graph)
@@ -37,8 +37,8 @@ def irepa():
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
 
-    print(nets.connect_test(x0,x1))
-    
+    print(nets.connect_test(x0, x1))
+
     # dataset = Dataset(prm.graph)
     for i in range(IREPA_ITER):
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
@@ -46,21 +46,20 @@ def irepa():
         nets.train(dataset)
         prm.improve(nets)
 
-    #test
+    # test
     print("\n Final value of estimated X trajectory:")
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
-    print(nets.connect_test(x0,x1))
+    print(nets.connect_test(x0, x1))
 
-# TODO: another file
 
-# Placeholder
-def connect(s1,s2,init):
+def connect(s1, s2, init):
     pass
 
 
-def connect_test(s1, s2,init):
+# Placeholder
+def connect_test(s1, s2, init):
     """Send a request to Acado optimizer service.
     Warm start argument?
     """
@@ -75,8 +74,7 @@ def connect_test(s1, s2,init):
     Xtheta = np.interp(Xx, sxarr, sthetaarr)
 
     X = np.vstack([Xx, Xy, Xtheta]).T
-    # FIXME: U has different shape than X
-    U = X.copy()
+    U = X.copy()[:, 0:2]
     V = euclid(s1, s2)
 
     return True, X, U, V
