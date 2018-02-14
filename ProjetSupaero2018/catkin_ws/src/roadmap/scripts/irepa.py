@@ -19,17 +19,19 @@ CONTROL_SIZE = 2
 
 
 def irepa():
-    nets = Networks(STATE_SIZE, CONTROL_SIZE)
     prm = PRM(sample, connect_test, NB_SAMPLE, NB_CONNECT)
     prm.build_graph(euclid)
     print('PRM initialized')
-    print(len(prm.graph.nodes), 'nodes')
-    print(len(prm.graph.edges), 'edges')
+    print(len(prm.graph.nodes), 'nodes:')
+    print(list(prm.graph.nodes),'\n')
+    print(len(prm.graph.edges), 'edges:')
+    print(list(prm.graph.edges),'\n')
     # TODO: Connexify PRM -> nodes couples tried several times?
     # TODO: Densify PRM
 
     #test
-    print("/n Initial value of estimated X trajectory:")
+    nets = Networks(STATE_SIZE, CONTROL_SIZE)
+    print("\n Initial value of estimated X trajectory:")
     dataset = Dataset(prm.graph)
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
@@ -45,7 +47,7 @@ def irepa():
         prm.improve(nets)
 
     #test
-    print("/n Final value of estimated X trajectory:")
+    print("\n Final value of estimated X trajectory:")
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
@@ -54,16 +56,15 @@ def irepa():
 # TODO: another file
 
 # Placeholder
-def connect(s1,s2):
+def connect(s1,s2,init):
     pass
 
 
-def connect_test(s1, s2):
+def connect_test(s1, s2,init):
     """Send a request to Acado optimizer service.
     Warm start argument?
     """
     trajlength = random.randint(10, 30)
-    success = True
 
     sxarr = np.array([s1[0], s2[0]])
     syarr = np.array([s1[1], s2[1]])
@@ -78,7 +79,7 @@ def connect_test(s1, s2):
     U = X.copy()
     V = euclid(s1, s2)
 
-    return success, X, U, V
+    return True, X, U, V
 
 
 def sample():

@@ -63,6 +63,11 @@ class Networks:
             xbatch = np.hstack([dataset.x1s[batch, :],
                                 dataset.x2s[batch, :]])
 
+            # FIXME
+            """
+            ValueError: Cannot feed value of shape (2048, 60) 
+            for Tensor 'Placeholder_2:0', which has shape '(?, 40)'
+            """
             self.sess.run([p.optim for p in nets],
                           feed_dict={
                 self.value.x: xbatch,
@@ -70,11 +75,6 @@ class Networks:
                 self.ptrajx.x: xbatch,
                 self.ptrajx.uref: dataset.trajxs[batch, :],
                 self.ptraju.x: xbatch,
-                # FIXME
-                """
-                ValueError: Cannot feed value of shape (2048, 60) 
-                for Tensor 'Placeholder_2:0', which has shape '(?, 40)'
-                """
                 self.ptraju.uref: dataset.trajus[batch, :]})
 
             if track and not episode % 50:

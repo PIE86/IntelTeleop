@@ -35,23 +35,29 @@ class PRM:
 
             state = self.sample()
             node_index = self.graph.add_node(state)
+
+        self.expand(n=self.nb_connect)
+
+        """
             nearest_nodes = self.graph.nn_from_state(state, hdistance,
                                                      self.nb_connect)
             new_edges = []
             for nn_node_index in nearest_nodes:
 
-                success, X, U, V = self.ACADO_connect(self.graph.nodes[node_index],
-                                                      self.graph.nodes[nn_node_index])
-                """ If successing while attempting to connect the two nodes
-                then add the new edge to the graph"""
+                success, X, U, V = self.ACADO_connect(
+                    self.graph.nodes[node_index],
+                    self.graph.nodes[nn_node_index])
+                ## If successing while attempting to connect the two nodes
+                ## then add the new edge to the graph
                 if success:
                     new_edges.append([(node_index, nn_node_index),
                                       Graph.new_path([X, U, V])])
 
-                success, X, U, V = self.ACADO_connect(self.graph.nodes[nn_node_index],
-                                                      self.graph.nodes[node_index])
-                """ If successing while attempting to connect the two nodes
-                in reverse order then add the new edge to the graph"""
+                success, X, U, V = self.ACADO_connect(
+                    self.graph.nodes[nn_node_index],
+                    self.graph.nodes[node_index])
+                ## If successing while attempting to connect the two nodes
+                ## in reverse order then add the new edge to the graph
                 if success:
                     new_edges.append([(nn_node_index, node_index),
                                       Graph.new_path([X, U, V])])
@@ -63,16 +69,19 @@ class PRM:
                     [edge[0] for edge in new_edges])
                 new_edges_V_array = np.array([edge[1].V for edge in new_edges])
 
-                best_edges_indexes = np.argpartition(new_edges_V_array,
-                                                     self.nb_best)[:-(self.nb_best+1):-1]
+                best_edges_indexes = np.argpartition(
+                    new_edges_V_array, self.nb_best)[:-(self.nb_best+1):-1]
 
-                new_edges = [[new_edges_states_array[index], new_edges[index][1]]
+                new_edges = [[new_edges_states_array[index],
+                              new_edges[index][1]]
                              for index in best_edges_indexes]
 
-            return [self.graph.add_edge(new_edge[0],
-                                        new_edge[1].X,
-                                        new_edge[1].U,
-                                        new_edge[1].V) for new_edge in new_edges]
+            return [self.graph.add_edge(
+                new_edge[0],
+                new_edge[1].X,
+                new_edge[1].U,
+                new_edge[1].V) for new_edge in new_edges]
+        """
 
     def improve(self, nets):
         """Improve the prm using the approximators:
@@ -107,7 +116,7 @@ class PRM:
 
         return edges_patch
 
-    def expand(self, nets, n=10, verbose=True):
+    def expand(self, estimator=None, n=10, verbose=True, max_iter=10):
         """Try to connect more nodes using the NN approx.
         - nets: approximators
         - n: number of trials"""
@@ -116,38 +125,62 @@ class PRM:
         for i in range(n):
             # TODO: maybe something better than just random? Least connected?
             success = False
-            areNotConnected = True
+            areConnected = True
+            iteration = 0
 
             # TODO: use the V-value for a horizon limited vue
             # Selects two random nodes until it finds two unconnected nodes
-            while areNotConnected:
-                node_index = random.choices(list(self.graph.nodes), k=2)
-                areNotConnected = node_index not in self.graph.edges.keys()
+            # or exceeds the max_iter iterations
+            while areConnected and iteration < max_iter:
+                iteration += 1
+                nodes_indexes = random.choices(list(self.graph.nodes), k=2)
+                areConnected = (tuple(nodes_indexes) 
+                    in self.graph.edges.keys()
+                    or nodes_indexes[0] == nodes_indexes[1])
 
-            state = (self.graph.nodes[node_index[0]].state,
-                     self.graph.nodes[node_index[1]].state)
+            if not areConnected:
 
-            if verbose:
-                print('#%d: Connecting %d to %d' % (i, i1, i2))
+                states = (self.graph.nodes[nodes_indexes[0]],
+                          self.graph.nodes[nodes_indexes[1]])
 
-            # Tries to optimally connect the two nodes
-            try:
-                # TODO: Not done initially in the irepa code
-                X, U, V = nets.connect(state)
-                sucess, Xa, Ua, Va = self.ACADO_connect(s1, s2, init=(X, U, V))
+                if verbose:
+                    print('#%d: Connecting %d to %d' % (i,
+                                                        nodes_indexes[0],
+                                                        nodes_indexes[1]))
+
+                # Tries to optimally connect the two nodes
+                    # TODO: Not done initially in the irepa code
+                if estimator:
+                    X_est, U_est, V_est = estimator.connect(states)
+                    init_path = (X_est, U_est, V_est)
+                else:
+                    init_path = None
+                print(f"\t\t Trying...")
+                success, X_opt, U_opt, V_opt = self.ACADO_connect(
+                    states[0], states[1], init=init_path)
             # TODO: except ACADOerror
-            except:
-                raise
 
             # If an optimal path between the two nodes was found, then adds it
             # to the graph as a new edge
-            if success:
-                self.graph.add_edge([i1, i2], [X, U, V])
-                if verbose:
-                    print('\t\t... Yes!')
+                if success:
+                    self.graph.add_edge((nodes_indexes[0],
+                                         nodes_indexes[1]),
+                                        X_opt, U_opt, V_opt)
+                    if verbose:
+                        print('\t\t\t... Yes!')
+                else:
+                    if verbose:
+                        print('\t\t\t... No!')
 
         return
 
+    # TODO
+    def connexify(self):
+        connex_groups_id = list(self.graph.connex_groups)
+        if len(connex_groups_id) > 1:
+            for id in connex_groups:
+                if id in self.graph.connex_groups:
+                    pass
 
 class Graph:
 
@@ -159,11 +192,14 @@ class Graph:
         # nodes = {node_id: state0}
         self.nodes = {}
 
-        # edges = {(node_id0,node_id1): Path(X, U, V)}
+        # edges = {(node_id,node_id1): Path(X, U, V)}
         self.edges = {}
 
-        # connex_groups = {idx_connex_group : [idx_nodes]}
+        # connex_groups = {connex_group_id : [nodes_id]}
         self.connex_groups = {}
+
+        # connex_elements = {nodes_id : [connex_group_id]}
+        self.connex_elements = {}
 
     def __str__(self):
         return f"""{len(self.nodes)} nodes, {len(self.edges)} edges \n 
@@ -187,6 +223,12 @@ class Graph:
         """
         node_index = len(self.nodes)
         self.nodes[node_index] = state
+
+        # Creates a new connex group and adds to it the new node
+        self.add_to_new_connex_group(node_index)
+        print(f"Added node [{node_index}:{state}] to graph")
+        print(f"Node {node_index} is in connex element " +
+              f"{self.connex_elements[node_index]}\n")
         return node_index
 
     @staticmethod
@@ -201,7 +243,29 @@ class Graph:
         assert(nodes[0] in self.nodes)
         assert(nodes[1] in self.nodes)
 
-        self.edges[nodes] = Graph.new_path([X, U, V])
+        if nodes[0] != nodes[1]:
+
+            self.edges[nodes] = Graph.new_path([X, U, V])
+
+            self.join_connex_groups(self.connex_elements[nodes[0]],
+                                    self.connex_elements[nodes[1]])
+
+    def add_to_new_connex_group(self, node_index):
+
+        new_group_index = len(self.connex_groups)
+        self.connex_groups[new_group_index] = [node_index]
+        self.connex_elements[node_index] = new_group_index
+
+    def join_connex_groups(self, connex_group_id0, connex_group_id1):
+
+        if (connex_group_id0 != connex_group_id1):
+            nodes_indexes_to_change = self.connex_groups.pop(connex_group_id1)
+            self.connex_groups[connex_group_id0] += nodes_indexes_to_change
+
+            changes = {
+                node_index: connex_group_id0
+                for node_index in nodes_indexes_to_change}
+            self.connex_elements.update(changes)
 
     # FIXME
     def node_list_to_state_list(self, node_list):
@@ -215,8 +279,10 @@ class Graph:
         Return the max_nn nearest neighbours nodes indexes of state.
         """
 
-        distances = np.array([[node_index, hdistance(
-            state, node)] for node_index, node in self.nodes.items() if node != state])
+        distances = np.array(
+            [[node_index,
+              hdistance(state, node)] for node_index, node
+             in self.nodes.items() if node != state])
 
         if len(distances) <= max_nn:
             return self.nodes.keys()
