@@ -21,15 +21,18 @@ random.seed(42)
 
 
 def irepa():
-    prm = PRM(sample, connect_test, NB_SAMPLE, NB_CONNECT)
-    prm.build_graph(euclid)
+    prm = PRM(sample, connect_test)
+    prm.add_nodes(NB_SAMPLE)
+    prm.densify_knn(euclid, NB_CONNECT)
+
     print('PRM initialized')
     print(len(prm.graph.nodes), 'nodes:')
     print(list(prm.graph.nodes), '\n')
     print(len(prm.graph.edges), 'edges:')
     print(list(prm.graph.edges), '\n')
-    # TODO: Connexify PRM -> nodes couples tried several times?
-    # TODO: Densify PRM
+
+    prm.connexify(None, 5)
+    prm.densify_longer_traj(euclid)
 
     # test
     nets = Networks(STATE_SIZE, CONTROL_SIZE)
@@ -88,6 +91,7 @@ def sample():
 
 
 def euclid(s1, s2):
+    print(s1, s2)
     return np.sqrt(sum((x1i - x2i)**2 for (x1i, x2i) in zip(s1, s2)))
 
 
