@@ -81,7 +81,7 @@ def connect_test(s1, s2, init=None):
 
     X = np.vstack([Xx, Xy, Xtheta]).T
     U = X.copy()[:, 0:2]
-    V = euclid(s1, s2)
+    V = euclid(s1, s2) + random.random()
 
     return success, X, U, V
 
@@ -91,7 +91,6 @@ def sample():
 
 
 def euclid(s1, s2):
-    print(s1, s2)
     return np.sqrt(sum((x1i - x2i)**2 for (x1i, x2i) in zip(s1, s2)))
 
 

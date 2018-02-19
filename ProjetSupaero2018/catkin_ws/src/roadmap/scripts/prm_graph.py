@@ -40,10 +40,10 @@ class PRM:
         nb_connect: number of nearest state to try to connect with
         nb_best: number of the best edges to keep
         """
+        new_edges = []
         for node_index, node in self.graph.nodes.items():
             nearest_nodes = self.graph.nn_from_state(node.state, hdistance,
                                                      nb_connect)
-            new_edges = []
             for nn_node_index in nearest_nodes:
                 success, X, U, V = self.ACADO_connect(
                     self.graph.nodes[node_index].state,
@@ -77,18 +77,17 @@ class PRM:
                               new_edges[index][1]]
                              for index in best_edges_indexes]
 
-            return [self.graph.add_edge(
-                new_edge[0],
-                new_edge[1].X,
-                new_edge[1].U,
-                new_edge[1].V) for new_edge in new_edges]
+        for new_edge in new_edges:
+            self.graph.add_edge(new_edge[0], new_edge[1].X,
+                                new_edge[1].U, new_edge[1].V)
+        return len(new_edges)
 
     def improve(self, nets):
         """Improve the prm using the approximators:
         - Replace some edges with betters paths
         - Tries to connect unconnected states
         """
-        self.graph.edges.update(self.better_edges(nets))
+        self.graph.edges.update(self.better_edges(nets, True))
         # TODO: densify_random can be viewed as a Densify? --> YES! Desnify random
         self.densify_random(nets, 20)
         self.connexify(nets, 5)
@@ -96,7 +95,6 @@ class PRM:
     def better_edges(self, nets, verbose=True):
         '''Return a ditc of edges that improve the PRM edge cost.'''
         EPS = 0.05
-
         edges_patch = {}
         for node0_index, node1_index in self.graph.edges:
             state0 = self.graph.nodes[node0_index].state
