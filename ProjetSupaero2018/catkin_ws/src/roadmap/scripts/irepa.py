@@ -4,59 +4,78 @@ import numpy as np
 from prm_graph import PRM
 from networks import Dataset, Networks
 
+VERBOSE = False
 
 # --- HYPER PARAMS
 # True PRM should be computed, False if  loaded from file
 INIT_PRM = True
 # Number of total iteration of the IREPA
-IREPA_ITER = 5
-NB_SAMPLE = 15
+IREPA_ITER = 3
+NB_SAMPLE = 30
 NB_CONNECT = 3
+# Densify longer
+NB_ATTEMPS_DENSIFY_LONGER = 10
+MIN_PATH_LEN = 3
+
+# connexify
+NB_ATTEMPT_PER_CONNEX_PAIR = 5
 
 # TODO: To get from Model node
 STATE_SIZE = 3
 CONTROL_SIZE = 2
 
-random.seed(42)
+# random.seed(42)
 
 
 def irepa():
     prm = PRM(sample, connect_test)
-    prm.add_nodes(NB_SAMPLE)
+    prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
     prm.densify_knn(euclid, NB_CONNECT)
 
     print('PRM initialized')
     print(len(prm.graph.nodes), 'nodes:')
-    print(list(prm.graph.nodes), '\n')
+    # print(list(prm.graph.nodes), '\n')
     print(len(prm.graph.edges), 'edges:')
-    print(list(prm.graph.edges), '\n')
+    # print(list(prm.graph.edges), '\n')
 
-    prm.connexify(None, 5)
-    prm.densify_longer_traj(euclid)
+    prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
+    prm.densify_longer_traj(NB_ATTEMPS_DENSIFY_LONGER, MIN_PATH_LEN, euclid)
 
     # test
     nets = Networks(STATE_SIZE, CONTROL_SIZE)
     print("\n Initial value of estimated X trajectory:")
     dataset = Dataset(prm.graph)
     batch = random.sample(range(len(dataset.us)), 1)
+    print(batch)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
-
+    print('x0 x1')
+    print(x0, x1)
+    print('Nets connect_test')
     print(nets.connect_test(x0, x1))
+    print('Nets trajectories')
+    print(nets.trajectories(x0, x1))
 
     # dataset = Dataset(prm.graph)
     for i in range(IREPA_ITER):
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
         dataset = Dataset(prm.graph)
+        print(dataset)
         nets.train(dataset)
-        prm.improve(nets)
+        prm.improve(nets, verbose=True)
 
     # test
-    print("\n Final value of estimated X trajectory:")
+    print("\n Final value of estimated trajectories:")
+    print(dataset)
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
+    print('x0 x1')
+    print(x0, x1)
+    print('Nets connect_test')
     print(nets.connect_test(x0, x1))
+    print('Nets trajectories')
+    print(nets.trajectories(x0, x1))
 
 
 def connect(s1, s2, init=None):
@@ -87,7 +106,7 @@ def connect_test(s1, s2, init=None):
 
 
 def sample():
-    return random.randint(1, 10), random.randint(1, 10), random.randint(1, 10)
+    return tuple(random.randint(1, 10) for _ in range(STATE_SIZE))
 
 
 def euclid(s1, s2):

@@ -53,8 +53,8 @@ bool solve(car_model::OptControl::Request &req,
     ROS_INFO("COUCOU");
     ROS_INFO("COUCOU");
     ROS_INFO("COUCOU");
-    Vector toto = states.getVector(0);
-    toto.printToString()
+    // Vector toto = states.getVector(0);
+    // toto.printToString()
     ROS_INFO("COUCOU");
 
     // res.states = states

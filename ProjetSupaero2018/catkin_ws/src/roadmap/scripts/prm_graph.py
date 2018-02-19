@@ -25,14 +25,14 @@ class PRM:
         self.ACADO_connect = connect
         self.graph = Graph()
 
-    def add_nodes(self, nb_sample=40):
+    def add_nodes(self, nb_sample=40, verbose=True):
         """Add a given number of nodes"""
         # TODO: add an option to "guide this adding"
         # Ex: add nodes between 2 unconnectable nodes...
         for _ in range(nb_sample):
 
             state = self.sample()
-            node_index = self.graph.add_node(state)
+            node_index = self.graph.add_node(state, verbose)
 
     def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
         """Build the prm graph
@@ -82,17 +82,16 @@ class PRM:
                                 new_edge[1].U, new_edge[1].V)
         return len(new_edges)
 
-    def improve(self, nets):
+    def improve(self, nets, verbose=False):
         """Improve the prm using the approximators:
         - Replace some edges with betters paths
         - Tries to connect unconnected states
         """
-        self.graph.edges.update(self.better_edges(nets, True))
-        # TODO: densify_random can be viewed as a Densify? --> YES! Desnify random
-        self.densify_random(nets, 20)
-        self.connexify(nets, 5)
+        self.graph.edges.update(self.better_edges(nets, verbose=verbose))
+        self.densify_random(nets, 20, verbose=verbose)
+        self.connexify(nets, 5, verbose=verbose)
 
-    def better_edges(self, nets, verbose=True):
+    def better_edges(self, nets, verbose=False):
         '''Return a ditc of edges that improve the PRM edge cost.'''
         EPS = 0.05
         edges_patch = {}
@@ -116,7 +115,7 @@ class PRM:
 
         return edges_patch
 
-    def densify_random(self, estimator=None, n=10, max_iter=10, verbose=True):
+    def densify_random(self, estimator=None, n=10, max_iter=10, verbose=False):
         """Try to connect more nodes using the NN approx.
         Randomly select n nodes in the graph and try to connect them
         to any other node of the graph.
@@ -154,8 +153,9 @@ class PRM:
 
                 # Tries to optimally connect the two nodes
                 # TODO: Not done initially in the irepa code
-                success, X_opt, U_opt, V_opt = self.opt_trajectories(states,
-                                                                     estimator)
+                success, X_opt, U_opt, V_opt = self.opt_trajectories(
+                                                        states, estimator,
+                                                        verbose=True)
             # TODO: except ACADOerror
 
             # If an optimal path between the two nodes was found, then adds it
@@ -172,24 +172,21 @@ class PRM:
 
         return
 
-    def densify_longer_traj(self, hdistance):
+    def densify_longer_traj(self, nb_attempt, min_path, hdistance):
         """Pick two random states, find their shortest path in the graph
         then try to directly connect them using the OCP warm-started with
-        the shortest path."""
+        the shortest path.
+        - min_path: Minimum size of longer paths to conside
+        """
 
-        # TODO: Precise this min
-        # Minimum size of longer paths to consider
-        MIN_PATH_LEN = 3
-
-        # TODO: new argument
-        for _ in range(10):
+        for _ in range(nb_attempt):
             X_prm = []
             # TODO: random or function of "connectability"
             node1, node2 = random.choices(list(self.graph.nodes.keys()), k=2)
             if node1 in self.graph.nodes[node1].linked_to:
                 continue
             shortest_path = astar(node1, node2, self.graph, hdistance)
-            if shortest_path is not None and len(shortest_path) >= MIN_PATH_LEN:
+            if shortest_path is not None and len(shortest_path) >= min_path:
                 state1 = self.graph.nodes[node1].state
                 state2 = self.graph.nodes[node2].state
                 for i in range(len(shortest_path)-1):
@@ -203,7 +200,7 @@ class PRM:
                 if success:
                     self.graph.add_edge((node1, node2), X, U, V)
 
-    def connexify(self, estimator, nb_connect=5):
+    def connexify(self, estimator, nb_connect=5, verbose=False):
         """
         For every pair of connex components in the graph, tries to connect
         nb_connect pairs of nodes.
@@ -218,7 +215,8 @@ class PRM:
                 state1 = self.graph.nodes[node_idx1].state
                 state2 = self.graph.nodes[node_idx2].state
                 success, X_opt, U_opt, V_opt = self.opt_trajectories(
-                                               (state1, state2), estimator)
+                                               (state1, state2), estimator,
+                                               verbose=verbose)
                 if success:
                     new_edges.append(((node_idx1, node_idx2),
                                       X_opt, U_opt, V_opt))
@@ -226,7 +224,7 @@ class PRM:
         for edge in new_edges:
             self.graph.add_edge(*edge)
 
-    def opt_trajectories(self, states, estimator=None):
+    def opt_trajectories(self, states, estimator=None, verbose=False):
         """Make an estimate of the trajectories to warm up the optimizer or
         just call the optimizer if no estimator"""
         if estimator:
@@ -234,7 +232,8 @@ class PRM:
             init_path = (X_est, U_est, V_est)
         else:
             init_path = None
-        print(f"\t\t Trying...")
+        if verbose:
+            print(f"\t\t Trying...")
         return self.ACADO_connect(states[0], states[1], init=init_path)
 
 
@@ -272,7 +271,7 @@ class Graph:
         for field in self.save_fields:
             self.__dict__[field] = np.load(pjoin(directory, field)+'.npy')[()]
 
-    def add_node(self, state):
+    def add_node(self, state, verbose=True):
         """
         Add a node to the graph with a defined state empty linked nodes
         Return index of note
@@ -283,9 +282,10 @@ class Graph:
 
         # Creates a new connex group and adds to it the new node
         self.add_to_new_connex_group(node_index)
-        print(f"Added node [{node_index}:{state}] to graph")
-        print(f"Node {node_index} is in connex element " +
-              f"{self.connex_elements[node_index]}\n")
+        if verbose:
+            print(f"Added node [{node_index}:{state}] to graph")
+            print(f"Node {node_index} is in connex element " +
+                  f"{self.connex_elements[node_index]}\n")
         return node_index
 
     @staticmethod
