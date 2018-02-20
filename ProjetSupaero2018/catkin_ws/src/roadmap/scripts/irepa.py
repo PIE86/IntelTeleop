@@ -24,58 +24,76 @@ NB_ATTEMPT_PER_CONNEX_PAIR = 5
 STATE_SIZE = 3
 CONTROL_SIZE = 2
 
-# random.seed(42)
+random.seed(42)
 
 
 def irepa():
-    prm = PRM(sample, connect_test)
+
+    # Initialize PRM with a sampling function
+    # and a connect function
+    prm = PRM(sample_fun = sample, connect_fun=connect_test)
+
+    # Add NN_SAMPLE random nodes to the PRM
     prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
     prm.densify_knn(euclid, NB_CONNECT)
 
     print('PRM initialized')
     print(len(prm.graph.nodes), 'nodes:')
-    # print(list(prm.graph.nodes), '\n')
+    print(list(prm.graph.nodes), '\n')
     print(len(prm.graph.edges), 'edges:')
-    # print(list(prm.graph.edges), '\n')
+    print(list(prm.graph.edges), '\n')
 
+    # Define an estimator
+    estimator = Networks(STATE_SIZE, CONTROL_SIZE)
+
+    # Try to connect the nearest neighbors in the PRM
     prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
     prm.densify_longer_traj(NB_ATTEMPS_DENSIFY_LONGER, MIN_PATH_LEN, euclid)
+    prm.densify_longer_traj(euclid)
 
-    # test
-    nets = Networks(STATE_SIZE, CONTROL_SIZE)
-    print("\n Initial value of estimated X trajectory:")
-    dataset = Dataset(prm.graph)
-    batch = random.sample(range(len(dataset.us)), 1)
-    print(batch)
-    x0 = dataset.x1s[batch, :].T
-    x1 = dataset.x2s[batch, :].T
-    print('x0 x1')
-    print(x0, x1)
-    print('Nets connect_test')
-    print(nets.connect_test(x0, x1))
-    print('Nets trajectories')
-    print(nets.trajectories(x0, x1))
-
-    # dataset = Dataset(prm.graph)
-    for i in range(IREPA_ITER):
+    i = 0
+    stop = False
+    while not stop and i < IREPA_ITER:
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
+        
+        # Expand PRM
+        # -----------------
+        # Pick a pair of unconnected nearest neighbors
+        # if distance > visibility horizon: # equivalent to longer_traj
+        #   p* <- shortest path in PRM
+        #   E <- ACADO(init = p*)
+        # else: # equivalent to densify knn
+        #   E <- ACADO(init = 0 or estimator)
+
+        # Stop <- True if PRM is fully connected
+
+        # Build a dataset of subtrajectories
+        # to train the estimator        
         dataset = Dataset(prm.graph)
-        print(dataset)
-        nets.train(dataset)
-        prm.improve(nets, verbose=True)
+
+        # Train the estimator on the dataset
+        estimator.train(dataset)
+
+        # Improve the PRM where the estimator
+        # gives better results
+        stop = prm.improve2(estimator) 
+        # returns False if estimator did better
+        # than PRM
+
+        i += 1
+
 
     # test
-    print("\n Final value of estimated trajectories:")
-    print(dataset)
+    print("\n Final value of estimated X trajectory:")
     batch = random.sample(range(len(dataset.us)), 1)
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
     print('x0 x1')
     print(x0, x1)
     print('Nets connect_test')
-    print(nets.connect_test(x0, x1))
+    print(estimator.connect_test(x0, x1))
     print('Nets trajectories')
-    print(nets.trajectories(x0, x1))
+    print(estimator.trajectories(x0, x1))
 
 
 def connect(s1, s2, init=None):
@@ -110,6 +128,7 @@ def sample():
 
 
 def euclid(s1, s2):
+    #   print(s1, s2)
     return np.sqrt(sum((x1i - x2i)**2 for (x1i, x2i) in zip(s1, s2)))
 
 

@@ -20,9 +20,9 @@ class PRM:
              between the 2 nodes
     """
 
-    def __init__(self, sample, connect):
-        self.sample = sample
-        self.ACADO_connect = connect
+    def __init__(self, sample_fun, connect_fun):
+        self.sample = sample_fun
+        self.ACADO_connect = connect_fun
         self.graph = Graph()
 
     def add_nodes(self, nb_sample=40, verbose=True):
@@ -32,11 +32,11 @@ class PRM:
         for _ in range(nb_sample):
 
             state = self.sample()
-            node_index = self.graph.add_node(state, verbose)
+            node_index = self.graph.add_node(state)
 
     def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
         """Build the prm graph
-        nb_sample: number of sample take from the state space
+        nb_sample: number of samples taken from the state space
         nb_connect: number of nearest state to try to connect with
         nb_best: number of the best edges to keep
         """
@@ -82,7 +82,7 @@ class PRM:
                                 new_edge[1].U, new_edge[1].V)
         return len(new_edges)
 
-    def improve(self, nets, verbose=False):
+    def improve(self, estimator, verbose=False):
         """Improve the prm using the approximators:
         - Replace some edges with betters paths
         - Tries to connect unconnected states
@@ -91,9 +91,10 @@ class PRM:
         self.densify_random(nets, 20, verbose=verbose)
         self.connexify(nets, 5, verbose=verbose)
 
-    def better_edges(self, nets, verbose=False):
+    def better_edges(self, nets, verbose=True):
         '''Return a ditc of edges that improve the PRM edge cost.'''
         EPS = 0.05
+
         edges_patch = {}
         for node0_index, node1_index in self.graph.edges:
             state0 = self.graph.nodes[node0_index].state
@@ -110,10 +111,40 @@ class PRM:
                     if verbose:
                         print("Better connection: %d to %d (%.2f vs %.2f)" % (
                             node0_index, node1_index, V, V_prm))
+                    
                     edges_patch[(node0_index, node1_index)
                                 ] = Graph.new_path([X, U, V])
 
         return edges_patch
+
+    def improve2(self, estimator,verbose=True):
+        """Improve the prm using the approximators:
+        - Replace some edges with betters paths
+        - Tries to connect unconnected states
+        """
+        EPS = 0.05
+
+        better_edges = {}
+        for node0_index, node1_index in self.graph.edges:
+            state0 = self.graph.nodes[node0_index].state
+            state1 = self.graph.nodes[node1_index].state
+
+            V_prm = self.graph.edges[(node0_index, node1_index)].V
+
+            X_est, U_est, V_est = estimator.trajectories(state0, state1)
+
+            if V_est < (1 - EPS) * V_prm:
+                success, X, U, V = self.ACADO_connect(
+                    state0, state1, init=(X_est, U_est, V_est))
+                if success:
+                    if verbose:
+                        print("Better connection: %d to %d (%.2f vs %.2f)" % (
+                            node0_index, node1_index, V, V_prm))
+                    better_edges[(node0_index, node1_index)
+                                 ] = Graph.new_path([X, U, V])
+
+        self.graph.edges.update(better_edges)
+        return not bool(better_edges)
 
     def densify_random(self, estimator=None, n=10, max_iter=10, verbose=False):
         """Try to connect more nodes using the NN approx.
@@ -173,13 +204,18 @@ class PRM:
         return
 
     def densify_longer_traj(self, nb_attempt, min_path, hdistance):
-        """Pick two random states, find their shortest path in the graph
-        then try to directly connect them using the OCP warm-started with
+        """Picks two random states, finds their shortest path in the graph
+        and then tries to directly connect them using the OCP warm-started with
         the shortest path.
-        - min_path: Minimum size of longer paths to conside
+        - min_path: Minimum size of longer paths to consider
         """
 
-        for _ in range(nb_attempt):
+        # TODO: Precise this min
+        # Minimum size of longer paths to consider
+        MIN_PATH_LEN = 3
+
+        # TODO: new argument
+        for _ in range(10):
             X_prm = []
             # TODO: random or function of "connectability"
             node1, node2 = random.choices(list(self.graph.nodes.keys()), k=2)
