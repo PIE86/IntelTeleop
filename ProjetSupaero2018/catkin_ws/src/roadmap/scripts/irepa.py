@@ -29,13 +29,13 @@ random.seed(42)
 
 def irepa():
 
-    # Initialize PRM with a sampling function
-    # and a connect function
-    prm = PRM(sample_fun = sample, connect_fun=connect_test)
+    # Initialize PRM with a sampling function,
+    # a connect function and an heuristic distance
+    prm = PRM(sample_fun = sample, connect_fun=connect_test, hdistance=euclid)
 
     # Add NN_SAMPLE random nodes to the PRM
     prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
-    prm.densify_knn(euclid, NB_CONNECT)
+    #prm.densify_knn(NB_CONNECT)
 
     print('PRM initialized')
     print(len(prm.graph.nodes), 'nodes:')
@@ -47,9 +47,9 @@ def irepa():
     estimator = Networks(STATE_SIZE, CONTROL_SIZE)
 
     # Try to connect the nearest neighbors in the PRM
-    prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
-    prm.densify_longer_traj(NB_ATTEMPS_DENSIFY_LONGER, MIN_PATH_LEN, euclid)
-    prm.densify_longer_traj(euclid)
+    #prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
+    #prm.densify_longer_traj(NB_ATTEMPS_DENSIFY_LONGER, MIN_PATH_LEN)
+    #prm.densify_longer_traj()
 
     i = 0
     stop = False
@@ -64,8 +64,9 @@ def irepa():
         #   E <- ACADO(init = p*)
         # else: # equivalent to densify knn
         #   E <- ACADO(init = 0 or estimator)
+        prm.expand()
 
-        # Stop <- True if PRM is fully connected
+        stop = prm.is_fully_connected()
 
         # Build a dataset of subtrajectories
         # to train the estimator        
@@ -76,7 +77,7 @@ def irepa():
 
         # Improve the PRM where the estimator
         # gives better results
-        stop = prm.improve2(estimator) 
+        stop = prm.improve(estimator) 
         # returns False if estimator did better
         # than PRM
 
