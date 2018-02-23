@@ -24,7 +24,7 @@ class PRM:
         self.sample = sample_fun
         self.ACADO_connect = connect_fun
         self.graph = Graph(hdistance)
-        self.visibility_horizon = 10
+        self.visibility_horizon = 5
 
     def add_nodes(self, nb_sample=40, verbose=True):
         """Add a given number of nodes"""
@@ -46,7 +46,7 @@ class PRM:
           E <- ACADO(init = 0 or estimator)
         """
 
-        for nodes_indexes, distance in zip(self.unconnected_2_nn()):
+        for (node1, node2), distance in zip(*self.unconnected_2_nn()):
 
             if distance > self.visibility_horizon:
                 path = tuple(self.graph.get_path(node1, node2))
@@ -56,25 +56,30 @@ class PRM:
                 path = None  # or estimator
 
             success, X, U, V = self.ACADO_connect(
-                self.graph.nodes[nodes_indexes[0]],
-                self.graph.nodes[nodes_indexes[1]],
+                self.graph.nodes[node1].state,
+                self.graph.nodes[node2].state,
                 init=path)
             # If successing while attempting to connect the two nodes
             # then add the new edge to the graph
             if success:
-                new_edges.append([(nodes_indexes[0], nodes_indexes[1]),
-                                  Graph.new_path([X, U, V])])
+                self.graph.add_edge((node1, node2), X, U, V)
 
-    # TODO
     def unconnected_2_nn(self):
-        nodes_indexes_list = [[1, 2], [2, 3]]
-        distance_list = [4, 5]
+        unconnected_pairs = [
+            pair for pair in permutations(list(self.graph.nodes.keys()), 2)
+            if pair not in self.graph.edges
+        ]
+        distance_list = [
+            self.graph.hdistance(self.graph.nodes[pair[0]].state,
+                                 self.graph.nodes[pair[1]].state)
+            for pair in unconnected_pairs
+        ]
+        print('NUMBER OF UNCONNECTED PAIRS:', len(unconnected_pairs))
 
-        return nodes_indexes_list, distance_list
+        return unconnected_pairs, distance_list
 
     def is_fully_connected(self):
-        return (len(self.graph.edges) >=
-                numpy.math.factorial(len(self.graph.nodes)))
+        return len(self.graph.edges) == len(self.graph.nodes)*(len(self.graph.nodes)-1)
 
     def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
         """Build the prm graph
@@ -168,8 +173,8 @@ class PRM:
 
         better_edges = {}
         for node0_index, node1_index in self.graph.edges:
-            state0 = self.graph.nodes[node0_index]
-            state1 = self.graph.nodes[node1_index]
+            state0 = self.graph.nodes[node0_index].state
+            state1 = self.graph.nodes[node1_index].state
 
             V_prm = self.graph.edges[(node0_index, node1_index)].V
 
@@ -247,7 +252,7 @@ class PRM:
 
     def densify_longer_traj(self, nb_attempt, min_path):
         """Picks two random states, finds their shortest path in the graph
-        and then tries to directly connect them using the OCP warm-started with
+        and then tries to directly connect them using the OCP warm-node1ed with
         the shortest path.
         - min_path: Minimum size of longer paths to consider
         """
@@ -432,32 +437,52 @@ class Graph:
         # FIXME
         return distances[nn_indexes, 0]
 
-    def astar(self, start, goal):
+    def get_path(self, node1, node2):
+        # If nodes already connected, return edge path
+        X_prm, U_prm, V_prm = [], [], 0
+        if (node1, node2) in self.edges:
+            return self.edges[(node1, node2)]
+        shortest_path = self.astar(node1, node2)
+        if shortest_path is None:
+            return None, None, None
+        for i in range(len(shortest_path)-1):
+            pair = shortest_path[i], shortest_path[i+1]
+            X_edge, U_edge, V_edge = self.edges[pair]
+            X_prm.append(X_edge)
+            U_prm.append(U_edge)
+            V_prm += V_edge
+
+        X_prm = np.vstack(X_prm)
+        U_prm = np.vstack(U_prm)
+
+        return X_prm, U_prm, V_prm
+
+    def astar(self, node1, node2):
         """
         Find the shortest between two nodes in the graph.
-        start and goal are both indices of nodes that should be in the graph.
+        node1 and node2 are both indices of nodes that should be in the graph.
         hdistance: heuristic distance used in the algorithm (euclidian, Value f)
         """
-        if start not in self.nodes:
-            raise ValueError('node ' + str(start) + ' not in the graph')
-        if goal not in self.nodes:
-            raise ValueError('node ' + str(goal) + ' not in the graph')
+        if node1 not in self.nodes:
+            raise ValueError('node ' + str(node1) + ' not in the graph')
+        if node2 not in self.nodes:
+            raise ValueError('node ' + str(node2) + ' not in the graph')
 
         # list of (node index, heuristic)
         frontier = PriorityQueue()
-        frontier.put(start, 0.)
+        frontier.put(node1, 0.)
         came_from = {}
         cost_so_far = {}
-        came_from[start] = None
-        cost_so_far[start] = 0.
+        came_from[node1] = None
+        cost_so_far[node1] = 0.
 
         while not frontier.empty():
             # Current
             current = frontier.get()
-            if current == goal:
-                # path reconstitution starting from the end
-                shortest_path = [goal]
-                while shortest_path[-1] != start:
+            if current == node2:
+                # path reconstitution node1ing from the end
+                shortest_path = [node2]
+                while shortest_path[-1] != node1:
                     shortest_path.append(came_from[shortest_path[-1]])
 
                 return list(reversed(shortest_path))
@@ -468,9 +493,9 @@ class Graph:
                 # If newly visited node or already visited but with bigger cost
                 if neigh not in cost_so_far or new_cost < cost_so_far[neigh]:
                     cost_so_far[neigh] = new_cost
-                    dist_goal = self.hdistance(self.nodes[current].state,
-                                               self.nodes[goal].state)
-                    anti_priority = new_cost + dist_goal
+                    dist_node2 = self.hdistance(self.nodes[current].state,
+                                               self.nodes[node2].state)
+                    anti_priority = new_cost + dist_node2
                     frontier.put(neigh, anti_priority)
                     came_from[neigh] = current
 

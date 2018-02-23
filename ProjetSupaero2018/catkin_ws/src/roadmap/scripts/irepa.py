@@ -31,31 +31,27 @@ def irepa():
 
     # Initialize PRM with a sampling function,
     # a connect function and an heuristic distance
-    prm = PRM(sample_fun = sample, connect_fun=connect_test, hdistance=euclid)
+    prm = PRM(sample_fun=sample, connect_fun=connect_test, hdistance=euclid)
 
     # Add NN_SAMPLE random nodes to the PRM
     prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
-    #prm.densify_knn(NB_CONNECT)
+    # prm.densify_knn(NB_CONNECT)
 
-    print('PRM initialized')
-    print(len(prm.graph.nodes), 'nodes:')
-    print(list(prm.graph.nodes), '\n')
-    print(len(prm.graph.edges), 'edges:')
-    print(list(prm.graph.edges), '\n')
+    print('PRM initialized,', len(prm.graph.nodes), 'nodes')
 
     # Define an estimator
     estimator = Networks(STATE_SIZE, CONTROL_SIZE)
 
     # Try to connect the nearest neighbors in the PRM
-    #prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
-    #prm.densify_longer_traj(NB_ATTEMPS_DENSIFY_LONGER, MIN_PATH_LEN)
-    #prm.densify_longer_traj()
+    # prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
+    # prm.densify_longer_traj(NB_ATTEMPS_DENSIFY_LONGER, MIN_PATH_LEN)
+    # prm.densify_longer_traj()
 
     i = 0
     stop = False
     while not stop and i < IREPA_ITER:
         print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
-        
+
         # Expand PRM
         # -----------------
         # Pick a pair of unconnected nearest neighbors
@@ -69,7 +65,7 @@ def irepa():
         stop = prm.is_fully_connected()
 
         # Build a dataset of subtrajectories
-        # to train the estimator        
+        # to train the estimator
         dataset = Dataset(prm.graph)
 
         # Train the estimator on the dataset
@@ -77,24 +73,33 @@ def irepa():
 
         # Improve the PRM where the estimator
         # gives better results
-        stop = prm.improve(estimator) 
+        stop = prm.improve(estimator)
         # returns False if estimator did better
         # than PRM
 
         i += 1
 
-
     # test
     print("\n Final value of estimated X trajectory:")
     batch = random.sample(range(len(dataset.us)), 1)
+    print('Dataset size:', len(dataset.x1s), 'trajectories')
     x0 = dataset.x1s[batch, :].T
     x1 = dataset.x2s[batch, :].T
     print('x0 x1')
-    print(x0, x1)
+    print(x0)
+    print(x1)
     print('Nets connect_test')
     print(estimator.connect_test(x0, x1))
     print('Nets trajectories')
-    print(estimator.trajectories(x0, x1))
+    X, U, V = estimator.trajectories(x0, x1)
+    print('State trajectory')
+    print(X)
+    print('Control trajectory')
+    print(U)
+    print('Value')
+    print(V)
+    print('Euclidian value')
+    print(euclid(x0, x1))
 
 
 def connect(s1, s2, init=None):
@@ -119,7 +124,7 @@ def connect_test(s1, s2, init=None):
 
     X = np.vstack([Xx, Xy, Xtheta]).T
     U = X.copy()[:, 0:2]
-    V = euclid(s1, s2) + random.random()
+    V = euclid(s1, s2) + 0.02*random.random()
 
     return success, X, U, V
 
