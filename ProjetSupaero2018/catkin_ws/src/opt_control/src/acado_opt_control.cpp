@@ -10,49 +10,63 @@
 
 #include "opt_control/OptControl.h"
 
+// TODO: check succes
+
 USING_NAMESPACE_ACADO
 
+// default nb_controls
+const unsigned int DEFAULT_NB_CONTROLS = 20;
+const float THRESHOLD = 0.1;
 
-void log_results(VariablesGrid states, VariablesGrid controls);
+void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
 std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls);
-OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2);
+OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
+                                              std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float cost);
+bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float threshold);
+
 
 bool solve(opt_control::OptControl::Request &req,
            opt_control::OptControl::Response &res)
 {
   geometry_msgs::Point p1 = req.p1;
   geometry_msgs::Point p2 = req.p2;
+  int nb_controls;
+  if (req.states.size() == 0){
+    nb_controls = DEFAULT_NB_CONTROLS;
+  }
+  else{
+    nb_controls = req.states.size();
+  }
 
   std::cout << "P1:" << p1 << '\n';
   std::cout << "P2:" << p2 << '\n';
 
-  OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2);
+  OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2, nb_controls, req.states, req.controls, req.cost);
   algorithm.solve(); // solve the problem.
   VariablesGrid states, parameters, controls;
   algorithm.getDifferentialStates(states);
   algorithm.getParameters(parameters);
   algorithm.getControls(controls);
 
-  // log_results(states, controls);
+  // log_results(states, controls, parameters);
 
   // Convert into ROS data structures
   auto states_controls = get_point_lsts(states, controls);
-  res.success = true;  // TODO: ?????????????
+  res.success = check_success(p1, p2, states, controls, THRESHOLD);
   res.states = std::get<0>(states_controls);
   res.controls = std::get<1>(states_controls);
-  // std::cout << states_arr << '\n';
-  // std::cout << controls_arr << '\n';
 
   return true;
 }
 
-OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2){
+OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
+                                              std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float init_cost){
   DifferentialState s,v,m; // the differential states
   Control u; // the control input u
   Parameter T; // the time horizon T
   DifferentialEquation f(0.0, T); // the differential equation
 
-  OCP ocp(0.0, T); // time horizon of the OCP: [0,T]
+  OCP ocp(0.0, T, nb_controls); // time horizon of the OCP: [0,T], , number of control points
   ocp.minimizeMayerTerm(T); // the time T should be optimized
 
   f << dot(s) == v; // an implementation
@@ -72,8 +86,46 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
   ocp.subjectTo(5.0 <= T <= 15.0); // and the time horizon T.
 
   OptimizationAlgorithm algorithm(ocp);
-  return ocp;
+
+  // ----------------------------------
+  // INITIALIZATION
+  // ----------------------------------
+  if (init_controls.size() > 0){
+    Grid timeGrid( 0.0, 1.0, 11 );
+    VariablesGrid x_init(3, timeGrid);
+    VariablesGrid u_init(1, timeGrid);
+    VariablesGrid p_init(1, timeGrid);
+
+    for (unsigned i = 0; i < nb_controls; i++){
+      for (unsigned j = 0; j < 3; j++){
+        if (j == 0){
+          x_init(i, j) = init_states[i].x;
+          u_init(i, j) = init_controls[i].x;
+        }
+        if (j == 1){
+          x_init(i, j) = init_states[i].y;
+        }
+        if (j == 2){
+          x_init(i, j) = init_states[i].z;
+        }
+      }
+    }
+    p_init(0, 0) = init_cost;
+
+    algorithm.initializeDifferentialStates(x_init);
+    algorithm.initializeControls(u_init);
+    algorithm.initializeParameters(p_init);
+  }
+
+  return algorithm;
 }
+
+
+bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float threshold){
+  // TODO
+  return true;
+}
+
 
 std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls){
   const int nb_points = controls.getNumPoints();
@@ -99,18 +151,19 @@ std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>>
 }
 
 
-void log_results(VariablesGrid states, VariablesGrid controls){
+void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters){
   const int nb_points = controls.getNumPoints();
+  std::cout << std::setprecision(5) << "Results" << "\n";
   std::cout << '\n' << "Number of points:" << nb_points << std::endl;
-  for(unsigned t = 0; t < controls.getNumPoints(); t++){
+  for(unsigned i = 0; i < controls.getNumPoints(); i++){
     std::cout << std::setprecision(5)
-      << states.getTime(t) << ", "
-      << controls.getTime(t) << ", "
-      << states.getVector(t)[0] << ", "
-      << states.getVector(t)[1] << ", "
-      << states.getVector(t)[2] << ", "
-      << controls.getVector(t)[0]
-      << std::endl;
+    << states.getTime(i) << ", "
+    << "parameters: " << parameters.getVector(i)[0] << ", "
+    //<< "sx: " << states.getVector(i)[0] << ", "
+    //<< "sy: " << states.getVector(i)[1] << ", "
+    //<< "sz: " << states.getVector(i)[2] << ", "
+    //<< "ux: " << controls.getVector(i)[0]
+    << std::endl;
   }
   std::cout << std::endl;
 }
