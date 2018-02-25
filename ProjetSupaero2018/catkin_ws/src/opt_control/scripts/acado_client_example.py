@@ -9,11 +9,12 @@ rospy.loginfo('End of wait for rocket')
 
 try:
     opt_control = rospy.ServiceProxy('solve_rocket', OptControl)
-    p1 = Point(1., 4., 0)
-    p2 = Point(6., 8., 0)
+    p1 = Point(0, 0, 1)
+    p2 = Point(10, 0, 0)
     resp = opt_control(p1, p2)
 
     print(resp.success)
-    print(resp)
+    print(resp.states)
+    print(resp.controls)
 except rospy.ServiceException, e:
     print "Service call failed: %s" % e
