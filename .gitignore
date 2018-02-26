@@ -38,3 +38,4 @@ ProjetSupaero2018/catkin_ws/src/roadmap/data/
 *.idea
 **/.ipynb_checkpoints
 *.ipynb
+*.sdf.swp
