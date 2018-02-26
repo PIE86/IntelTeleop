@@ -1,8 +1,22 @@
+#!/usr/bin/env python
+
 import random
 import time
 import numpy as np
+import rospy
+from opt_control.srv import OptControl
+from geometry_msgs.msg import Point
+
 from prm_graph import PRM
 from networks import Dataset, Networks
+
+OPT_CONTROL_SERVICE = 'solve_rocket'
+
+rospy.init_node('irepa_node')
+rospy.wait_for_service('solve_rocket')
+rospy.loginfo('End of wait for rocket')
+opt_control_proxy = rospy.ServiceProxy('solve_rocket', OptControl)
+
 
 VERBOSE = False
 
@@ -22,16 +36,20 @@ NB_ATTEMPT_PER_CONNEX_PAIR = 5
 
 # TODO: To get from Model node
 STATE_SIZE = 3
-CONTROL_SIZE = 2
+CONTROL_SIZE = 1
 
 random.seed(42)
+
+#
+i_acado_failures = 0
 
 
 def irepa():
 
     # Initialize PRM with a sampling function,
     # a connect function and an heuristic distance
-    prm = PRM(sample_fun=sample, connect_fun=connect_test, hdistance=euclid)
+    # prm = PRM(sample_fun=sample, connect_fun=connect_test, hdistance=euclid)
+    prm = PRM(sample_fun=sample, connect_fun=connect, hdistance=euclid)
 
     # Add NN_SAMPLE random nodes to the PRM
     prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
@@ -105,7 +123,39 @@ def irepa():
 def connect(s1, s2, init=None):
     """Tries to connect 2 sets by calling the Acado optimizer service.
     If init trajectory is passed, warm start of the optimization process"""
-    pass
+    global i_acado_failures
+    print('CONNECT after', i_acado_failures, 'failures')
+
+    p1 = Point(*s1)
+    p2 = Point(*s2)
+    # HACK only for rocket -> carb mass cannot increase
+    if p1.z < p2.z:
+        print('CARBURANT PAS POSSIBLE')
+        return False, [], [], 0
+
+    if init is not None:
+        print(init)
+        X_init, U_init, V_init = init
+        X_init = [Point(*s) for s in X_init]
+        U_init = [Point(u[0], 0, 0) for u in U_init]
+    else:
+        X_init, U_init, V_init = [], [], 0
+
+    # resp = opt_control_proxy(p1, p2, states, controls, cost)
+    resp = opt_control_proxy(p1, p2, X_init, U_init, V_init)
+
+    print(resp.success)
+    print('Path length:', len(resp.states))
+
+    if resp.success:
+        print('WEEEEHHHHHHHHH')
+        X = np.array([[s.x, s.y, s.z] for s in resp.states])
+        U = np.array([[u.x] for u in resp.states])
+        return resp.success, X, U, resp.time
+    else:
+        print('OHHHHHHHHHHHHH')
+        i_acado_failures += 1
+        return resp.success, [], [], 0
 
 
 # Placeholder
@@ -130,7 +180,9 @@ def connect_test(s1, s2, init=None):
 
 
 def sample():
-    return tuple(random.randint(1, 10) for _ in range(STATE_SIZE))
+    return (round(random.uniform(0, 10), 3),
+            round(random.uniform(-0.1, 1.7), 3),
+            round(random.uniform(0, 1), 3))
 
 
 def euclid(s1, s2):

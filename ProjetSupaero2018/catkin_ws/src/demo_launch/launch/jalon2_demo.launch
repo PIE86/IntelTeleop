@@ -1,0 +1,6 @@
+<launch>
+  <!-- Controller, roadmap and model -->
+  <node pkg="opt_control" type="acado_opt_control" name="NameOptControl"/>
+  <node pkg="roadmap" type="irepa.py" name="NameIrepa"/>
+
+</launch>

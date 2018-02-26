@@ -49,7 +49,7 @@ class PRM:
         for (node1, node2), distance in zip(*self.unconnected_2_nn()):
 
             if distance > self.visibility_horizon:
-                path = tuple(self.graph.get_path(node1, node2))
+                path = self.graph.get_path(node1, node2)
 
             else:
                 # TODO: path = estimator.predict(X)
@@ -444,7 +444,7 @@ class Graph:
             return self.edges[(node1, node2)]
         shortest_path = self.astar(node1, node2)
         if shortest_path is None:
-            return None, None, None
+            return None
         for i in range(len(shortest_path)-1):
             pair = shortest_path[i], shortest_path[i+1]
             X_edge, U_edge, V_edge = self.edges[pair]
