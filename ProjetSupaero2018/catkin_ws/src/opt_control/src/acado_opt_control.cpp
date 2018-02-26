@@ -15,14 +15,16 @@
 USING_NAMESPACE_ACADO
 
 // default nb_controls
-const unsigned int DEFAULT_NB_CONTROLS = 20;
+const unsigned int DEFAULT_NB_CONTROLS = 21;
+// state vector norm threshold above which 2 states are considered differents
 const float THRESHOLD = 0.1;
+float TMIN = 5.0;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
 std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls);
 OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
                                               std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float cost);
-bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float threshold);
+bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold);
 
 
 bool solve(opt_control::OptControl::Request &req,
@@ -52,9 +54,10 @@ bool solve(opt_control::OptControl::Request &req,
 
   // Convert into ROS data structures
   auto states_controls = get_point_lsts(states, controls);
-  res.success = check_success(p1, p2, states, controls, THRESHOLD);
   res.states = std::get<0>(states_controls);
   res.controls = std::get<1>(states_controls);
+  res.time = parameters.getVector(0)[0];
+  res.success = check_success(p1, p2, states, controls, res.time, THRESHOLD);
 
   return true;
 }
@@ -83,7 +86,7 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 
   ocp.subjectTo(-0.1 <= v <= 1.7); // as well as the bounds on v
   ocp.subjectTo(-1.1 <= u <= 1.1); // the control input u,
-  ocp.subjectTo(5.0 <= T <= 15.0); // and the time horizon T.
+  ocp.subjectTo(TMIN <= T <= 15.0); // and the time horizon T.
 
   OptimizationAlgorithm algorithm(ocp);
 
@@ -121,9 +124,14 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 }
 
 
-bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float threshold){
+bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold){
   // TODO
-  return true;
+  bool succes = false;
+  if (T < TMIN){
+    succes = false;
+  }
+  // - else if dist between start/end and p1 p2 > THRESHOLD -> false
+  return succes;
 }
 
 
@@ -159,10 +167,10 @@ void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid par
     std::cout << std::setprecision(5)
     << states.getTime(i) << ", "
     << "parameters: " << parameters.getVector(i)[0] << ", "
-    //<< "sx: " << states.getVector(i)[0] << ", "
-    //<< "sy: " << states.getVector(i)[1] << ", "
-    //<< "sz: " << states.getVector(i)[2] << ", "
-    //<< "ux: " << controls.getVector(i)[0]
+    << "sx: " << states.getVector(i)[0] << ", "
+    << "sy: " << states.getVector(i)[1] << ", "
+    << "sz: " << states.getVector(i)[2] << ", "
+    << "ux: " << controls.getVector(i)[0]
     << std::endl;
   }
   std::cout << std::endl;

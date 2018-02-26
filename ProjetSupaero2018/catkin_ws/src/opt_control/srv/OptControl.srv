@@ -5,6 +5,6 @@ geometry_msgs/Point[] controls
 float64 cost
 ---
 int64 success
-float64 cost
+float64 time
 geometry_msgs/Point[] states
 geometry_msgs/Point[] controls
