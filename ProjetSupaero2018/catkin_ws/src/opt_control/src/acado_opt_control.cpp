@@ -15,7 +15,7 @@
 USING_NAMESPACE_ACADO
 
 // default nb_controls
-const unsigned int DEFAULT_NB_CONTROLS = 21;
+const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
 // state vector norm threshold above which 2 states are considered differents
 const float THRESHOLD = 0.1;
 float TMIN = 5.0;
@@ -24,7 +24,7 @@ void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid par
 std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls);
 OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
                                               std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float cost);
-bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold);
+bool check_success(int returnValue, geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold);
 
 
 bool solve(opt_control::OptControl::Request &req,
@@ -40,11 +40,15 @@ bool solve(opt_control::OptControl::Request &req,
     nb_controls = req.states.size();
   }
 
+  // cf https://sourceforge.net/p/acado/discussion/general/thread/6e434f88/
+  clearAllStaticCounters();
+
   std::cout << "P1:" << p1 << '\n';
   std::cout << "P2:" << p2 << '\n';
 
   OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2, nb_controls, req.states, req.controls, req.cost);
-  algorithm.solve(); // solve the problem.
+
+  int returnValue = algorithm.solve(); // solve the problem.
   VariablesGrid states, parameters, controls;
   algorithm.getDifferentialStates(states);
   algorithm.getParameters(parameters);
@@ -57,7 +61,7 @@ bool solve(opt_control::OptControl::Request &req,
   res.states = std::get<0>(states_controls);
   res.controls = std::get<1>(states_controls);
   res.time = parameters.getVector(0)[0];
-  res.success = check_success(p1, p2, states, controls, res.time, THRESHOLD);
+  res.success = check_success(returnValue, p1, p2, states, controls, res.time, THRESHOLD);
 
   return true;
 }
@@ -124,14 +128,16 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 }
 
 
-bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold){
+bool check_success(int returnValue, geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold){
   // TODO
-  bool succes = false;
+  if (returnValue == RET_OPTALG_SOLVE_FAILED){
+    return false;
+  }
   if (T < TMIN){
-    succes = false;
+    return false;
   }
   // - else if dist between start/end and p1 p2 > THRESHOLD -> false
-  return succes;
+  return true;
 }
 
 

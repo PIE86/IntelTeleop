@@ -36,14 +36,24 @@ controls = [
 cost = 7.44e+00
 try:
     opt_control = rospy.ServiceProxy('solve_rocket', OptControl)
+
+    # Failure rocket example
+    p1 = Point(6.394000e+00, -5.500000e-02, 2.750000e-01)
+    p2 = Point(2.279000e+00, 4.210000e-01, 8.000000e-02)
+    # success rocket example, corresonds to states and controls init vectors
     p1 = Point(0, 0, 1)
     p2 = Point(10, 0, 0)
-    # resp = opt_control(p1, p2, [], [], 0)
-    resp = opt_control(p1, p2, states, controls, cost)
+    for i in range(10):
+        print()
+        print()
+        print()
+        print(i)
+        resp = opt_control(p1, p2, [], [], 0)
+    # resp = opt_control(p1, p2, states, controls, cost)
 
     print(resp.success)
     print('Path length:', len(resp.states))
     print(resp.states)
     print(resp.controls)
-except rospy.ServiceException, e:
-    print "Service call failed: %s" % e
+except rospy.ServiceException as e:
+    print("Service call failed: %s" % e)
