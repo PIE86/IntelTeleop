@@ -62,31 +62,33 @@ bool solve(opt_control::OptControl::Request &req,
   return true;
 }
 
-OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
-                                              std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float init_cost){
-  DifferentialState s,v,m; // the differential states
-  Control u; // the control input u
-  Parameter T; // the time horizon T
+OptimizationAlgorithm create_algorithm_rocket(
+    geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
+    std::vector<geometry_msgs::Point> init_states,
+    std::vector<geometry_msgs::Point> init_controls, float init_cost){
+  // Wheel model
+  // (x, y) is the position of the wheel in the world and theta its angle
+  DifferentialState x, y, theta;
+  // v is the velocity and w the angle speed
+  Control v, w;
+  Parameter T;
   DifferentialEquation f(0.0, T); // the differential equation
 
   OCP ocp(0.0, T, nb_controls); // time horizon of the OCP: [0,T], , number of control points
   ocp.minimizeMayerTerm(T); // the time T should be optimized
 
-  f << dot(s) == v; // an implementation
-  f << dot(v) == (u - 0.2 * v * v)/m; // of the model equations
-  f << dot(m) == -0.01 * u * u; // for the rocket.
+  f << dot(x) == v * cos(theta);
+  f << dot(y) == v * sin(theta);
+  f << dot(theta) == w;
 
-  ocp.subjectTo(f); // minimize T s.t. the model,
-  ocp.subjectTo(AT_START, s == p1.x); // the initial values for s,
-  ocp.subjectTo(AT_START, v == p1.y); // v,
-  ocp.subjectTo(AT_START, m == p1.z); // and m,
+  ocp.subjectTo(f);
+  ocp.subjectTo(AT_START, x == p1.x);
+  ocp.subjectTo(AT_START, y == p1.y);
+  ocp.subjectTo(AT_START, theta == p1.z);
 
-  ocp.subjectTo(AT_END, s == p2.x); // the terminal constraints for s
-  ocp.subjectTo(AT_END, v == p2.y); // and v,
-
-  ocp.subjectTo(-0.1 <= v <= 1.7); // as well as the bounds on v
-  ocp.subjectTo(-1.1 <= u <= 1.1); // the control input u,
-  ocp.subjectTo(TMIN <= T <= 15.0); // and the time horizon T.
+  ocp.subjectTo(AT_END, x == p2.x);
+  ocp.subjectTo(AT_END, y == p2.y);
+  ocp.subjectTo(AT_END, theta == p2.z);
 
   OptimizationAlgorithm algorithm(ocp);
 
