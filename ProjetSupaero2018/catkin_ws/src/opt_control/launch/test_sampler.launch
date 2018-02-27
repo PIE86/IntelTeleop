@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="opt_control" type="sampling_service" name="sampling_service"/>
+  <node pkg="opt_control" type="sampling_example.py" name="sampling_client"/>
+
+</launch>

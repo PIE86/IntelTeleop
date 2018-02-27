@@ -4,11 +4,11 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Point.h"
 
-#include "sampler/Sample.h"
+#include "opt_control/Sample.h"
 
 bool create_sample(
-  sampler::Sample::Request  &req,
-  sampler::Sample::Response &res)
+  opt_control::Sample::Request  &req,
+  opt_control::Sample::Response &res)
 {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -27,7 +27,7 @@ bool create_sample(
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "sampler_service");
+  ros::init(argc, argv, "sampling_service");
   ros::NodeHandle n;
 
   ros::ServiceServer service = n.advertiseService(

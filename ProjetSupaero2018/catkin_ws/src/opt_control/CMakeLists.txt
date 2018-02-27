@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   OptControl.srv
+  Sample.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -46,3 +47,7 @@ include_directories(
 add_executable(acado_opt_control src/acado_opt_control.cpp)
 target_link_libraries(acado_opt_control ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${ACADO_SHARED_LIBRARIES})
 add_dependencies(acado_opt_control ${catkin_EXPORTED_TARGETS})
+
+add_executable(sampling_service src/sampling_service.cpp)
+target_link_libraries(sampling_service ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(sampling_service ${catkin_EXPORTED_TARGETS})
