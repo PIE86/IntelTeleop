@@ -28,7 +28,11 @@ try:
 
     # success rocket example, corresonds to states and controls init vectors
     p1 = Point(0, 0, 1)
-    p2 = Point(1, 0, 0)
+    p2 = Point(10, 0, 0)
+    # p1 = Point(1, 0, 1)
+    # p2 = Point(2, 1, 0)
+    # p1 = Point(.922, 0.435, 2.651)
+    # p2 = Point(8.764, 1.573, 4.118)
     # with init
     # resp = opt_control(p1, p2, states, controls, cost)
 

@@ -35,7 +35,7 @@ class PRM:
             state = self.sample()
             node_index = self.graph.add_node(state)
 
-    def expand(self):
+    def expand(self, first=False):
         """ Expand PRM
         -----------------
         Pick a pair of unconnected nearest neighbors
@@ -49,9 +49,10 @@ class PRM:
         for (node1, node2), distance in zip(*self.unconnected_2_nn()):
 
             if distance > self.visibility_horizon:
+                if first:
+                    print(node1, node2, 'too far')
+                    continue
                 path = self.graph.get_path(node1, node2)
-                # if path is not None:
-                #     print(path)
 
             else:
                 # TODO: path = estimator.predict(X)
@@ -156,9 +157,9 @@ class PRM:
                 state0, state1, init=(X_est, U_est, V_est))
 
             if success:
-                if V < (1 - EPS) * V_prm:
+                if (V < (1 - EPS) * V_prm):
                     if verbose:
-                        print("Better connection: %d to %d (%.2f vs %.2f)" % (
+                        print("Better connection: %d to %d (%.2f < %.2f)" % (
                             node0_index, node1_index, V, V_prm))
 
                     edges_patch[(node0_index, node1_index)
@@ -185,9 +186,9 @@ class PRM:
             if V_est < (1 - EPS) * V_prm:
                 success, X, U, V = self.ACADO_connect(
                     state0, state1, init=(X_est, U_est, V_est))
-                if success:
+                if success and V < (1 - EPS) * V_prm:
                     if verbose:
-                        print("Better connection: %d to %d (%.2f vs %.2f)" % (
+                        print("Better connection: %d to %d (%.2f < %.2f)" % (
                             node0_index, node1_index, V, V_prm))
                     better_edges[(node0_index, node1_index)
                                  ] = Graph.new_path([X, U, V])

@@ -36,7 +36,7 @@ NB_ATTEMPT_PER_CONNEX_PAIR = 5
 
 # TODO: To get from Model node
 STATE_SIZE = 3
-CONTROL_SIZE = 1
+CONTROL_SIZE = 2
 
 random.seed(42)
 
@@ -77,7 +77,7 @@ def irepa():
         #   E <- ACADO(init = 0 or estimator)
         print('\n\n\n######################')
         print('EXPAND')
-        prm.expand()
+        prm.expand(first=(not bool(i)))
         print()
         print('Edge number:', len(prm.graph.edges))
         print('######################\n\n\n')
@@ -128,16 +128,12 @@ def connect(s1, s2, init=None):
     print('Try to connect', s1, s2)
     p1 = Point(*s1)
     p2 = Point(*s2)
-    # HACK only for rocket -> carb mass cannot increase
-    if p1.z < p2.z:
-        print('CARBURANT PAS POSSIBLE')
-        return False, [], [], 0
 
     if init is not None:
         print('Using initialization')
         X_init, U_init, V_init = init
         X_init = [Point(*s) for s in X_init]
-        U_init = [Point(u[0], 0, 0) for u in U_init]
+        U_init = [Point(u[0], u[1], 0) for u in U_init]
     else:
         X_init, U_init, V_init = [], [], 0
 
@@ -146,12 +142,12 @@ def connect(s1, s2, init=None):
     print('Path length:', len(resp.states))
 
     if resp.success:
-        print('SUCCESS of optimization')
+        print('  SUCCESS of optimization, time:', resp.time)
         X = np.array([[s.x, s.y, s.z] for s in resp.states])
-        U = np.array([[u.x] for u in resp.states])
+        U = np.array([[u.x, u.y] for u in resp.states])
         return resp.success, X, U, resp.time
     else:
-        print('FAILURE of optimization')
+        print('  FAILURE of optimization')
         return resp.success, [], [], 0
 
 
@@ -178,8 +174,8 @@ def connect_test(s1, s2, init=None):
 
 def sample():
     return (round(random.uniform(0, 10), 3),
-            round(random.uniform(-0.1, 1.7), 3),
-            round(random.uniform(0, 1), 3))
+            round(random.uniform(0, 5), 3),
+            round(random.uniform(0, 2*np.pi), 3))
 
 
 def euclid(s1, s2):

@@ -4,6 +4,7 @@
 
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
+#include <acado_gnuplot.hpp>
 
 #include "ros/ros.h"
 #include "geometry_msgs/Point.h"
@@ -11,6 +12,7 @@
 #include "opt_control/OptControl.h"
 
 #define ACADO_VERBOSE false
+#define PLOT false
 // TODO: check succes
 
 USING_NAMESPACE_ACADO
@@ -22,10 +24,26 @@ const float THRESHOLD = 0.1;
 float TMIN = 0.0;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
+
 std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls);
-OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
-                                              std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float cost);
-bool check_success(int returnValue, geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold);
+
+OptimizationAlgorithm create_algorithm_rocket(
+  geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
+  std::vector<geometry_msgs::Point> init_states,
+  std::vector<geometry_msgs::Point> init_controls, float cost);
+
+OptimizationAlgorithm create_algorithm_car(
+  geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
+  std::vector<geometry_msgs::Point> init_states,
+  std::vector<geometry_msgs::Point> init_controls, float init_cost);
+
+bool check_success(
+  int returnValue, geometry_msgs::Point p1,
+  geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls,
+  float T, float threshold);
+
+
+
 
 
 bool solve(opt_control::OptControl::Request &req,
@@ -48,16 +66,17 @@ bool solve(opt_control::OptControl::Request &req,
   // std::cout << "P1:" << p1 << '\n';
   // std::cout << "P2:" << p2 << '\n';
 
-  OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2, nb_controls, req.states, req.controls, req.cost);
+  OptimizationAlgorithm algorithm = create_algorithm_car(p1, p2, nb_controls, req.states, req.controls, req.cost);
+  // OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2, nb_controls, req.states, req.controls, req.cost);
 
   // solve the problem, returnValue is a status describing how the calcul went
   // HACK: logs produced during optimization dumped into a file
   if (!ACADO_VERBOSE){
-    std::freopen("output.txt","w", stdout);
+    std::cout.setstate(std::ios_base::failbit);
   }
   int returnValue = algorithm.solve();
   if (!ACADO_VERBOSE){
-    std::fclose (stdout);
+    std::cout.clear();
   }
 
   VariablesGrid states, parameters, controls;
@@ -76,6 +95,90 @@ bool solve(opt_control::OptControl::Request &req,
 
   return true;
 }
+
+
+OptimizationAlgorithm create_algorithm_car(
+    geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
+    std::vector<geometry_msgs::Point> init_states,
+    std::vector<geometry_msgs::Point> init_controls, float init_cost){
+  // Wheel model
+  // (x, y) is the position of the wheel in the world and theta its angle
+  DifferentialState x, y, theta;
+  // v is the velocity and w the angle speed
+  Control v, w;
+  Parameter T;
+  DifferentialEquation f(0.0, T); // the differential equation
+
+  OCP ocp(0.0, T, nb_controls); // time horizon of the OCP: [0,T], , number of control points
+  ocp.minimizeMayerTerm(T); // the time T should be optimized
+
+  f << dot(x) == v * cos(theta);
+  f << dot(y) == v * sin(theta);
+  f << dot(theta) == w;
+
+  ocp.subjectTo(f);
+  ocp.subjectTo(AT_START, x == p1.x);
+  ocp.subjectTo(AT_START, y == p1.y);
+  ocp.subjectTo(AT_START, theta == p1.z);
+
+  ocp.subjectTo(AT_END, x == p2.x);
+  ocp.subjectTo(AT_END, y == p2.y);
+  ocp.subjectTo(AT_END, theta == p2.z);
+
+  // TODO: bounds
+	ocp.subjectTo( -2 <= v <= 5);
+	ocp.subjectTo( -1 <= w <= 1);
+  ocp.subjectTo(TMIN <= T); // and the time horizon T.
+
+  OptimizationAlgorithm algorithm(ocp);
+
+  algorithm.set( MAX_NUM_ITERATIONS, 80 );
+
+
+  // ----------------------------------
+  // INITIALIZATION
+  // ----------------------------------
+  if (init_controls.size() > 0){
+    Grid timeGrid( 0.0, 1.0, nb_controls );
+    VariablesGrid x_init(3, timeGrid);
+    VariablesGrid u_init(2, timeGrid);
+    VariablesGrid p_init(1, timeGrid);
+
+    for (unsigned i = 0; i < nb_controls; i++){
+      for (unsigned j = 0; j < 3; j++){
+        if (j == 0){
+          x_init(i, j) = init_states[i].x;
+          u_init(i, j) = init_controls[i].x;
+        }
+        if (j == 1){
+          x_init(i, j) = init_states[i].y;
+          u_init(i, j) = init_controls[i].y;
+        }
+        if (j == 2){
+          x_init(i, j) = init_states[i].z;
+        }
+      }
+    }
+    p_init(0, 0) = init_cost;
+
+    algorithm.initializeDifferentialStates(x_init);
+    algorithm.initializeControls(u_init);
+    algorithm.initializeParameters(p_init);
+  }
+
+  if (PLOT){
+    GnuplotWindow window;
+    window.addSubplot(x, "DifferentialState x");
+    window.addSubplot(y, "DifferentialState y");
+    window.addSubplot(theta, "DifferentialState theta");
+    window.addSubplot(v, "Control v");
+    window.addSubplot(w, "Control w");
+    algorithm << window;
+  }
+
+  return algorithm;
+}
+
 
 OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
                                               std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float init_cost){
@@ -135,9 +238,8 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 
     algorithm.initializeDifferentialStates(x_init);
     algorithm.initializeControls(u_init);
-    // algorithm.initializeParameters(p_init);
+    algorithm.initializeParameters(p_init);
   }
-
   return algorithm;
 }
 
@@ -149,7 +251,7 @@ bool check_success(int returnValue, geometry_msgs::Point p1, geometry_msgs::Poin
   }
   if (returnValue == RET_MAX_NUMBER_OF_STEPS_EXCEEDED){
     std::cout << "\n\n\n\n\n\n" << '\n';
-    std::cout << "MAX ITEEEEEEERRRRRR" << '\n'; // Never seen ?
+    std::cout << "MAX ITERATIONS REACHED" << '\n'; // Never seen ?
     return false;
   }
   if (T < TMIN){
