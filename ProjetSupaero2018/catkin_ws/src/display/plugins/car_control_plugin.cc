@@ -12,9 +12,9 @@
 #include <stdio.h>
 
 #include <thread>
-#include "ros/ros.h"
-#include "ros/callback_queue.h"
-#include "utils/Command.h"
+#include <ros/ros.h>
+#include <ros/callback_queue.h>
+#include <utils/Command.h>
 
 #include <math.h>
 
@@ -42,7 +42,7 @@ namespace gazebo
 
 		this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
 
-		this->rosSub = this->rosNode->subscribe("/gazebo/car_cmd", 10 , &CarControlPlugin::OnRosMsg, this);
+		this->rosSub = this->rosNode->subscribe("car_cmd", 10 , &CarControlPlugin::OnRosMsg, this);
 
 		this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
     }
@@ -83,7 +83,7 @@ namespace gazebo
 
 	private: gazebo::math::Vector3 orientation;
 
-    private: physics::ModelPtr model;
+  private: physics::ModelPtr model;
 
 	private: std::unique_ptr<ros::NodeHandle> rosNode;
 

@@ -1,101 +1,66 @@
-#ifndef _CAR_CONTROL_PLUGIN_HH_
-#define _CAR_CONTROL_PLUGIN_HH_
+#ifndef _STATE_FEEDBACK_CONTROL_PLUGIN_HH_
+#define _STATE_FEEDBACK_CONTROL_PLUGIN_HH_
 
-#include <boost/bind.hpp>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
-#include <gazebo/math/Vector3.hh>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 #include <gazebo/math/Pose.hh>
-#include <gazebo/math/Quaternion.hh>
-
 #include <stdio.h>
-
-#include <thread>
-#include "ros/ros.h"
-#include "ros/callback_queue.h"
-#include "utils/Command.h"
-
-#include <math.h>
+#include <ros/ros.h>
+#include <utils/State.h>
 
 #define PI 3.14159265
 
 namespace gazebo
 
 {
-  class CarControlPlugin : public ModelPlugin
+  class StateFeedbackPlugin : public ModelPlugin
   {
 
-  	public: CarControlPlugin() {}
+  	public: StateFeedbackPlugin() {}
 
     public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     {
 
-		this->model = _model;
+  		this->model = _model;
+      int argc;
+      char **argv;
+      ros::init(argc, argv, "talker");
+      ros::NodeHandle n;
+      ros::Publisher state_pub = n.advertise<utils::State>("state", 1000);
+      ros::Rate loop_rate(10);
+      while (ros::ok())
+      {
+        utils::State state;
+        gazebo::math::Pose pose;
+        geometry_msgs::Vector3 pos_msg;
+        geometry_msgs::Quaternion rot_msg;
 
-		this->velocity = math::Vector3();
-		this->velocity.Set(_sdf->Get<double>("X_velocity"), _sdf->Get<double>("Y_velocity"), _sdf->Get<double>("Z_velocity"));
-		this->SetVelocity(this->velocity);
+        pose = this->model->GetWorldPose();
+        pos_msg.x = pose.pos.x;
+        pos_msg.y = pose.pos.y;
+        pos_msg.z = pose.pos.z;
+        rot_msg.x = pose.rot.x;
+        rot_msg.y = pose.rot.y;
+        rot_msg.z = pose.rot.z;
+        rot_msg.w = pose.rot.w;
 
-		this->orientation = math::Vector3();
-		this->orientation.Set(0,0,0);
+        state.pos = pos_msg;
+        state.rot = rot_msg;
 
-		this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
-
-		this->rosSub = this->rosNode->subscribe("/gazebo/car_cmd", 10 , &CarControlPlugin::OnRosMsg, this);
-
-		this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
+        state_pub.publish(state);
+        ros::spinOnce();
+        loop_rate.sleep();
+      }
     }
-
-    public: void SetVelocity(const gazebo::math::Vector3 &_vel)
-    {
-		this->model->SetLinearVel(_vel);
-		gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
-    }
-
-    public: void SetOrientation(const float &_theta)
-    {
-
-    	this->orientation.Set(0,0,_theta *PI/180.0);
-    	math::Pose initPose(this->model->GetWorldPose().pos, math::Quaternion(0, 0, _theta *PI/180.0));
-		this->model->SetWorldPose(initPose);
-		gzmsg << "Orientation set to: " << _theta << "\n";
-    }
-
-    public: void OnRosMsg(const utils::CommandConstPtr &_msg)
-	{
-		this->SetOrientation(_msg->theta);
-		this->velocity.Set(_msg->velocity*cos(_msg->theta *PI/180.0), _msg->velocity*sin(_msg->theta *PI/180.0), 0);
-    	this->SetVelocity(this->velocity);
-	}
-
-    /// \brief ROS helper function that processes messages
-	private: void QueueThread()
-	{
-	  static const double timeout = 0.01;
-	  while (this->rosNode->ok())
-	  {
-	    this->rosQueue.callAvailable(ros::WallDuration(timeout));
-	  }
-	}
-
-	private: gazebo::math::Vector3 velocity;
-
-	private: gazebo::math::Vector3 orientation;
 
     private: physics::ModelPtr model;
 
-	private: std::unique_ptr<ros::NodeHandle> rosNode;
-
-	private: ros::Subscriber rosSub;
-
-	private: ros::CallbackQueue rosQueue;
-
-	private: std::thread rosQueueThread;
-
   };
 
-  GZ_REGISTER_MODEL_PLUGIN(CarControlPlugin)
+  GZ_REGISTER_MODEL_PLUGIN(StateFeedbackPlugin)
 }
 
 #endif

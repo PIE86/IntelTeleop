@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
 import rospy
-from rospy_tutorials.msg import Floats
+from utils.msg import Command
 import math as m
 
 
 def talker():
 
-    pub = rospy.Publisher('t_car_position', Floats, queue_size=100)
     rospy.init_node('xy_emultor', anonymous=True)
+    pub = rospy.Publisher('car_cmd', Command, queue_size=10)
+
     rate = rospy.Rate(10)  # 10hz
 
     a = 0
-    # b = 0
 
     R = 1
 
@@ -21,11 +21,10 @@ def talker():
         t = m.tan(rospy.get_time()-151674805)
 
         x = a + R*(1-t*t)/(1+t*t)
-        # y = b + 2*R*t/(1+t*t)
-        # pos = [x,y]
-        msg = [2*x, 120]
-        print(msg)
-        # rospy.loginfo(msg)
+        data = [2*x, 120]
+        vel = data[0]
+        theta = data[1]
+        msg = Command(vel, theta)
         pub.publish(msg)
         rate.sleep()
 

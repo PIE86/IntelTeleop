@@ -1,2 +1,2 @@
-float32 velocity
-float32 theta
+geometry_msgs/Vector3 pos
+geometry_msgs/Quaternion rot

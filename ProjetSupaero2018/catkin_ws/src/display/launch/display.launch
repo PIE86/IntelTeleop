@@ -5,6 +5,8 @@
     <arg name="verbose" value="true"/>
     <!-- more default parameters can be changed here -->
   </include>
+  <node pkg = "utils" name = "Read_Obstacles" type = "read_obstacles_server.py" output = "screen">
+  </node>
   <node pkg = "display" name = "Init_World" type = "Init_world.py" output = "screen">
   </node>
 </launch>
