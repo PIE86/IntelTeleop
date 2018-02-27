@@ -4,6 +4,7 @@ from sampler.srv import Sample
 
 rospy.init_node('sampler_client')
 rospy.wait_for_service('sampler_service')
+print("HEEEELLLLLOOOOO")
 
 try:
     sampler_service = rospy.ServiceProxy('sampler_service', Sample)

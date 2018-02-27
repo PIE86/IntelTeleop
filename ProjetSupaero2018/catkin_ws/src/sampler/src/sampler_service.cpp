@@ -7,8 +7,8 @@
 #include "sampler/Sample.h"
 
 bool create_sample(
-  beginner_tutorials::Sample::Request  &req,
-  beginner_tutorials::Sample::Response &res)
+  sampler::Sample::Request  &req,
+  sampler::Sample::Response &res)
 {
   std::random_device rd;
   std::mt19937 gen(rd());

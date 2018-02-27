@@ -32,3 +32,7 @@ include_directories(
   ${roscpp_INDLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(sampler_service src/sampler_service.cpp)
+target_link_libraries(sampler_service ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(sampler_service ${catkin_EXPORTED_TARGETS})
