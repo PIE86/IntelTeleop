@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="sampler" type="sampler_service" name="Sampler"/>
+  <node pkg="sampler" type="sampler_service_client_example.py" name="SamplerClient"/>
+
+</launch>
