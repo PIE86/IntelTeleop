@@ -3,11 +3,10 @@ import rospy
 from sampler.srv import Sample
 
 rospy.init_node('sampler_client')
-rospy.wait_for_service('sampler_service')
-print("HEEEELLLLLOOOOO")
+rospy.wait_for_service('create_sample')
 
 try:
-    sampler_service = rospy.ServiceProxy('sampler_service', Sample)
+    sampler_service = rospy.ServiceProxy('create_sample', Sample)
 
     print("Generating 20 samples:")
     for _ in range(20):
