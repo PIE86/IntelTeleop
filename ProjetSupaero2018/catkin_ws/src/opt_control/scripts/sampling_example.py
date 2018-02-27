@@ -6,10 +6,10 @@ rospy.init_node('sampling_client')
 rospy.wait_for_service('create_samples')
 
 try:
-    sampling_service = rospy.ServiceProxy('create_samples', Samples)
+    create_samples = rospy.ServiceProxy('create_samples', Samples)
 
     print("Generating 30 samples:")
-    resp = sampling_service(30)
+    resp = create_samples(30)
     for sample in resp.samples:
         print(sample.x, sample.y, sample.z)
 
