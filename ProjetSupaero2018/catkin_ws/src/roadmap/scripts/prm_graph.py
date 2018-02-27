@@ -445,6 +445,10 @@ class Graph:
         shortest_path = self.astar(node1, node2)
         if shortest_path is None:
             return None
+        print()
+        print()
+        print()
+        print('SHORTEST PATH:', shortest_path)
         for i in range(len(shortest_path)-1):
             pair = shortest_path[i], shortest_path[i+1]
             X_edge, U_edge, V_edge = self.edges[pair]

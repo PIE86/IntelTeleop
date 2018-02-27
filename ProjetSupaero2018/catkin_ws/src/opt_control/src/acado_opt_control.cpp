@@ -10,6 +10,7 @@
 
 #include "opt_control/OptControl.h"
 
+#define ACADO_VERBOSE false
 // TODO: check succes
 
 USING_NAMESPACE_ACADO
@@ -32,6 +33,7 @@ bool solve(opt_control::OptControl::Request &req,
 {
   geometry_msgs::Point p1 = req.p1;
   geometry_msgs::Point p2 = req.p2;
+  // Decides which will be the size of trajectories
   int nb_controls;
   if (req.states.size() == 0){
     nb_controls = DEFAULT_NB_CONTROLS;
@@ -43,12 +45,21 @@ bool solve(opt_control::OptControl::Request &req,
   // cf https://sourceforge.net/p/acado/discussion/general/thread/6e434f88/
   clearAllStaticCounters();
 
-  std::cout << "P1:" << p1 << '\n';
-  std::cout << "P2:" << p2 << '\n';
+  // std::cout << "P1:" << p1 << '\n';
+  // std::cout << "P2:" << p2 << '\n';
 
   OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2, nb_controls, req.states, req.controls, req.cost);
 
-  int returnValue = algorithm.solve(); // solve the problem.
+  // solve the problem, returnValue is a status describing how the calcul went
+  // HACK: logs produced during optimization dumped into a file
+  if (!ACADO_VERBOSE){
+    std::freopen("output.txt","w", stdout);
+  }
+  int returnValue = algorithm.solve();
+  if (!ACADO_VERBOSE){
+    std::fclose (stdout);
+  }
+
   VariablesGrid states, parameters, controls;
   algorithm.getDifferentialStates(states);
   algorithm.getParameters(parameters);
@@ -94,11 +105,14 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 
   OptimizationAlgorithm algorithm(ocp);
 
+  algorithm.set( MAX_NUM_ITERATIONS, 80 );
+
+
   // ----------------------------------
   // INITIALIZATION
   // ----------------------------------
   if (init_controls.size() > 0){
-    Grid timeGrid( 0.0, 1.0, 11 );
+    Grid timeGrid( 0.0, 1.0, init_controls.size() );
     VariablesGrid x_init(3, timeGrid);
     VariablesGrid u_init(1, timeGrid);
     VariablesGrid p_init(1, timeGrid);

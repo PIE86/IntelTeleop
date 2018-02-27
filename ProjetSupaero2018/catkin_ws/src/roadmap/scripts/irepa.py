@@ -41,7 +41,7 @@ CONTROL_SIZE = 1
 random.seed(42)
 
 #
-i_acado_failures = 0
+i_acado = 0
 
 
 def irepa():
@@ -123,8 +123,9 @@ def irepa():
 def connect(s1, s2, init=None):
     """Tries to connect 2 sets by calling the Acado optimizer service.
     If init trajectory is passed, warm start of the optimization process"""
-    global i_acado_failures
-    print('CONNECT after', i_acado_failures, 'failures')
+    global i_acado
+    i_acado += 1
+    print('CONNECT nb', i_acado, s1, 'to', s2)
 
     p1 = Point(*s1)
     p2 = Point(*s2)
@@ -134,7 +135,7 @@ def connect(s1, s2, init=None):
         return False, [], [], 0
 
     if init is not None:
-        print(init)
+        print('Using initialization')
         X_init, U_init, V_init = init
         X_init = [Point(*s) for s in X_init]
         U_init = [Point(u[0], 0, 0) for u in U_init]
@@ -143,18 +144,20 @@ def connect(s1, s2, init=None):
 
     # resp = opt_control_proxy(p1, p2, states, controls, cost)
     resp = opt_control_proxy(p1, p2, X_init, U_init, V_init)
+    if init is not None:
+        print('Test without init...')
+        rototo = opt_control_proxy(p1, p2, [], [], 0)
+        print('   Success:', rototo.success)
 
-    print(resp.success)
     print('Path length:', len(resp.states))
 
     if resp.success:
-        print('WEEEEHHHHHHHHH')
+        print('SUCCESS of optimization')
         X = np.array([[s.x, s.y, s.z] for s in resp.states])
         U = np.array([[u.x] for u in resp.states])
         return resp.success, X, U, resp.time
     else:
-        print('OHHHHHHHHHHHHH')
-        i_acado_failures += 1
+        print('FAILURE of optimization')
         return resp.success, [], [], 0
 
 
