@@ -40,9 +40,6 @@ CONTROL_SIZE = 1
 
 random.seed(42)
 
-#
-i_acado = 0
-
 
 def irepa():
 
@@ -78,7 +75,12 @@ def irepa():
         #   E <- ACADO(init = p*)
         # else: # equivalent to densify knn
         #   E <- ACADO(init = 0 or estimator)
+        print('\n\n\n######################')
+        print('EXPAND')
         prm.expand()
+        print()
+        print('Edge number:', len(prm.graph.edges))
+        print('######################\n\n\n')
 
         stop = prm.is_fully_connected()
 
@@ -123,10 +125,7 @@ def irepa():
 def connect(s1, s2, init=None):
     """Tries to connect 2 sets by calling the Acado optimizer service.
     If init trajectory is passed, warm start of the optimization process"""
-    global i_acado
-    i_acado += 1
-    print('CONNECT nb', i_acado, s1, 'to', s2)
-
+    print('Try to connect', s1, s2)
     p1 = Point(*s1)
     p2 = Point(*s2)
     # HACK only for rocket -> carb mass cannot increase
@@ -144,11 +143,6 @@ def connect(s1, s2, init=None):
 
     # resp = opt_control_proxy(p1, p2, states, controls, cost)
     resp = opt_control_proxy(p1, p2, X_init, U_init, V_init)
-    if init is not None:
-        print('Test without init...')
-        rototo = opt_control_proxy(p1, p2, [], [], 0)
-        print('   Success:', rototo.success)
-
     print('Path length:', len(resp.states))
 
     if resp.success:

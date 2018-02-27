@@ -50,6 +50,8 @@ class PRM:
 
             if distance > self.visibility_horizon:
                 path = self.graph.get_path(node1, node2)
+                # if path is not None:
+                #     print(path)
 
             else:
                 # TODO: path = estimator.predict(X)

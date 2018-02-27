@@ -19,7 +19,7 @@ USING_NAMESPACE_ACADO
 const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
 // state vector norm threshold above which 2 states are considered differents
 const float THRESHOLD = 0.1;
-float TMIN = 5.0;
+float TMIN = 0.0;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
 std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls);
@@ -135,7 +135,7 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 
     algorithm.initializeDifferentialStates(x_init);
     algorithm.initializeControls(u_init);
-    algorithm.initializeParameters(p_init);
+    // algorithm.initializeParameters(p_init);
   }
 
   return algorithm;
@@ -145,6 +145,11 @@ OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_
 bool check_success(int returnValue, geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold){
   // TODO
   if (returnValue == RET_OPTALG_SOLVE_FAILED){
+    return false;
+  }
+  if (returnValue == RET_MAX_NUMBER_OF_STEPS_EXCEEDED){
+    std::cout << "\n\n\n\n\n\n" << '\n';
+    std::cout << "MAX ITEEEEEEERRRRRR" << '\n'; // Never seen ?
     return false;
   }
   if (T < TMIN){
