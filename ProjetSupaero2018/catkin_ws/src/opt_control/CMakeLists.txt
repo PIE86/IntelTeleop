@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   OptControl.srv
-  Sample.srv
+  Samples.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
