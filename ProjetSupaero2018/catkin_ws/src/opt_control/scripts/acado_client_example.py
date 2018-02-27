@@ -45,5 +45,5 @@ try:
     print('Path length:', len(resp.states))
     print(resp.states)
     print(resp.controls)
-except rospy.ServiceException, e:
-    print "Service call failed: %s" % e
+except rospy.ServiceException as e:
+    print("Service call failed: %s" % e)

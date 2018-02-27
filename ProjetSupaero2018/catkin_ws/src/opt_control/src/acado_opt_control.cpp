@@ -4,11 +4,14 @@
 
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
+#include <acado_gnuplot.hpp>
 
 #include "ros/ros.h"
 #include "geometry_msgs/Point.h"
 
 #include "opt_control/OptControl.h"
+
+#define PLOT true
 
 // TODO: check succes
 
@@ -89,6 +92,9 @@ OptimizationAlgorithm create_algorithm_rocket(
   ocp.subjectTo(AT_END, x == p2.x);
   ocp.subjectTo(AT_END, y == p2.y);
   ocp.subjectTo(AT_END, theta == p2.z);
+  
+	ocp.subjectTo( -10 <= v <= 10);
+	ocp.subjectTo( -10 <= w <= 10);
 
   OptimizationAlgorithm algorithm(ocp);
 
@@ -109,6 +115,7 @@ OptimizationAlgorithm create_algorithm_rocket(
         }
         if (j == 1){
           x_init(i, j) = init_states[i].y;
+          u_init(i, j) = init_controls[i].y;
         }
         if (j == 2){
           x_init(i, j) = init_states[i].z;
@@ -120,6 +127,18 @@ OptimizationAlgorithm create_algorithm_rocket(
     algorithm.initializeDifferentialStates(x_init);
     algorithm.initializeControls(u_init);
     algorithm.initializeParameters(p_init);
+    
+    
+    if (PLOT){
+		  GnuplotWindow window;
+		  window.addSubplot(x, "DifferentialState x");
+		  window.addSubplot(y, "DifferentialState y");
+		  window.addSubplot(theta, "DifferentialState theta");
+		  window.addSubplot(v, "Control v");
+		  window.addSubplot(w, "Control w");
+		  algorithm << window;
+		}
+    
   }
 
   return algorithm;
