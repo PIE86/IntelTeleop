@@ -1,7 +1,7 @@
+import sys
 import random
 import numpy as np
-from numpy.linalg import norm as npnorm
-from keras.models import Sequential, model_from_json
+from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 
 
@@ -32,6 +32,7 @@ class Networks:
     def train(self, dataset, nepisodes=int(1e2)):
         # TODO track
         # TODO normalization
+        # TODO: value outputs a np.array instead of double like get_path
         for episode in range(nepisodes):
             batch = random.choices(
                 range(len(dataset.us)), k=self.BATCH_SIZE*16)
@@ -109,8 +110,13 @@ class Dataset:
         # TODO: LENT!
         print('Load dataset ')
         # for every edge trajectory
+        nb_edges = len(self.graph.edges)
+        i = 0
         for (p1, p2), (X, U, V) in self.graph.edges.items():
-            print('.', end='')
+            i += 1
+            # print progress in percents
+            sys.stdout.write("\r{}%".format(round(100*float(i)/nb_edges, 0)))
+            sys.stdout.flush()
             DV = V / (len(X) - 1)
             # for every instant of the trajectory
             for k, (x1, u1) in enumerate(zip(X, U)):

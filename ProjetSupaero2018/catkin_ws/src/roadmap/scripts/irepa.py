@@ -24,7 +24,7 @@ VERBOSE = False
 INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 4
-NB_SAMPLE = 8
+NB_SAMPLE = 5
 NB_CONNECT = 3
 # Densify longer
 NB_ATTEMPS_DENSIFY_LONGER = 10

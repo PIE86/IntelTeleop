@@ -62,6 +62,7 @@ class PRM:
                 self.graph.nodes[node1].state,
                 self.graph.nodes[node2].state,
                 init=path)
+
             # If successing while attempting to connect the two nodes
             # then add the new edge to the graph
             if success:
@@ -82,7 +83,8 @@ class PRM:
         return unconnected_pairs, distance_list
 
     def is_fully_connected(self):
-        return len(self.graph.edges) == len(self.graph.nodes)*(len(self.graph.nodes)-1)
+        nb_nodes, nb_edges = len(self.graph.nodes), len(self.graph.edges)
+        return nb_edges == nb_nodes*(nb_nodes-1)
 
     def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
         """Build the prm graph
@@ -501,7 +503,7 @@ class Graph:
                 if neigh not in cost_so_far or new_cost < cost_so_far[neigh]:
                     cost_so_far[neigh] = new_cost
                     dist_node2 = self.hdistance(self.nodes[current].state,
-                                               self.nodes[node2].state)
+                                                self.nodes[node2].state)
                     anti_priority = new_cost + dist_node2
                     frontier.put(neigh, anti_priority)
                     came_from[neigh] = current
