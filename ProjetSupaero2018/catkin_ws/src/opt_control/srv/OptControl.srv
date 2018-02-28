@@ -1,10 +1,12 @@
-geometry_msgs/Point p1
-geometry_msgs/Point p2
-geometry_msgs/Point[] states
-geometry_msgs/Point[] controls
+float64[] s1
+float64[] s2
+float64[] states
+float64[] controls
 float64 cost
+int32 NX
+int32 NU
 ---
-int64 success
+int16 success
 float64 time
-geometry_msgs/Point[] states
-geometry_msgs/Point[] controls
+float64[] states
+float64[] controls

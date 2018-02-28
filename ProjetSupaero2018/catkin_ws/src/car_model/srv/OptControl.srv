@@ -1,0 +1,6 @@
+geometry_msgs/Point p1
+geometry_msgs/Point p2
+---
+int64 success
+geometry_msgs/Point[] states
+geometry_msgs/Point[] controls
