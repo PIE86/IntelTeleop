@@ -1,0 +1,3 @@
+int64 nbSamples
+---
+geometry_msgs/Point[] samples

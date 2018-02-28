@@ -5,50 +5,75 @@
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
 #include <acado_gnuplot.hpp>
-#include <acado/symbolic_operator/atan.hpp>
 
 #include "ros/ros.h"
-#include "geometry_msgs/Point.h"
 
 #include "opt_control/OptControl.h"
 
-#define PLOT true
+#define ACADO_VERBOSE false
+#define PLOT false
 
 // TODO: check succes
 
 USING_NAMESPACE_ACADO
 
 // default nb_controls
-const unsigned int DEFAULT_NB_CONTROLS = 20;
+const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
+
 // state vector norm threshold above which 2 states are considered differents
-const float THRESHOLD = 0.1;
-float TMIN = 5.0;
+const double THRESHOLD = 0.1;
+double TMIN = 0.0;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
-std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls);
-OptimizationAlgorithm create_algorithm_rocket(geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
-                                              std::vector<geometry_msgs::Point> init_states, std::vector<geometry_msgs::Point> init_controls, float cost);
-bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold);
+
+OptimizationAlgorithm create_algorithm_car(
+  std::vector<double> s1, std::vector<double> s2, int nb_controls,
+  std::vector<double> init_states,
+  std::vector<double> init_controls, double init_cost,
+  int NX, int NU);
+
+bool check_success(
+  int returnValue, std::vector<double> s1,
+  std::vector<double> s2, VariablesGrid states, VariablesGrid controls,
+  double T, double threshold);
+
 
 
 bool solve(opt_control::OptControl::Request &req,
            opt_control::OptControl::Response &res)
 {
-  geometry_msgs::Point p1 = req.p1;
-  geometry_msgs::Point p2 = req.p2;
+  std::vector<double> s1 = req.s1;
+  std::vector<double> s2 = req.s2;
+  // Decides which will be the size of trajectories
   int nb_controls;
   if (req.states.size() == 0){
     nb_controls = DEFAULT_NB_CONTROLS;
   }
   else{
-    nb_controls = req.states.size();
+    nb_controls = req.states.size()/req.NX;
   }
 
-  std::cout << "P1:" << p1 << '\n';
-  std::cout << "P2:" << p2 << '\n';
+  // cf https://sourceforge.net/p/acado/discussion/general/thread/6e434f88/
+  clearAllStaticCounters();
 
-  OptimizationAlgorithm algorithm = create_algorithm_rocket(p1, p2, nb_controls, req.states, req.controls, req.cost);
-  algorithm.solve(); // solve the problem.
+  // std::cout << "s1:" << s1 << '\n';
+  // std::cout << "s2:" << s2 << '\n';
+
+  auto toto = req.states;
+  auto titi = req.controls;
+
+  OptimizationAlgorithm algorithm = create_algorithm_car(s1, s2, nb_controls, toto, titi, req.cost, req.NX, req.NU);
+
+  // solve the problem, returnValue is a status describing how the calcul went
+  // HACK: logs produced during optimization dumped into a file
+  if (!ACADO_VERBOSE){
+    std::cout.setstate(std::ios_base::failbit);
+  }
+  int returnValue = algorithm.solve();
+  if (!ACADO_VERBOSE){
+    std::cout.clear();
+  }
+
   VariablesGrid states, parameters, controls;
   algorithm.getDifferentialStates(states);
   algorithm.getParameters(parameters);
@@ -57,81 +82,85 @@ bool solve(opt_control::OptControl::Request &req,
   // log_results(states, controls, parameters);
 
   // Convert into ROS data structures
-  auto states_controls = get_point_lsts(states, controls);
-  res.states = std::get<0>(states_controls);
-  res.controls = std::get<1>(states_controls);
+  const int nb_points = controls.getNumPoints();
+  std::vector<double> time_arr(nb_points);
+  std::vector<double> states_arr(nb_points*req.NX);
+  std::vector<double> controls_arr(nb_points*req.NU);
+
+  // getVector(t) return the control values as a vector
+  for (unsigned i = 0; i < nb_points; i++)
+  {
+    time_arr[i] = states.getTime(i);
+    for (unsigned j = 0; j < req.NX; j++){
+      states_arr[i+j] = states.getVector(i)[j];
+    }
+    for (unsigned j = 0; j < req.NU; j++){
+      controls_arr[i+j] = controls.getVector(i)[j];
+    }
+  }
+
+  res.states = states_arr;
+  res.controls = controls_arr;
   res.time = parameters.getVector(0)[0];
-  res.success = check_success(p1, p2, states, controls, res.time, THRESHOLD);
+  res.success = check_success(returnValue, s1, s2, states, controls, res.time, THRESHOLD);
 
   return true;
 }
 
-OptimizationAlgorithm create_algorithm_rocket(
-    geometry_msgs::Point p1, geometry_msgs::Point p2, int nb_controls,
-    std::vector<geometry_msgs::Point> init_states,
-    std::vector<geometry_msgs::Point> init_controls, float init_cost){
+
+OptimizationAlgorithm create_algorithm_car(
+    std::vector<double> s1, std::vector<double> s2, int nb_controls,
+    std::vector<double> init_states,
+    std::vector<double> init_controls, double init_cost,
+    int NX, int NU){
   // Wheel model
   // (x, y) is the position of the wheel in the world and theta its angle
-  DifferentialState x, y, theta, v;
-  // c is the torque w the yaw rate
-  Control c, w;
-  Parameter T; // duration
+  DifferentialState x, y, theta;
+  // v is the velocity and w the angle speed
+  Control v, w;
+  Parameter T;
   DifferentialEquation f(0.0, T); // the differential equation
 
   OCP ocp(0.0, T, nb_controls); // time horizon of the OCP: [0,T], , number of control points
   ocp.minimizeMayerTerm(T); // the time T should be optimized
 
-	// Wheel parameters
-	const double r = 0.2; // radius
-	const double m = 2; // mass
-	const double J = 0.5 * m * r * r; // inertia
-
-
-	// DifferentialEquation
   f << dot(x) == v * cos(theta);
   f << dot(y) == v * sin(theta);
   f << dot(theta) == w;
-  f << dot(v) ==  c * r/J;
 
-	// Constraints
   ocp.subjectTo(f);
-  ocp.subjectTo(AT_START, x == p1.x);
-  ocp.subjectTo(AT_START, y == p1.y);
-  ocp.subjectTo(AT_START, theta == p1.z);
-  ocp.subjectTo(AT_START, v == 0);
+  ocp.subjectTo(AT_START, x == s1[0]);
+  ocp.subjectTo(AT_START, y == s1[1]);
+  ocp.subjectTo(AT_START, theta == s1[2]);
 
-  ocp.subjectTo(AT_END, x == p2.x);
-  ocp.subjectTo(AT_END, y == p2.y);
-  ocp.subjectTo(AT_END, theta == p2.z);
-  
-  ocp.subjectTo( 0 <= T); // duration
-  ocp.subjectTo( -10 <= c * r/J <= 10); // acceleration
-  ocp.subjectTo( - M_PI <= w <=  M_PI); // yaw rate
+  ocp.subjectTo(AT_END, x == s2[0]);
+  ocp.subjectTo(AT_END, y == s2[1]);
+  ocp.subjectTo(AT_END, theta == s2[2]);
+
+  // TODO: bounds
+	ocp.subjectTo( -2 <= v <= 5);
+	ocp.subjectTo( -1 <= w <= 1);
+  ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
   OptimizationAlgorithm algorithm(ocp);
+
+  algorithm.set( MAX_NUM_ITERATIONS, 80 );
+
 
   // ----------------------------------
   // INITIALIZATION
   // ----------------------------------
-  	Grid timeGrid( 0.0, 1.0, nb_controls );
-	VariablesGrid x_init(4, timeGrid);
-    VariablesGrid u_init(2, timeGrid);
+
+  if (init_controls.size() > 0){
+    Grid timeGrid( 0.0, 1.0, nb_controls);
+    VariablesGrid x_init(NX, timeGrid);
+    VariablesGrid u_init(NU, timeGrid);
     VariablesGrid p_init(1, timeGrid);
     
-  if (init_controls.size() > 0){
     for (unsigned i = 0; i < nb_controls; i++){
       for (unsigned j = 0; j < 3; j++){
-        if (j == 0){
-          x_init(i, j) = init_states[i].x;
-          u_init(i, j) = init_controls[i].x;
-        }
-        if (j == 1){
-          x_init(i, j) = init_states[i].y;
-          u_init(i, j) = init_controls[i].y;
-        }
-        if (j == 2){
-          x_init(i, j) = init_states[i].z;
-        }
+        x_init(i, j) = init_states[i+j];
+        u_init(i, j) = init_controls[i+j];
       }
     }
 
@@ -157,43 +186,39 @@ OptimizationAlgorithm create_algorithm_rocket(
 		algorithm << window;
 	}
 
+  if (PLOT){
+    GnuplotWindow window;
+    window.addSubplot(x, "DifferentialState x");
+    window.addSubplot(y, "DifferentialState y");
+    window.addSubplot(theta, "DifferentialState theta");
+    window.addSubplot(v, "Control v");
+    window.addSubplot(w, "Control w");
+    algorithm << window;
+  }
+
   return algorithm;
 }
 
 
-bool check_success(geometry_msgs::Point p1, geometry_msgs::Point p2, VariablesGrid states, VariablesGrid controls, float T, float threshold){
+
+bool check_success(
+  int returnValue, std::vector<double> s1,
+  std::vector<double> s2, VariablesGrid states, VariablesGrid controls,
+  double T, double threshold){
   // TODO
-  bool succes = false;
+  if (returnValue == RET_OPTALG_SOLVE_FAILED){
+    return false;
+  }
+  if (returnValue == RET_MAX_NUMBER_OF_STEPS_EXCEEDED){
+    std::cout << "\n\n\n\n\n\n" << '\n';
+    std::cout << "MAX ITERATIONS REACHED" << '\n'; // Never seen ?
+    return false;
+  }
   if (T < TMIN){
-    succes = false;
+    return false;
   }
-  // - else if dist between start/end and p1 p2 > THRESHOLD -> false
-  return succes;
-}
-
-
-std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>> get_point_lsts(VariablesGrid states, VariablesGrid controls){
-  const int nb_points = controls.getNumPoints();
-  std::vector<float> time_arr(nb_points);
-  std::vector<geometry_msgs::Point> states_arr(nb_points);
-  std::vector<geometry_msgs::Point> controls_arr(nb_points);
-  geometry_msgs::Point s_point;
-  geometry_msgs::Point u_point;
-
-  // getVector(t) return the control values as a vector
-  for(unsigned i = 0; i < controls.getNumPoints(); i++)
-  {
-    time_arr[i] = states.getTime(i);
-    s_point.x = states.getVector(i)[0];
-    s_point.y = states.getVector(i)[1];
-    s_point.z = states.getVector(i)[2];
-    u_point.x = controls.getVector(i)[0];
-    u_point.y = controls.getVector(i)[1];
-    states_arr[i] = s_point;
-    controls_arr[i] = u_point;
-  }
-
-  return std::make_tuple(states_arr, controls_arr);
+  // - else if dist between start/end and s1 s2 > THRESHOLD -> false
+  return true;
 }
 
 
@@ -217,11 +242,11 @@ void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid par
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "solve_rocket_server");
+  ros::init(argc, argv, "solve_ocp_server");
   ros::NodeHandle n;
 
-  ros::ServiceServer service = n.advertiseService("solve_rocket", solve);
-  ROS_INFO("Ready to do Rocket Science.");
+  ros::ServiceServer service = n.advertiseService("solve_ocp", solve);
+  ROS_INFO("Ready to solve OCP.");
   ros::spin();
 
   return 0;
