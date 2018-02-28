@@ -4,17 +4,20 @@ import random
 import time
 import numpy as np
 import rospy
-from opt_control.srv import OptControl
-
+from opt_control.srv import OptControl  # , Samples
 from prm_graph import PRM
 from networks import Dataset, Networks
 
 OPT_CONTROL_SERVICE = 'solve_ocp'
+SAMPLING_SERVICE = 'create_samples'
 
 rospy.init_node('irepa_node')
+# rospy.wait_for_service(SAMPLING_SERVICE)
+# rospy.loginfo('End of wait for sampler')
 rospy.wait_for_service(OPT_CONTROL_SERVICE)
-rospy.loginfo('End of wait for rocket')
+rospy.loginfo('End of wait for ocp')
 opt_control_proxy = rospy.ServiceProxy(OPT_CONTROL_SERVICE, OptControl)
+# create_samples_proxy = rospy.ServiceProxy(SAMPLING_SERVICE, Samples)
 
 
 VERBOSE = False
@@ -24,7 +27,7 @@ VERBOSE = False
 INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 4
-NB_SAMPLE = 5
+NB_SAMPLE = 10
 NB_CONNECT = 3
 # Densify longer
 NB_ATTEMPS_DENSIFY_LONGER = 10
@@ -44,8 +47,7 @@ def irepa():
 
     # Initialize PRM with a sampling function,
     # a connect function and an heuristic distance
-    # prm = PRM(sample_fun=sample, connect_fun=connect_test, hdistance=euclid)
-    prm = PRM(sample_fun=sample, connect_fun=connect, hdistance=euclid)
+    prm = PRM(sample_fun=sample_test, connect_fun=connect, hdistance=euclid)
 
     # Add NN_SAMPLE random nodes to the PRM
     prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
@@ -89,6 +91,15 @@ def irepa():
 
         # Train the estimator on the dataset
         estimator.train(dataset)
+
+        # Test the estimator networks
+        metrics = estimator.test(dataset)
+        print('\n##########')
+        print('TEST ESTIMATOR')
+        print('    value', metrics[0])
+        print('    controls', metrics[1])
+        print('    value', metrics[2])
+        print('##########\n')
 
         # Improve the PRM where the estimator
         # gives better results
@@ -174,7 +185,12 @@ def connect_test(s1, s2, init=None):
     return success, X, U, V
 
 
-def sample():
+# def sample(nb):
+#     resp = create_samples(nb)
+#
+
+
+def sample_test():
     return (round(random.uniform(0, 10), 3),
             round(random.uniform(0, 5), 3),
             round(random.uniform(0, 2*np.pi), 3))

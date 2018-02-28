@@ -48,6 +48,17 @@ class Networks:
                             batch_size=self.BATCH_SIZE,
                             epochs=1, verbose=False)
 
+    def test(self, dataset):
+        """Test over the whole dataset"""
+        xbatch = np.hstack([dataset.x1s, dataset.x2s])
+        value_metrics = self.value.evaluate(xbatch, dataset.vs,
+                                            batch_size=self.BATCH_SIZE)
+        states_metrics = self.ptrajx.evaluate(xbatch, dataset.trajxs,
+                                              batch_size=self.BATCH_SIZE)
+        controls_metrics = self.ptraju.evaluate(xbatch, dataset.trajus,
+                                                batch_size=self.BATCH_SIZE)
+        return value_metrics, states_metrics, controls_metrics
+
     def trajectories(self, x1=None, x2=None):
         """
         Returns a triplet X,U,V (ie a vector sampling the time function) to go
