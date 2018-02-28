@@ -3,9 +3,11 @@ import numpy as np
 import rospy
 from opt_control.srv import OptControl
 
-from test_trajectories import (states, controls, cost,
-                               states_shortest, controls_shortest, cost_shortest,
-                               states_shortest_without_init, controls_shortest_without_init, cost_shortest_without_init)
+# from test_trajectories import (
+#         states, controls, cost,
+#         states_shortest, controls_shortest, cost_shortest,
+#         states_shortest_without_init, controls_shortest_without_init,
+#         cost_shortest_without_init)
 
 NX = 3
 NU = 2
@@ -14,12 +16,12 @@ rospy.init_node('ocp_solve_client')
 rospy.wait_for_service('solve_ocp')
 rospy.loginfo('End of wait for rocket')
 
-states = np.array(states)
-controls = np.array(controls)
-states_shortest = np.array(states_shortest)
-controls_shortest = np.array(controls_shortest)
-states_shortest_without_init = np.array(states_shortest_without_init)
-controls_shortest_without_init = np.array(controls_shortest_without_init)
+# states = np.array(states)
+# controls = np.array(controls)
+# states_shortest = np.array(states_shortest)
+# controls_shortest = np.array(controls_shortest)
+# states_shortest_without_init = np.array(states_shortest_without_init)
+# controls_shortest_without_init = np.array(controls_shortest_without_init)
 
 
 try:
@@ -43,7 +45,7 @@ try:
     # p1 = np.array((2.232, 1.226, 0.677))
     # p2 = np.array((9.572, 0.506, 0.26690096))
     # resp = opt_control(p1, p2, states_shortest, controls_shortest,
-                        #  cost_shortest, NX, NU)
+    #                    cost_shortest, NX, NU)
     # resp = opt_control(p1, p2, states_shortest_without_init,
     #                    controls_shortest_without_init,
     #                    cost_shortest_without_init, NX, NU)

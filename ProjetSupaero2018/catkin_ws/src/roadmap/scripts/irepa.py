@@ -34,8 +34,8 @@ MIN_PATH_LEN = 3
 NB_ATTEMPT_PER_CONNEX_PAIR = 5
 
 # TODO: To get from Model node
-STATE_SIZE = 3
-CONTROL_SIZE = 2
+NX = 3
+NU = 2
 
 random.seed(42)
 
@@ -54,7 +54,7 @@ def irepa():
     print('PRM initialized,', len(prm.graph.nodes), 'nodes')
 
     # Define an estimator
-    estimator = Networks(STATE_SIZE, CONTROL_SIZE)
+    estimator = Networks(NX, NU)
 
     # Try to connect the nearest neighbors in the PRM
     # prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)
@@ -131,19 +131,22 @@ def connect(s1, s2, init=None):
 
     if init is not None:
         X_init, U_init, V_init = init
-        print('Using initialization, value:', V_init, ', length:', X_init.shape[0])
+        print('Using initialization, value:', V_init,
+              ', length:', X_init.shape[0])
         X_init = X_init.flatten()
         U_init = U_init.flatten()
     else:
         X_init, U_init, V_init = [], [], 0
 
     # resp = opt_control_proxy(p1, p2, states, controls, cost)
-    resp = opt_control_proxy(p1, p2, X_init, U_init, V_init, STATE_SIZE, CONTROL_SIZE)
+    resp = opt_control_proxy(p1, p2, X_init, U_init, V_init,
+                             NX, NU)
 
     if resp.success:
-        print('  SUCCESS of optimization, time:', resp.time, 'Path length:', len(resp.states)//STATE_SIZE)
-        X = np.array(resp.states).reshape(len(resp.states)//STATE_SIZE, STATE_SIZE)
-        U = np.array(resp.controls).reshape(len(resp.controls)//CONTROL_SIZE, CONTROL_SIZE)
+        print('  SUCCESS of optimization, time:', resp.time,
+              'Path length:', len(resp.states)//NX)
+        X = np.array(resp.states).reshape(len(resp.states)//NX, NX)
+        U = np.array(resp.controls).reshape(len(resp.controls)//NU, NU)
         return resp.success, X, U, resp.time
     else:
         print('  FAILURE of optimization')
