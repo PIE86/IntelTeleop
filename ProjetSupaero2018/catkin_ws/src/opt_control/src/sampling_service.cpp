@@ -31,7 +31,7 @@ bool create_sample(
 {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<> generateFloat(0.0, 50.0);
+  std::uniform_real_distribution<> generateFloat(0.0, 20);
   std::uniform_real_distribution<> generateAngle(- M_PI, M_PI);
 
   float x, y;
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "sampling_service");
   ros::NodeHandle n;
 
-  ros::service::waitForService("check_point", 15);
+  ros::service::waitForService("check_point", 5000);
 
   ros::ServiceServer service = n.advertiseService(
     "create_samples", create_sample);
