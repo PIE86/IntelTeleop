@@ -5,6 +5,7 @@
 #include <acado_toolkit.hpp>
 #include <acado_optimal_control.hpp>
 #include <acado_gnuplot.hpp>
+#include <acado/symbolic_operator/atan.hpp>
 
 #include "ros/ros.h"
 #include "geometry_msgs/Point.h"
@@ -18,7 +19,7 @@
 USING_NAMESPACE_ACADO
 
 // default nb_controls
-const unsigned int DEFAULT_NB_CONTROLS = 21;
+const unsigned int DEFAULT_NB_CONTROLS = 20;
 // state vector norm threshold above which 2 states are considered differents
 const float THRESHOLD = 0.1;
 float TMIN = 5.0;
@@ -71,42 +72,53 @@ OptimizationAlgorithm create_algorithm_rocket(
     std::vector<geometry_msgs::Point> init_controls, float init_cost){
   // Wheel model
   // (x, y) is the position of the wheel in the world and theta its angle
-  DifferentialState x, y, theta;
-  // v is the velocity and w the angle speed
-  Control v, w;
-  Parameter T;
+  DifferentialState x, y, theta, v;
+  // c is the torque w the yaw rate
+  Control c, w;
+  Parameter T; // duration
   DifferentialEquation f(0.0, T); // the differential equation
 
   OCP ocp(0.0, T, nb_controls); // time horizon of the OCP: [0,T], , number of control points
   ocp.minimizeMayerTerm(T); // the time T should be optimized
 
+	// Wheel parameters
+	const double r = 0.2; // radius
+	const double m = 2; // mass
+	const double J = 0.5 * m * r * r; // inertia
+
+
+	// DifferentialEquation
   f << dot(x) == v * cos(theta);
   f << dot(y) == v * sin(theta);
   f << dot(theta) == w;
+  f << dot(v) ==  c * r/J;
 
+	// Constraints
   ocp.subjectTo(f);
   ocp.subjectTo(AT_START, x == p1.x);
   ocp.subjectTo(AT_START, y == p1.y);
   ocp.subjectTo(AT_START, theta == p1.z);
+  ocp.subjectTo(AT_START, v == 0);
 
   ocp.subjectTo(AT_END, x == p2.x);
   ocp.subjectTo(AT_END, y == p2.y);
   ocp.subjectTo(AT_END, theta == p2.z);
   
-	ocp.subjectTo( -10 <= v <= 10);
-	ocp.subjectTo( -10 <= w <= 10);
+  ocp.subjectTo( 0 <= T); // duration
+  ocp.subjectTo( -10 <= c * r/J <= 10); // acceleration
+  ocp.subjectTo( - M_PI <= w <=  M_PI); // yaw rate
 
   OptimizationAlgorithm algorithm(ocp);
 
   // ----------------------------------
   // INITIALIZATION
   // ----------------------------------
-  if (init_controls.size() > 0){
-    Grid timeGrid( 0.0, 1.0, 11 );
-    VariablesGrid x_init(3, timeGrid);
-    VariablesGrid u_init(1, timeGrid);
+  	Grid timeGrid( 0.0, 1.0, nb_controls );
+	VariablesGrid x_init(4, timeGrid);
+    VariablesGrid u_init(2, timeGrid);
     VariablesGrid p_init(1, timeGrid);
-
+    
+  if (init_controls.size() > 0){
     for (unsigned i = 0; i < nb_controls; i++){
       for (unsigned j = 0; j < 3; j++){
         if (j == 0){
@@ -122,24 +134,28 @@ OptimizationAlgorithm create_algorithm_rocket(
         }
       }
     }
-    p_init(0, 0) = init_cost;
 
-    algorithm.initializeDifferentialStates(x_init);
-    algorithm.initializeControls(u_init);
-    algorithm.initializeParameters(p_init);
-    
-    
-    if (PLOT){
-		  GnuplotWindow window;
-		  window.addSubplot(x, "DifferentialState x");
-		  window.addSubplot(y, "DifferentialState y");
-		  window.addSubplot(theta, "DifferentialState theta");
-		  window.addSubplot(v, "Control v");
-		  window.addSubplot(w, "Control w");
-		  algorithm << window;
+    p_init(0, 0) = init_cost;
 		}
+		
+	else {
+		p_init(0,0) = 10;
+		}
+	    
+	algorithm.initializeDifferentialStates(x_init);
+  algorithm.initializeControls(u_init);
+  algorithm.initializeParameters(p_init);
     
-  }
+  if (PLOT){
+		GnuplotWindow window;
+		window.addSubplot(x, "DifferentialState x");
+		window.addSubplot(y, "DifferentialState y");
+		window.addSubplot(theta, "DifferentialState theta");
+		window.addSubplot(v, "DifferentialState v");
+		window.addSubplot(c*r/J, "Control acceleration a");
+		window.addSubplot(w, "Control w");
+		algorithm << window;
+	}
 
   return algorithm;
 }
@@ -172,6 +188,7 @@ std::tuple<std::vector<geometry_msgs::Point>, std::vector<geometry_msgs::Point>>
     s_point.y = states.getVector(i)[1];
     s_point.z = states.getVector(i)[2];
     u_point.x = controls.getVector(i)[0];
+    u_point.y = controls.getVector(i)[1];
     states_arr[i] = s_point;
     controls_arr[i] = u_point;
   }
