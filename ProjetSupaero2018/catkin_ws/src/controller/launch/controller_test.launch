@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="controller" type="controller_server.py" name="NameController"/>
+  <node pkg="roadmap" type="path_finding_service.py" name="NamePathFinding"/>
+  <node pkg="car_model" type="car_position_publisher.py" name="NameCarPosition"/>
+
+</launch>
