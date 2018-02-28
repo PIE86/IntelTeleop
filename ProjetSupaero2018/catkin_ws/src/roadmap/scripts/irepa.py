@@ -5,17 +5,16 @@ import time
 import numpy as np
 import rospy
 from opt_control.srv import OptControl
-from geometry_msgs.msg import Point
 
 from prm_graph import PRM
 from networks import Dataset, Networks
 
-OPT_CONTROL_SERVICE = 'solve_rocket'
+OPT_CONTROL_SERVICE = 'solve_ocp'
 
 rospy.init_node('irepa_node')
-rospy.wait_for_service('solve_rocket')
+rospy.wait_for_service(OPT_CONTROL_SERVICE)
 rospy.loginfo('End of wait for rocket')
-opt_control_proxy = rospy.ServiceProxy('solve_rocket', OptControl)
+opt_control_proxy = rospy.ServiceProxy(OPT_CONTROL_SERVICE, OptControl)
 
 
 VERBOSE = False
@@ -24,8 +23,8 @@ VERBOSE = False
 # True PRM should be computed, False if  loaded from file
 INIT_PRM = True
 # Number of total iteration of the IREPA
-IREPA_ITER = 3
-NB_SAMPLE = 30
+IREPA_ITER = 4
+NB_SAMPLE = 8
 NB_CONNECT = 3
 # Densify longer
 NB_ATTEMPS_DENSIFY_LONGER = 10
@@ -99,52 +98,52 @@ def irepa():
 
         i += 1
 
-    # test
-    print("\n Final value of estimated X trajectory:")
-    batch = random.sample(range(len(dataset.us)), 1)
-    print('Dataset size:', len(dataset.x1s), 'trajectories')
-    x0 = dataset.x1s[batch, :].T
-    x1 = dataset.x2s[batch, :].T
-    print('x0 x1')
-    print(x0)
-    print(x1)
-    print('Nets connect_test')
-    print(estimator.connect_test(x0, x1))
-    print('Nets trajectories')
-    X, U, V = estimator.trajectories(x0, x1)
-    print('State trajectory')
-    print(X)
-    print('Control trajectory')
-    print(U)
-    print('Value')
-    print(V)
-    print('Euclidian value')
-    print(euclid(x0, x1))
+        # test
+        print()
+        print()
+        print("\nEstimations at iteration", i)
+        # test_traj_idx = random.sample(range(len(dataset.us)), 1)
+        test_traj_idx = 18
+        print('Dataset size:', len(dataset.x1s), 'trajectories')
+        x0 = dataset.x1s[test_traj_idx, :].T
+        x1 = dataset.x2s[test_traj_idx, :].T
+        print('x0 x1')
+        print(x0)
+        print(x1)
+        print('Nets trajectories')
+        X, U, V = estimator.trajectories(x0, x1)
+        print('State trajectory')
+        print(X)
+        print('Control trajectory')
+        print(U)
+        print('Value')
+        print(V)
+        print('Euclidian value')
+        print(euclid(x0, x1))
 
 
 def connect(s1, s2, init=None):
     """Tries to connect 2 sets by calling the Acado optimizer service.
     If init trajectory is passed, warm start of the optimization process"""
     print('Try to connect', s1, s2)
-    p1 = Point(*s1)
-    p2 = Point(*s2)
+    p1 = s1
+    p2 = s2
 
     if init is not None:
-        print('Using initialization')
         X_init, U_init, V_init = init
-        X_init = [Point(*s) for s in X_init]
-        U_init = [Point(u[0], u[1], 0) for u in U_init]
+        print('Using initialization, value:', V_init, ', length:', X_init.shape[0])
+        X_init = X_init.flatten()
+        U_init = U_init.flatten()
     else:
         X_init, U_init, V_init = [], [], 0
 
     # resp = opt_control_proxy(p1, p2, states, controls, cost)
-    resp = opt_control_proxy(p1, p2, X_init, U_init, V_init)
-    print('Path length:', len(resp.states))
+    resp = opt_control_proxy(p1, p2, X_init, U_init, V_init, STATE_SIZE, CONTROL_SIZE)
 
     if resp.success:
-        print('  SUCCESS of optimization, time:', resp.time)
-        X = np.array([[s.x, s.y, s.z] for s in resp.states])
-        U = np.array([[u.x, u.y] for u in resp.states])
+        print('  SUCCESS of optimization, time:', resp.time, 'Path length:', len(resp.states)//STATE_SIZE)
+        X = np.array(resp.states).reshape(len(resp.states)//STATE_SIZE, STATE_SIZE)
+        U = np.array(resp.controls).reshape(len(resp.controls)//CONTROL_SIZE, CONTROL_SIZE)
         return resp.success, X, U, resp.time
     else:
         print('  FAILURE of optimization')

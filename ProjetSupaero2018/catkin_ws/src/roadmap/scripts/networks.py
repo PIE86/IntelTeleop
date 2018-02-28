@@ -12,12 +12,14 @@ to pay for going from a to b ; the X- ; and the U-trajectories X(a,b) and
 U(a,b) which are the state and control trajectories to go from a to b.
 '''
 
+TRAJLENGTH = 21
+
 
 class Networks:
     BATCH_SIZE = 128
 
     def __init__(self, state_size, control_size):
-        self.TRAJLENGTH = 20
+        self.TRAJLENGTH = TRAJLENGTH
         self.state_size = state_size
         self.control_size = control_size
 
@@ -113,7 +115,7 @@ class Dataset:
             # for every instant of the trajectory
             for k, (x1, u1) in enumerate(zip(X, U)):
                 # Create subtrajectory of minimum size 7 to the end of the traj
-                # resample this trajectory: if trajectory length < 20: more
+                # resample this trajectory: if trajectory length < 21: more
                 # points, otherwise less
                 for di, x2 in enumerate(X[k+1:]):
                     if di < 5:
@@ -124,8 +126,8 @@ class Dataset:
                     vs.append(DV * (di + 1))
                     # np.ravel -> flatten any array in a 1D array
 
-                    trajxs.append(np.ravel(resample(X[k:k+di+2], 20)))
-                    trajus.append(np.ravel(resample(U[k:k+di+2], 20)))
+                    trajxs.append(np.ravel(resample(X[k:k+di+2], TRAJLENGTH)))
+                    trajus.append(np.ravel(resample(U[k:k+di+2], TRAJLENGTH)))
                     self.indexes.append([p1, p2, k, di])
 
         print('\n')
