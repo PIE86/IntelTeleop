@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="obstacles" type="check_point_server.py" name="check_obstacle_service"/>
+  <node pkg="opt_control" type="sampling_service" name="sampling_service"/>
+  <node pkg="opt_control" type="sampling_example.py" name="sampling_client"/>
+
+</launch>
