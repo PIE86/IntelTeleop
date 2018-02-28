@@ -1,10 +1,14 @@
 import random
-from itertools import permutations
-import numpy as np
-from os.path import join as pjoin
 import heapq
-
+import numpy as np
+from itertools import permutations
+from os.path import join as pjoin
 from collections import namedtuple
+
+from networks import resample
+
+# Resampled shortest path trajectories size
+MAXTRAJLENGTH = 40
 
 
 Path = namedtuple('Path', ['X', 'U', 'V'])
@@ -461,8 +465,8 @@ class Graph:
             U_prm.append(U_edge)
             V_prm += V_edge
 
-        X_prm = np.vstack(X_prm)
-        U_prm = np.vstack(U_prm)
+        X_prm = resample(np.vstack(X_prm), MAXTRAJLENGTH)
+        U_prm = resample(np.vstack(U_prm), MAXTRAJLENGTH)
 
         return X_prm, U_prm, V_prm
 
