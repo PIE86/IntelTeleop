@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+import numpy as np
+
 import rospy
+
 from opt_control.srv import Samples
 
 rospy.init_node('sampling_client')
@@ -10,8 +13,8 @@ try:
 
     print("Generating 30 samples:")
     resp = create_samples(30)
-    for sample in resp.samples:
-        print(sample.x, sample.y, sample.z)
+    samples = np.matrix(resp.samples).reshape(30, len(resp.samples)/30)
+    print samples
 
 except rospy.ServiceException, e:
     print "Service call failed: %s" % e

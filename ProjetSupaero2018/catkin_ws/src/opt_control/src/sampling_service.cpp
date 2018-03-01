@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "ros/ros.h"
-#include "geometry_msgs/Point.h"
 
 #include "obstacles/CheckPoint.h"
 
@@ -35,10 +34,8 @@ bool create_sample(
   std::uniform_real_distribution<> generateAngle(- M_PI, M_PI);
 
   float x, y;
-  std::vector<geometry_msgs::Point> samples;
+  std::vector<double> samples;
   for (int i = 0; i < req.nbSamples; i++){
-    geometry_msgs::Point sample;
-
     // Create an (x, y) position while checking for obstacles
     try {
       do {
@@ -49,11 +46,9 @@ bool create_sample(
       return false;
     }
 
-    sample.x = x;
-    sample.y = y;
-    sample.z = generateAngle(gen);
-
-    samples.push_back(sample);
+    samples.push_back(x);
+    samples.push_back(y);
+    samples.push_back(generateAngle(gen));
   }
 
   res.samples = samples;
