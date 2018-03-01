@@ -9,7 +9,7 @@ from opt_control.srv import OptControl
 #         states_shortest_without_init, controls_shortest_without_init,
 #         cost_shortest_without_init)
 
-NX = 3
+NX = 4
 NU = 2
 
 rospy.init_node('ocp_solve_client')
@@ -33,8 +33,10 @@ try:
     # success rocket example, corresonds to states and controls init vectors
     # p1 = np.array((0, 0, 1))
     # p2 = np.array((10, 0, 0))
-    p1 = np.array((1, 0, 1))
-    p2 = np.array((2, 1, 0))
+    #p1 = np.array((1, 0, 1))
+    #p2 = np.array((2, 1, 0))
+    p1 = np.array((0, 0, 0, 1.2))
+    p2 = np.array((10, 10, 1, 1.4))
     # p1 = np.array((.922, 0.435, 2.651))
     # p2 = np.array((8.764, 1.573, 4.118))
     # with init
