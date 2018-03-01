@@ -350,7 +350,8 @@ class Graph:
         return """{} nodes, {} edges \n
                 Nodes: {} \n
                 Edges: {}""".format(
-                len(self.nodes), len(self.edges), self.nodes, self.edges)
+                    len(self.nodes), len(self.edges), self.nodes, self.edges
+                )
 
     def save(self, directory):
         """Save the graphs attributes to files in the directory"""
