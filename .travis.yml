@@ -4,9 +4,7 @@ python:
 
 before_install:
   # Install flake8 for python code checking
-  - sudo apt-get update -qq
-  - sudo apt install python3-pip
-  - pip3 install --user flake8
+  - sudo pip install flake8
 
 script:
   # Check python code
