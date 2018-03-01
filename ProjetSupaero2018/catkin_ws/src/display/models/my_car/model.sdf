@@ -94,10 +94,11 @@
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
     <plugin name="car_control" filename="libcar_control.so">
-    <plugin name="car_state_feedback" filename="libstate_feedback.so">  
       <X_velocity>0</X_velocity>
       <Y_velocity>0</Y_velocity>
       <Z_velocity>0</Z_velocity>
+    </plugin>
+    <plugin name="car_state_feedback" filename="libstate_feedback.so">
     </plugin>
   </model>
 </sdf>

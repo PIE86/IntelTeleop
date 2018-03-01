@@ -9,7 +9,9 @@
 #include <gazebo/math/Pose.hh>
 #include <stdio.h>
 #include <ros/ros.h>
-#include <utils/State.h>
+#include <ros/callback_queue.h>
+#include <thread>
+#include "std_msgs/Int32MultiArray.h"
 
 #define PI 3.14159265
 
@@ -25,38 +27,47 @@ namespace gazebo
     {
 
   		this->model = _model;
-      int argc;
-      char **argv;
-      ros::init(argc, argv, "talker");
-      ros::NodeHandle n;
-      ros::Publisher state_pub = n.advertise<utils::State>("state", 1000);
-      ros::Rate loop_rate(10);
-      while (ros::ok())
-      {
-        utils::State state;
-        gazebo::math::Pose pose;
-        geometry_msgs::Vector3 pos_msg;
-        geometry_msgs::Quaternion rot_msg;
 
-        pose = this->model->GetWorldPose();
-        pos_msg.x = pose.pos.x;
-        pos_msg.y = pose.pos.y;
-        pos_msg.z = pose.pos.z;
-        rot_msg.x = pose.rot.x;
-        rot_msg.y = pose.rot.y;
-        rot_msg.z = pose.rot.z;
-        rot_msg.w = pose.rot.w;
+      this->rosNode.reset(new ros::NodeHandle("StateTalker"));
+      this->state_pub = this->rosNode->advertise<std_msgs::Int32MultiArray>("/state", 1000);
+      this->updateConnection = event::Events::ConnectWorldUpdateBegin(
+          std::bind(&StateFeedbackPlugin::OnUpdate, this));
+      this->rosQueueThread = std::thread(std::bind(&StateFeedbackPlugin::QueueThread, this));
 
-        state.pos = pos_msg;
-        state.rot = rot_msg;
-
-        state_pub.publish(state);
-        ros::spinOnce();
-        loop_rate.sleep();
-      }
     }
 
+    public: void OnUpdate()
+    {
+      ros::Rate loop_rate(10);
+
+      // utils::State state;
+      std_msgs::Int32MultiArray state;
+      state.data.clear();
+      gazebo::math::Pose pose;
+
+      pose = this->model->GetWorldPose();
+      state.data.push_back(pose.pos.x);
+      state.data.push_back(pose.pos.y);
+      state.data.push_back(pose.rot.GetAsEuler().z);
+
+      state_pub.publish(state);
+    }
+
+    private: void QueueThread()
+  	{
+  	  static const double timeout = 0.01;
+  	  while (this->rosNode->ok())
+  	  {
+  	    this->rosQueue.callAvailable(ros::WallDuration(timeout));
+  	  }
+  	}
+
     private: physics::ModelPtr model;
+    private: std::unique_ptr<ros::NodeHandle> rosNode;
+    private: ros::Publisher state_pub;
+    private: ros::CallbackQueue rosQueue;
+  	private: std::thread rosQueueThread;
+    private: event::ConnectionPtr updateConnection;
 
   };
 
