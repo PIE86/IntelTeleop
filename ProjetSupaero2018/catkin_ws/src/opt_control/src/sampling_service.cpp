@@ -8,6 +8,9 @@
 
 #include "opt_control/Samples.h"
 
+#include "modelConstants.h"
+
+
 bool checkValidity(float x, float y){
   ros::NodeHandle n;
   ros::ServiceClient client = \
@@ -30,7 +33,8 @@ bool create_sample(
 {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<> generateFloat(0.0, 20);
+  std::uniform_real_distribution<> generateX(X_MIN, X_MAX);
+  std::uniform_real_distribution<> generateY(Y_MIN, Y_MAX);
   std::uniform_real_distribution<> generateAngle(- M_PI, M_PI);
 
   float x, y;
@@ -39,8 +43,8 @@ bool create_sample(
     // Create an (x, y) position while checking for obstacles
     try {
       do {
-        x = generateFloat(gen);
-        y = generateFloat(gen);
+        x = generateX(gen);
+        y = generateY(gen);
       } while (!checkValidity(x, y));
     } catch(int e) {
       return false;
