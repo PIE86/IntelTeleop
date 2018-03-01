@@ -31,8 +31,9 @@ class Networks:
                                          control_size * self.TRAJLENGTH)
 
         # Fit standard scalers with data ranges
-        self.x_scaler = StandardScaler().fit(x_range)
-        self.u_scaler = StandardScaler().fit(u_range)
+        self.xs_scaler = StandardScaler().fit(np.tile(x_range,2))
+        self.x_scaler = StandardScaler().fit(np.tile(x_range,TRAJLENGTH))   
+        self.u_scaler = StandardScaler().fit(np.tile(u_range,TRAJLENGTH))
 
     def train(self, dataset, nepisodes=int(1e2)):
         # TODO track
@@ -41,7 +42,7 @@ class Networks:
         batch = random.choices(
             range(len(dataset.us)), k=self.BATCH_SIZE*16)
 
-        xbatch = self.x_scaler.transform(np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]]))
+        xbatch = self.xs_scaler.transform(np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]]))
 
         self.value.fit(xbatch,
                        dataset.vs[batch, :],
@@ -60,7 +61,7 @@ class Networks:
 
     def test(self, dataset):
         """Test over the whole dataset"""
-        xbatch = self.x_scaler.transform(np.hstack([dataset.x1s, dataset.x2s]))
+        xbatch = self.xs_scaler.transform(np.hstack([dataset.x1s, dataset.x2s]))
         value_metrics = self.value.evaluate(xbatch,
                                             dataset.vs,
                                             batch_size=self.BATCH_SIZE)
@@ -77,7 +78,7 @@ class Networks:
         Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).
         """
-        x = self.x_scaler.transform(np.hstack([x1, x2]).reshape((1, 2*self.state_size)))
+        x = self.xs_scaler.transform(np.hstack([x1, x2]).reshape((1, 2*self.state_size)))
 
         X = self.x_scaler.reverse_transform(self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
         X = X.reshape((self.TRAJLENGTH, self.state_size))
