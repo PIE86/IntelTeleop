@@ -30,27 +30,24 @@ namespace gazebo
 
     public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     {
+			this->model = _model;
 
-		this->model = _model;
+			this->velocity = math::Vector3();
+			//this->velocity.Set(_sdf->Get<double>("X_velocity"), _sdf->Get<double>("Y_velocity"), _sdf->Get<double>("Z_velocity"));
+			this->SetVelocity(this->velocity);
 
-		this->velocity = math::Vector3();
-		//this->velocity.Set(_sdf->Get<double>("X_velocity"), _sdf->Get<double>("Y_velocity"), _sdf->Get<double>("Z_velocity"));
-		this->SetVelocity(this->velocity);
+			this->orientation = math::Vector3();
+			this->orientation.Set(0,0,0);
 
-		this->orientation = math::Vector3();
-		this->orientation.Set(0,0,0);
-
-		this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
-
-		this->rosSub = this->rosNode->subscribe("car_cmd", 10 , &CarControlPlugin::OnRosMsg, this);
-
-		this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
+			this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
+			this->rosSub = this->rosNode->subscribe("car_cmd", 10 , &CarControlPlugin::OnRosMsg, this);
+			this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
     }
 
     public: void SetVelocity(const gazebo::math::Vector3 &_vel)
     {
-		this->model->SetLinearVel(_vel);
-		gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
+			this->model->SetLinearVel(_vel);
+			gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
     }
 
     public: void SetOrientation(const float &_theta)
@@ -58,14 +55,14 @@ namespace gazebo
 
     	this->orientation.Set(0,0,_theta *PI/180.0);
     	math::Pose initPose(this->model->GetWorldPose().pos, math::Quaternion(0, 0, _theta *PI/180.0));
-		this->model->SetWorldPose(initPose);
-		gzmsg << "Orientation set to: " << _theta << "\n";
+			this->model->SetWorldPose(initPose);
+			gzmsg << "Orientation set to: " << _theta << "\n";
     }
 
     public: void OnRosMsg(const utils::CommandConstPtr &_msg)
 	{
 		this->SetOrientation(_msg->theta);
-		this->velocity.Set(_msg->velocity*cos(_msg->theta *PI/180.0), _msg->velocity*sin(_msg->theta *PI/180.0), 0);
+		this->velocity.Set(_msg->velocity*sin(_msg->theta *PI/180.0), _msg->velocity*cos(_msg->theta *PI/180.0), 0);
     	this->SetVelocity(this->velocity);
 	}
 
@@ -80,17 +77,11 @@ namespace gazebo
 	}
 
 	private: gazebo::math::Vector3 velocity;
-
 	private: gazebo::math::Vector3 orientation;
-
   private: physics::ModelPtr model;
-
 	private: std::unique_ptr<ros::NodeHandle> rosNode;
-
 	private: ros::Subscriber rosSub;
-
 	private: ros::CallbackQueue rosQueue;
-
 	private: std::thread rosQueueThread;
 
   };
