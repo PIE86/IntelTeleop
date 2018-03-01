@@ -1,7 +1,7 @@
 import sys
 import random
 import numpy as np
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Dropout, Activation
 
 
@@ -33,20 +33,22 @@ class Networks:
         # TODO track
         # TODO normalization
         # TODO: value outputs a np.array instead of double like get_path
-        for episode in range(nepisodes):
-            batch = random.choices(
-                range(len(dataset.us)), k=self.BATCH_SIZE*16)
-            xbatch = np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]])
+        batch = random.choices(
+            range(len(dataset.us)), k=self.BATCH_SIZE*16)
 
-            self.value.fit(xbatch, dataset.vs[batch, :],
-                           batch_size=self.BATCH_SIZE,
-                           epochs=1, verbose=True)
-            self.ptrajx.fit(xbatch, dataset.trajxs[batch, :],
-                            batch_size=self.BATCH_SIZE,
-                            epochs=1, verbose=False)
-            self.ptraju.fit(xbatch, dataset.trajus[batch, :],
-                            batch_size=self.BATCH_SIZE,
-                            epochs=1, verbose=False)
+        xbatch = np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]])
+
+        self.value.fit(xbatch, dataset.vs[batch, :],
+                       batch_size=self.BATCH_SIZE,
+                       epochs=nepisodes, verbose=True)
+
+        self.ptrajx.fit(xbatch, dataset.trajxs[batch, :],
+                        batch_size=self.BATCH_SIZE,
+                        epochs=nepisodes, verbose=False)
+
+        self.ptraju.fit(xbatch, dataset.trajus[batch, :],
+                        batch_size=self.BATCH_SIZE,
+                        epochs=nepisodes, verbose=False)
 
     def test(self, dataset):
         """Test over the whole dataset"""
@@ -94,6 +96,16 @@ class Networks:
 
     def connect(self, x1, x2):
         pass
+
+    def save(self):
+        self.value.save("model_value.hd5")
+        self.ptraju.save("model_ptraju.hd5")
+        self.ptrajx.save("model_ptrajx.hd5")
+
+    def load(self):
+        self.value = load_model("model_value.hd5")
+        self.ptraju = load_model("model_ptraju.hd5")
+        self.ptrajx = load_model("model_ptrajx.hd5")
 
 
 class Dataset:
