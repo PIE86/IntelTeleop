@@ -31,9 +31,8 @@ class PRM:
         # TODO: add an option to "guide this adding"
         # Ex: add nodes between 2 unconnectable nodes...
         for _ in range(nb_sample):
-
             state = self.sample()
-            node_index = self.graph.add_node(state)
+            self.graph.add_node(state)
 
     def expand(self, first=False):
         """ Expand PRM
@@ -82,7 +81,8 @@ class PRM:
         return unconnected_pairs, distance_list
 
     def is_fully_connected(self):
-        return len(self.graph.edges) == len(self.graph.nodes)*(len(self.graph.nodes)-1)
+        return len(self.graph.edges) == len(
+            self.graph.nodes) * (len(self.graph.nodes)-1)
 
     def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
         """Build the prm graph
@@ -137,9 +137,10 @@ class PRM:
         - Replace some edges with betters paths
         - Tries to connect unconnected states
         """
-        self.graph.edges.update(self.better_edges(nets, verbose=verbose))
-        self.densify_random(nets, 20, verbose=verbose)
-        self.connexify(nets, 5, verbose=verbose)
+        # Nets is undefined here !
+        # self.graph.edges.update(self.better_edges(nets, verbose=verbose))
+        # self.densify_random(nets, 20, verbose=verbose)
+        # self.connexify(nets, 5, verbose=verbose)
 
     def better_edges(self, nets, verbose=True):
         '''Return a ditc of edges that improve the PRM edge cost.'''
@@ -262,7 +263,7 @@ class PRM:
 
         # TODO: Precise this min
         # Minimum size of longer paths to consider
-        MIN_PATH_LEN = 3
+        # MIN_PATH_LEN = 3
 
         # TODO: new argument
         for _ in range(10):
@@ -319,7 +320,7 @@ class PRM:
         else:
             init_path = None
         if verbose:
-            print(f"\t\t Trying...")
+            print("Trying...")
         return self.ACADO_connect(states[0], states[1], init=init_path)
 
 
@@ -346,9 +347,9 @@ class Graph:
         self.hdistance = hdistance
 
     def __str__(self):
-        return f"""{len(self.nodes)} nodes, {len(self.edges)} edges \n
-                Nodes: {self.nodes} \n
-                Edges: {self.edges}"""
+        return "{} nodes, {} edges \nNodes: {} \nEdges: {}".format(
+            len(self.nodes), len(self.edges), self.nodes, self.edges
+        )
 
     def save(self, directory):
         """Save the graphs attributes to files in the directory"""
@@ -372,9 +373,9 @@ class Graph:
         # Creates a new connex group and adds to it the new node
         self.add_to_new_connex_group(node_index)
         if verbose:
-            print(f"Added node [{node_index}:{state}] to graph")
-            print(f"Node {node_index} is in connex element " +
-                  f"{self.connex_elements[node_index]}\n")
+            print("Added node [{}:{}] to graph".format(node_index, state))
+            print("Node {} is in connex element ".format(node_index) +
+                  "{}\n".format(self.connex_elements[node_index]))
         return node_index
 
     @staticmethod
@@ -468,7 +469,8 @@ class Graph:
         """
         Find the shortest between two nodes in the graph.
         node1 and node2 are both indices of nodes that should be in the graph.
-        hdistance: heuristic distance used in the algorithm (euclidian, Value f)
+        hdistance: heuristic distance used in the algorithm
+        (euclidian, Value f)
         """
         if node1 not in self.nodes:
             raise ValueError('node ' + str(node1) + ' not in the graph')
@@ -501,7 +503,7 @@ class Graph:
                 if neigh not in cost_so_far or new_cost < cost_so_far[neigh]:
                     cost_so_far[neigh] = new_cost
                     dist_node2 = self.hdistance(self.nodes[current].state,
-                                               self.nodes[node2].state)
+                                                self.nodes[node2].state)
                     anti_priority = new_cost + dist_node2
                     frontier.put(neigh, anti_priority)
                     came_from[neigh] = current
