@@ -1,7 +1,7 @@
 import random
 import numpy as np
-from numpy.linalg import norm as npnorm
-from keras.models import Sequential, model_from_json
+# from numpy.linalg import norm as npnorm
+from keras.models import Sequential  # , model_from_json
 from keras.layers.core import Dense, Dropout, Activation
 
 
