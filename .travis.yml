@@ -5,8 +5,9 @@ python:
 before_install:
   # Install flake8 for python code checking
   - sudo apt-get update -qq
-  - sudo apt-get install -qq python-flake8
+  - sudo apt install python3-pip
+  - pip3 install --user flake8
 
 script:
   # Check python code
-  - python3 -m flake8 ProjetSupaero2018/catkin_ws/src/
+  - python3.6 -m flake8 ProjetSupaero2018/catkin_ws/src/
