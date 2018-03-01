@@ -25,22 +25,22 @@ rospy.loginfo('End of wait for ocp')
 
 try:
     opt_control = rospy.ServiceProxy('solve_ocp', OptControl)
-    
-		# Failure rocket example
+
+    # Failure rocket example
     # p1 = np.array((6.394000e+00, -5.500000e-02, 2.750000e-01))
     # p2 = np.array((2.279000e+00, 4.210000e-01, 8.000000e-02))
 
-    # success rocket example, corresonds to states and controls init vectors
+    # success rocket example, corresponds to states and controls init vectors
     # p1 = np.array((0, 0, 1))
     # p2 = np.array((10, 0, 0))
-    #p1 = np.array((1, 0, 1))
-    #p2 = np.array((2, 1, 0))
+    # p1 = np.array((1, 0, 1))
+    # p2 = np.array((2, 1, 0))
     p1 = np.array((0, 0, 0, 1.2))
     p2 = np.array((10, 10, 1, 1.4))
     # p1 = np.array((.922, 0.435, 2.651))
     # p2 = np.array((8.764, 1.573, 4.118))
     # with init
-    # resp = opt_control(p1, p2, states, 
+    #  resp = opt_control(p1, p2, states,
     # Shortest path example
     # p1 = np.array((2.232, 1.226, 0.677))
     # p2 = np.array((9.572, 0.506, 0.26690096))
