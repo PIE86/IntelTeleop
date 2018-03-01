@@ -34,7 +34,7 @@ namespace gazebo
 		this->model = _model;
 
 		this->velocity = math::Vector3();
-		this->velocity.Set(_sdf->Get<double>("X_velocity"), _sdf->Get<double>("Y_velocity"), _sdf->Get<double>("Z_velocity"));
+		//this->velocity.Set(_sdf->Get<double>("X_velocity"), _sdf->Get<double>("Y_velocity"), _sdf->Get<double>("Z_velocity"));
 		this->SetVelocity(this->velocity);
 
 		this->orientation = math::Vector3();
