@@ -347,11 +347,9 @@ class Graph:
         self.hdistance = hdistance
 
     def __str__(self):
-        return """{} nodes, {} edges \n
-                Nodes: {} \n
-                Edges: {}""".format(
-                    len(self.nodes), len(self.edges), self.nodes, self.edges
-                )
+        return "{} nodes, {} edges \nNodes: {} \nEdges: {}".format(
+            len(self.nodes), len(self.edges), self.nodes, self.edges
+        )
 
     def save(self, directory):
         """Save the graphs attributes to files in the directory"""
