@@ -40,6 +40,12 @@ NB_ATTEMPT_PER_CONNEX_PAIR = 5
 NX = 3
 NU = 2
 
+# Range of the variables
+X_MIN = 0 * np.ones(NX)
+X_MAX = 10 * np.ones(NX)
+U_MIN = -10 * np.ones(NU)
+U_MAX = 10 * np.ones(NU)
+
 random.seed(42)
 
 
@@ -56,7 +62,9 @@ def irepa():
     print('PRM initialized,', len(prm.graph.nodes), 'nodes')
 
     # Define an estimator
-    estimator = Networks(NX, NU)
+    estimator = Networks(NX, NU,
+                         x_range=np.array([X_MIN, X_MAX]),
+                         u_range=np.array([U_MIN, U_MAX]))
 
     # Try to connect the nearest neighbors in the PRM
     # prm.connexify(None, NB_ATTEMPT_PER_CONNEX_PAIR)

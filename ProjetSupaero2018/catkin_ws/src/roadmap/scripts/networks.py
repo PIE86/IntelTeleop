@@ -3,6 +3,7 @@ import random
 import numpy as np
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Dropout, Activation
+from sklearn.preprocessing import StandardScaler
 
 
 '''
@@ -18,7 +19,7 @@ TRAJLENGTH = 21
 class Networks:
     BATCH_SIZE = 128
 
-    def __init__(self, state_size, control_size):
+    def __init__(self, state_size, control_size, x_range, u_range):
         self.TRAJLENGTH = TRAJLENGTH
         self.state_size = state_size
         self.control_size = control_size
@@ -29,6 +30,10 @@ class Networks:
         self.ptraju = self._create_model(state_size * 2,
                                          control_size * self.TRAJLENGTH)
 
+        # Fit standard scalers with data ranges
+        self.x_scaler = StandardScaler().fit(x_range)
+        self.u_scaler = StandardScaler().fit(u_range)
+
     def train(self, dataset, nepisodes=int(1e2)):
         # TODO track
         # TODO normalization
@@ -36,28 +41,34 @@ class Networks:
         batch = random.choices(
             range(len(dataset.us)), k=self.BATCH_SIZE*16)
 
-        xbatch = np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]])
+        xbatch = self.x_scaler.transform(np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]]))
 
-        self.value.fit(xbatch, dataset.vs[batch, :],
+        self.value.fit(xbatch,
+                       dataset.vs[batch, :],
                        batch_size=self.BATCH_SIZE,
                        epochs=nepisodes, verbose=True)
 
-        self.ptrajx.fit(xbatch, dataset.trajxs[batch, :],
+        self.ptrajx.fit(xbatch,
+                        self.x_scaler.transform(dataset.trajxs[batch, :]),
                         batch_size=self.BATCH_SIZE,
                         epochs=nepisodes, verbose=False)
 
-        self.ptraju.fit(xbatch, dataset.trajus[batch, :],
+        self.ptraju.fit(xbatch,
+                        self.u_scaler.transform(dataset.trajus[batch, :]),
                         batch_size=self.BATCH_SIZE,
                         epochs=nepisodes, verbose=False)
 
     def test(self, dataset):
         """Test over the whole dataset"""
-        xbatch = np.hstack([dataset.x1s, dataset.x2s])
-        value_metrics = self.value.evaluate(xbatch, dataset.vs,
+        xbatch = self.x_scaler.transform(np.hstack([dataset.x1s, dataset.x2s]))
+        value_metrics = self.value.evaluate(xbatch,
+                                            dataset.vs,
                                             batch_size=self.BATCH_SIZE)
-        states_metrics = self.ptrajx.evaluate(xbatch, dataset.trajxs,
+        states_metrics = self.ptrajx.evaluate(xbatch,
+                                              self.x_scaler.transform(dataset.trajxs),
                                               batch_size=self.BATCH_SIZE)
-        controls_metrics = self.ptraju.evaluate(xbatch, dataset.trajus,
+        controls_metrics = self.ptraju.evaluate(xbatch,
+                                                self.u_scaler.transform(dataset.trajus),
                                                 batch_size=self.BATCH_SIZE)
         return value_metrics, states_metrics, controls_metrics
 
@@ -66,11 +77,11 @@ class Networks:
         Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).
         """
-        x = np.hstack([x1, x2]).reshape((1, 2*self.state_size))
+        x = self.x_scaler.transform(np.hstack([x1, x2]).reshape((1, 2*self.state_size)))
 
-        X = self.ptrajx.predict(x, batch_size=self.BATCH_SIZE)
+        X = self.x_scaler.reverse_transform(self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
         X = X.reshape((self.TRAJLENGTH, self.state_size))
-        U = self.ptraju.predict(x, batch_size=self.BATCH_SIZE)
+        U = self.u_scaler.reverse_transform(self.ptraju.predict(x, batch_size=self.BATCH_SIZE))
         U = U.reshape((self.TRAJLENGTH, self.control_size))
         V = self.value.predict(x, batch_size=self.BATCH_SIZE)
         return X, U, V
