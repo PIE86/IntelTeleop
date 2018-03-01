@@ -11,7 +11,7 @@
 #include "opt_control/OptControl.h"
 
 #define ACADO_VERBOSE false
-#define PLOT false
+#define PLOT true
 
 // TODO: check succes
 
@@ -163,28 +163,11 @@ OptimizationAlgorithm create_algorithm_car(
         u_init(i, j) = init_controls[i+j];
       }
     }
-
-    p_init(0, 0) = init_cost;
-		}
-		
-	else {
-		p_init(0,0) = 10;
-		}
 	    
 	algorithm.initializeDifferentialStates(x_init);
   algorithm.initializeControls(u_init);
   algorithm.initializeParameters(p_init);
-    
-  if (PLOT){
-		GnuplotWindow window;
-		window.addSubplot(x, "DifferentialState x");
-		window.addSubplot(y, "DifferentialState y");
-		window.addSubplot(theta, "DifferentialState theta");
-		window.addSubplot(v, "DifferentialState v");
-		window.addSubplot(c*r/J, "Control acceleration a");
-		window.addSubplot(w, "Control w");
-		algorithm << window;
-	}
+  }
 
   if (PLOT){
     GnuplotWindow window;

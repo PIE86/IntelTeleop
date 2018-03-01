@@ -14,7 +14,7 @@ NU = 2
 
 rospy.init_node('ocp_solve_client')
 rospy.wait_for_service('solve_ocp')
-rospy.loginfo('End of wait for rocket')
+rospy.loginfo('End of wait for ocp')
 
 # states = np.array(states)
 # controls = np.array(controls)
@@ -38,8 +38,7 @@ try:
     # p1 = np.array((.922, 0.435, 2.651))
     # p2 = np.array((8.764, 1.573, 4.118))
     # with init
-    # resp = opt_control(p1, p2, states, controls, cost, NX, NU)
-
+    # resp = opt_control(p1, p2, states, 
     # Shortest path example
     # p1 = np.array((2.232, 1.226, 0.677))
     # p2 = np.array((9.572, 0.506, 0.26690096))
