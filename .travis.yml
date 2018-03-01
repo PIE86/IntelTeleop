@@ -8,4 +8,4 @@ before_install:
 
 script:
   # Check python code
-  - python3.6 -m flake8 ProjetSupaero2018/catkin_ws/src/
+  - flake8 ProjetSupaero2018/catkin_ws/src/
