@@ -1,4 +1,6 @@
 language: python
+python:
+  - "3.6"
 
 before_install:
   # Install flake8 for python code checking
@@ -6,5 +8,5 @@ before_install:
   - sudo apt-get install -qq python-flake8
 
 script:
-  # Check python code 
-  - flake8 ProjetSupaero2018/catkin_ws/src/
+  # Check python code
+  - python3 -m flake8 ProjetSupaero2018/catkin_ws/src/
