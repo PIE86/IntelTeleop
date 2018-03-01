@@ -32,7 +32,7 @@ class Networks:
 
         # Fit standard scalers with data ranges
         self.xs_scaler = StandardScaler().fit(np.tile(x_range,2))
-        self.x_scaler = StandardScaler().fit(np.tile(x_range,TRAJLENGTH))   
+        self.x_scaler = StandardScaler().fit(np.tile(x_range,TRAJLENGTH))
         self.u_scaler = StandardScaler().fit(np.tile(u_range,TRAJLENGTH))
 
     def train(self, dataset, nepisodes=int(1e2)):
@@ -80,9 +80,9 @@ class Networks:
         """
         x = self.xs_scaler.transform(np.hstack([x1, x2]).reshape((1, 2*self.state_size)))
 
-        X = self.x_scaler.reverse_transform(self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
+        X = self.x_scaler.inverse_transform(self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
         X = X.reshape((self.TRAJLENGTH, self.state_size))
-        U = self.u_scaler.reverse_transform(self.ptraju.predict(x, batch_size=self.BATCH_SIZE))
+        U = self.u_scaler.inverse_transform(self.ptraju.predict(x, batch_size=self.BATCH_SIZE))
         U = U.reshape((self.TRAJLENGTH, self.control_size))
         V = self.value.predict(x, batch_size=self.BATCH_SIZE)
         return X, U, V
