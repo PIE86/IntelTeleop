@@ -1,7 +1,7 @@
 import random
 import numpy as np
-from numpy.linalg import norm as npnorm
-from keras.models import Sequential, model_from_json
+# from numpy.linalg import norm as npnorm
+from keras.models import Sequential  # , model_from_json
 from keras.layers.core import Dense, Dropout, Activation
 
 
@@ -110,7 +110,7 @@ class Dataset:
         print('Load dataset ')
         # for every edge trajectory
         for (p1, p2), (X, U, V) in self.graph.edges.items():
-            print('.', end='')
+            # print('.', end='')
             DV = V / (len(X) - 1)
             # for every instant of the trajectory
             for k, (x1, u1) in enumerate(zip(X, U)):
