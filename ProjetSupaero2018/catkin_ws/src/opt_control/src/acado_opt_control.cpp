@@ -10,14 +10,16 @@
 
 #include "opt_control/OptControl.h"
 
-#define ACADO_VERBOSE false
-#define PLOT false
+#define ACADO_VERBOSE true
+#define PLOT true
+
 // TODO: check succes
 
 USING_NAMESPACE_ACADO
 
 // default nb_controls
 const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
+
 // state vector norm threshold above which 2 states are considered differents
 const double THRESHOLD = 0.1;
 double TMIN = 0.0;
@@ -111,60 +113,69 @@ OptimizationAlgorithm create_algorithm_car(
     std::vector<double> init_states,
     std::vector<double> init_controls, double init_cost,
     int NX, int NU){
+    
+  // Wheel parameters
+	const double r = 0.2; // radius
+	const double m = 2; // mass
+	const double J = 0.5 * m * r*r; // inertia  
+    
   // Wheel model
-  // (x, y) is the position of the wheel in the world and theta its angle
-  DifferentialState x, y, theta;
-  // v is the velocity and w the angle speed
-  Control v, w;
+  DifferentialState x, y, theta, v;  
+  Control c, w;  // c is the torque w the yaw rate
+  IntermediateState a = c * r/J; // acceleration
+  
   Parameter T;
   DifferentialEquation f(0.0, T); // the differential equation
 
   OCP ocp(0.0, T, nb_controls); // time horizon of the OCP: [0,T], , number of control points
   ocp.minimizeMayerTerm(T); // the time T should be optimized
-
+  
+	// DifferentialEquation
   f << dot(x) == v * cos(theta);
   f << dot(y) == v * sin(theta);
   f << dot(theta) == w;
-
+  f << dot(v) ==  a;
+  
   ocp.subjectTo(f);
   ocp.subjectTo(AT_START, x == s1[0]);
   ocp.subjectTo(AT_START, y == s1[1]);
   ocp.subjectTo(AT_START, theta == s1[2]);
+  ocp.subjectTo(AT_START, v == s1[3]);
 
   ocp.subjectTo(AT_END, x == s2[0]);
   ocp.subjectTo(AT_END, y == s2[1]);
   ocp.subjectTo(AT_END, theta == s2[2]);
+  ocp.subjectTo(AT_END, v == s2[3]);
 
   // TODO: bounds
-	ocp.subjectTo( -2 <= v <= 5);
-	ocp.subjectTo( -1 <= w <= 1);
+	ocp.subjectTo( -15 <= a <= 10); // braking capability > acceleration capability
+	ocp.subjectTo( -M_PI <= w <= M_PI);
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
   OptimizationAlgorithm algorithm(ocp);
 
   algorithm.set( MAX_NUM_ITERATIONS, 80 );
 
-
   // ----------------------------------
   // INITIALIZATION
   // ----------------------------------
+
   if (init_controls.size() > 0){
     Grid timeGrid( 0.0, 1.0, nb_controls);
     VariablesGrid x_init(NX, timeGrid);
     VariablesGrid u_init(NU, timeGrid);
     VariablesGrid p_init(1, timeGrid);
-
+    
     for (unsigned i = 0; i < nb_controls; i++){
       for (unsigned j = 0; j < 3; j++){
         x_init(i, j) = init_states[i+j];
         u_init(i, j) = init_controls[i+j];
       }
     }
-    p_init(0, 0) = init_cost;
-
-    algorithm.initializeDifferentialStates(x_init);
-    algorithm.initializeControls(u_init);
-    algorithm.initializeParameters(p_init);
+	    
+	algorithm.initializeDifferentialStates(x_init);
+  algorithm.initializeControls(u_init);
+  algorithm.initializeParameters(p_init);
   }
 
   if (PLOT){
@@ -172,7 +183,8 @@ OptimizationAlgorithm create_algorithm_car(
     window.addSubplot(x, "DifferentialState x");
     window.addSubplot(y, "DifferentialState y");
     window.addSubplot(theta, "DifferentialState theta");
-    window.addSubplot(v, "Control v");
+    window.addSubplot(v, "DifferentialState v");
+    window.addSubplot(a, "IntermediateState a");
     window.addSubplot(w, "Control w");
     algorithm << window;
   }
