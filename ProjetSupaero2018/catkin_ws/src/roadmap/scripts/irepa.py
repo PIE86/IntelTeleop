@@ -11,15 +11,6 @@ from networks import Dataset, Networks
 OPT_CONTROL_SERVICE = 'solve_ocp'
 SAMPLING_SERVICE = 'create_samples'
 
-rospy.init_node('irepa_node')
-# rospy.wait_for_service(SAMPLING_SERVICE)
-# rospy.loginfo('End of wait for sampler')
-rospy.wait_for_service(OPT_CONTROL_SERVICE)
-rospy.loginfo('End of wait for ocp')
-opt_control_proxy = rospy.ServiceProxy(OPT_CONTROL_SERVICE, OptControl)
-# create_samples_proxy = rospy.ServiceProxy(SAMPLING_SERVICE, Samples)
-
-
 VERBOSE = False
 
 # --- HYPER PARAMS
@@ -27,7 +18,7 @@ VERBOSE = False
 INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 4
-NB_SAMPLE = 10
+NB_SAMPLE = 20
 NB_CONNECT = 3
 # Densify longer
 NB_ATTEMPS_DENSIFY_LONGER = 10
@@ -49,7 +40,7 @@ U_MAX = 10 * np.ones(NU)
 random.seed(42)
 
 
-def irepa():
+def irepa(opt_control_proxy):
 
     # Initialize PRM with a sampling function,
     # a connect function and an heuristic distance
@@ -210,4 +201,12 @@ def euclid(s1, s2):
 
 
 if __name__ == '__main__':
-    irepa()
+    rospy.init_node('irepa_node')
+    # rospy.wait_for_service(SAMPLING_SERVICE)
+    # rospy.loginfo('End of wait for sampler')
+    rospy.wait_for_service(OPT_CONTROL_SERVICE)
+    rospy.loginfo('End of wait for ocp')
+    opt_control_proxy = rospy.ServiceProxy(OPT_CONTROL_SERVICE, OptControl)
+    # create_samples_proxy = rospy.ServiceProxy(SAMPLING_SERVICE, Samples)
+
+    irepa(opt_control_proxy)

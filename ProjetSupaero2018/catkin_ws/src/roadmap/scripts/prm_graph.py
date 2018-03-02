@@ -147,32 +147,6 @@ class PRM:
         self.densify_random(nets, 20, verbose=verbose)
         self.connexify(nets, 5, verbose=verbose)
 
-    def better_edges(self, nets, verbose=True):
-        '''Return a ditc of edges that improve the PRM edge cost.'''
-        EPS = 0.05
-
-        edges_patch = {}
-        for node0_index, node1_index in self.graph.edges:
-            state0 = self.graph.nodes[node0_index].state
-            state1 = self.graph.nodes[node1_index].state
-
-            V_prm = self.graph.edges[(node0_index, node1_index)].V
-
-            X_est, U_est, V_est = nets.trajectories(state0, state1)
-            success, X, U, V = self.ACADO_connect(
-                state0, state1, init=(X_est, U_est, V_est))
-
-            if success:
-                if (V < (1 - EPS) * V_prm):
-                    if verbose:
-                        print("Better connection: %d to %d (%.2f < %.2f)" % (
-                            node0_index, node1_index, V, V_prm))
-
-                    edges_patch[(node0_index, node1_index)
-                                ] = Graph.new_path([X, U, V])
-
-        return edges_patch
-
     def improve(self, estimator, verbose=True):
         """Improve the prm using the approximators:
         - Replace some edges with betters paths
@@ -194,7 +168,8 @@ class PRM:
                     state0, state1, init=(X_est, U_est, V_est))
                 if success and V < (1 - EPS) * V_prm:
                     if verbose:
-                        print("Better connection: %d to %d (%.2f < %.2f)" % (
+                        print("""    ---------> BETTER connection:
+                        %d to %d (%.2f < %.2f)""" % (
                             node0_index, node1_index, V, V_prm))
                     better_edges[(node0_index, node1_index)
                                  ] = Graph.new_path([X, U, V])

@@ -6,13 +6,16 @@
 #include <acado_optimal_control.hpp>
 #include <acado_gnuplot.hpp>
 
+#include <actionlib/server/simple_action_server.h>
+
 #include "ros/ros.h"
 
 #include "opt_control/OptControl.h"
+#include "roadmap/OptControlAction.h"
+
 
 #define ACADO_VERBOSE false
 #define PLOT false
-// TODO: check succes
 
 USING_NAMESPACE_ACADO
 
@@ -21,6 +24,11 @@ const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
 // state vector norm threshold above which 2 states are considered differents
 const double THRESHOLD = 0.1;
 double TMIN = 0.0;
+
+
+
+
+typedef actionlib::SimpleActionServer<roadmap::OptControlAction> Server;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
 
@@ -37,18 +45,18 @@ bool check_success(
 
 
 
-bool solve(opt_control::OptControl::Request &req,
-           opt_control::OptControl::Response &res)
+bool solve(const roadmap::OptControlGoalConstPtr& goal, Server* as)
 {
-  std::vector<double> s1 = req.s1;
-  std::vector<double> s2 = req.s2;
+  // TODO
+  std::vector<double> s1 = goal->s1;
+  std::vector<double> s2 = goal->s2;
   // Decides which will be the size of trajectories
   int nb_controls;
-  if (req.states.size() == 0){
+  if (goal->states.size() == 0){
     nb_controls = DEFAULT_NB_CONTROLS;
   }
   else{
-    nb_controls = req.states.size()/req.NX;
+    nb_controls = goal->states.size()/goal->NX;
   }
 
   // cf https://sourceforge.net/p/acado/discussion/general/thread/6e434f88/
@@ -57,10 +65,10 @@ bool solve(opt_control::OptControl::Request &req,
   // std::cout << "s1:" << s1 << '\n';
   // std::cout << "s2:" << s2 << '\n';
 
-  auto toto = req.states;
-  auto titi = req.controls;
+  auto toto = goal->states;
+  auto titi = goal->controls;
 
-  OptimizationAlgorithm algorithm = create_algorithm_car(s1, s2, nb_controls, toto, titi, req.cost, req.NX, req.NU);
+  OptimizationAlgorithm algorithm = create_algorithm_car(s1, s2, nb_controls, toto, titi, goal->cost, goal->NX, goal->NU);
 
   // solve the problem, returnValue is a status describing how the calcul went
   // HACK: logs produced during optimization dumped into a file
@@ -82,25 +90,30 @@ bool solve(opt_control::OptControl::Request &req,
   // Convert into ROS data structures
   const int nb_points = controls.getNumPoints();
   std::vector<double> time_arr(nb_points);
-  std::vector<double> states_arr(nb_points*req.NX);
-  std::vector<double> controls_arr(nb_points*req.NU);
+  std::vector<double> states_arr(nb_points*goal->NX);
+  std::vector<double> controls_arr(nb_points*goal->NU);
 
   // getVector(t) return the control values as a vector
   for (unsigned i = 0; i < nb_points; i++)
   {
     time_arr[i] = states.getTime(i);
-    for (unsigned j = 0; j < req.NX; j++){
+    for (unsigned j = 0; j < goal->NX; j++){
       states_arr[i+j] = states.getVector(i)[j];
     }
-    for (unsigned j = 0; j < req.NU; j++){
+    for (unsigned j = 0; j < goal->NU; j++){
       controls_arr[i+j] = controls.getVector(i)[j];
     }
   }
 
-  res.states = states_arr;
-  res.controls = controls_arr;
-  res.time = parameters.getVector(0)[0];
-  res.success = check_success(returnValue, s1, s2, states, controls, res.time, THRESHOLD);
+  roadmap::OptControlResult result;
+
+  result.states = states_arr;
+  result.controls = controls_arr;
+  result.time = parameters.getVector(0)[0];
+  result.success = check_success(returnValue, s1, s2, states, controls, result.time, THRESHOLD);
+
+  as->setSucceeded(result, "coucou");
+
 
   return true;
 }
@@ -223,10 +236,12 @@ void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid par
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "solve_ocp_server");
-  ros::NodeHandle n;
 
-  ros::ServiceServer service = n.advertiseService("solve_ocp", solve);
+  ros::init(argc, argv, "do_dishes_server");
+  ros::NodeHandle n;
+  Server server(n, "solve_ocp", boost::bind(&solve, _1, &server), false);
+  server.start();
+
   ROS_INFO("Ready to solve OCP.");
   ros::spin();
 
