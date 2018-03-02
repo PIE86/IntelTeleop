@@ -39,9 +39,11 @@ namespace gazebo
 			this->orientation = math::Vector3();
 			this->orientation.Set(0,0,0);
 
-			this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
-			this->rosSub = this->rosNode->subscribe("car_cmd", 10 , &CarControlPlugin::OnRosMsg, this);
+			this->rosNode.reset(new ros::NodeHandle("car_control"));
+			this->rosSub = this->rosNode->subscribe("command", 10 , &CarControlPlugin::OnRosMsg, this);
 			this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
+			
+			time_step = 0.001;
     }
 
     public: void SetVelocity(const gazebo::math::Vector3 &_vel)
@@ -50,20 +52,36 @@ namespace gazebo
 			gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
     }
 
-    public: void SetOrientation(const float &_theta)
+    /*public: void SetOrientation(const float &_theta)
     {
-
     	this->orientation.Set(0,0,_theta *PI/180.0);
     	math::Pose initPose(this->model->GetWorldPose().pos, math::Quaternion(0, 0, _theta *PI/180.0));
 			this->model->SetWorldPose(initPose);
 			gzmsg << "Orientation set to: " << _theta << "\n";
+    }*/
+    
+    public: void SetAngularVelocity(const float &_omega)
+    {
+    	this->model->SetAngularVel({0, 0, _omega});
+    	gzmsg << "Angular velocity set to: " << _omega << "\n";
     }
 
     public: void OnRosMsg(const utils::CommandConstPtr &_msg)
 	{
-		this->SetOrientation(_msg->theta);
-		this->velocity.Set(_msg->velocity*sin(_msg->theta *PI/180.0), _msg->velocity*cos(_msg->theta *PI/180.0), 0);
-    	this->SetVelocity(this->velocity);
+		//gazebo::common:Time gz_time_now = _model->GetWorld()->GetSimTime();
+		//ros_time = ros::Time(gz_time_now.sec, gz_time_now.nsec);
+		
+		//ros::Duration time_step = ros_time - old_ros_time;
+		
+		//this->SetOrientation(_msg->theta);
+		this->SetAngularVelocity(_msg->theta);
+		
+		math::Quaternion pose = this->model->GetWorldPose().rot;
+		double yaw = pose.GetYaw();
+		//double yaw_next = yaw + _msg->theta * time_step;
+		
+		this->velocity.Set(-_msg->velocity*sin(yaw), _msg->velocity*cos(yaw), 0);
+    this->SetVelocity(this->velocity);
 	}
 
     /// \brief ROS helper function that processes messages
@@ -83,6 +101,7 @@ namespace gazebo
 	private: ros::Subscriber rosSub;
 	private: ros::CallbackQueue rosQueue;
 	private: std::thread rosQueueThread;
+	private: double time_step;
 
   };
 
