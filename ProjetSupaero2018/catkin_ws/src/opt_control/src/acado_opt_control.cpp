@@ -12,7 +12,7 @@
 #include "modelConstants.h"
 
 #define ACADO_VERBOSE false
-#define PLOT false
+#define PLOT true
 // TODO: check succes
 
 USING_NAMESPACE_ACADO
