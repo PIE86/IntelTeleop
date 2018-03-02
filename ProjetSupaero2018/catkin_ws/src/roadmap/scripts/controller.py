@@ -34,7 +34,8 @@ class Controller:
         self.t = 0  # useless as attribute?
         self.t_idx = 0
 
-        self.client = actionlib.SimpleActionClient(OPT_CONTROL_ACTION_SERVER, OptControlAction)
+        self.client = actionlib.SimpleActionClient(
+                        OPT_CONTROL_ACTION_SERVER, OptControlAction)
         self.client.wait_for_server()
         self.pub = rospy.Publisher('controller', Control, queue_size=10)
 
