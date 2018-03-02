@@ -9,6 +9,7 @@
 #include "ros/ros.h"
 
 #include "opt_control/OptControl.h"
+#include "modelConstants.h"
 
 #define ACADO_VERBOSE false
 #define PLOT false
@@ -127,6 +128,8 @@ OptimizationAlgorithm create_algorithm_car(
   f << dot(theta) == w;
 
   ocp.subjectTo(f);
+
+  // Set constraints
   ocp.subjectTo(AT_START, x == s1[0]);
   ocp.subjectTo(AT_START, y == s1[1]);
   ocp.subjectTo(AT_START, theta == s1[2]);
@@ -135,9 +138,11 @@ OptimizationAlgorithm create_algorithm_car(
   ocp.subjectTo(AT_END, y == s2[1]);
   ocp.subjectTo(AT_END, theta == s2[2]);
 
-  // TODO: bounds
-	ocp.subjectTo( -2 <= v <= 5);
-	ocp.subjectTo( -1 <= w <= 1);
+  ocp.subjectTo(X_MIN <= x <= X_MAX);
+  ocp.subjectTo(Y_MIN <= y <= Y_MAX);
+
+	ocp.subjectTo(-2 <= v <= 5);
+	ocp.subjectTo(-1 <= w <= 1);
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
   OptimizationAlgorithm algorithm(ocp);
