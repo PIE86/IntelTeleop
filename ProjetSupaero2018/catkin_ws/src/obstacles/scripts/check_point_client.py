@@ -22,8 +22,8 @@ if __name__ == "__main__":
         x = float(sys.argv[1])
         y = float(sys.argv[2])
     else:
-        print "Expecting two arguments: point coordinates x y"
+        print("Expecting two arguments: point coordinates x y")
         sys.exit(1)
-    print "Requesting check on point: %s %s" % (x, y)
+    print("Requesting check on point: %s %s" % (x, y))
     is_valid = check_point_client(x, y)
-    print "After checking point: point is valid? %s" % is_valid
+    print("After checking point: point is valid? %s" % is_valid)

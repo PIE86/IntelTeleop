@@ -9,9 +9,10 @@
 #include "ros/ros.h"
 
 #include "opt_control/OptControl.h"
+#include "modelConstants.h"
 
 #define ACADO_VERBOSE false
-#define PLOT false
+#define PLOT true
 // TODO: check succes
 
 USING_NAMESPACE_ACADO
@@ -20,7 +21,6 @@ USING_NAMESPACE_ACADO
 const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
 // state vector norm threshold above which 2 states are considered differents
 const double THRESHOLD = 0.1;
-double TMIN = 0.0;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
 
@@ -127,6 +127,8 @@ OptimizationAlgorithm create_algorithm_car(
   f << dot(theta) == w;
 
   ocp.subjectTo(f);
+
+  // Set constraints
   ocp.subjectTo(AT_START, x == s1[0]);
   ocp.subjectTo(AT_START, y == s1[1]);
   ocp.subjectTo(AT_START, theta == s1[2]);
@@ -135,10 +137,26 @@ OptimizationAlgorithm create_algorithm_car(
   ocp.subjectTo(AT_END, y == s2[1]);
   ocp.subjectTo(AT_END, theta == s2[2]);
 
-  // TODO: bounds
-	ocp.subjectTo( -2 <= v <= 5);
-	ocp.subjectTo( -1 <= w <= 1);
+  ocp.subjectTo(X_MIN <= x <= X_MAX);
+  ocp.subjectTo(Y_MIN <= y <= Y_MAX);
+
+  ocp.subjectTo(V_MIN <= v <= V_MAX);
+  ocp.subjectTo(W_MIN <= w <= W_MAX);
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
+
+  // The car has to avoid obstacles
+  std::vector<double> obstacles;
+  if (ros::param::get("/obstacles/obstacles_vec", obstacles)){
+    for(unsigned int obstacle_index = 0; obstacle_index < obstacles.size()/3; obstacle_index++){
+      double obs_x = obstacles.at(3 * obstacle_index);
+      double obs_y = obstacles.at(3 * obstacle_index + 1);
+      double obs_r = obstacles.at(3 * obstacle_index + 2);
+
+      ocp.subjectTo(pow(x - obs_x, 2) + pow(y - obs_y, 2) >= pow(obs_r, 2));
+    }
+  } else {
+    ROS_INFO("\033[1;31mCould not read obstacles... Please run the obstacles/read_obstacles_server node before !!! \033[0m");
+  }
 
   OptimizationAlgorithm algorithm(ocp);
 
@@ -225,6 +243,9 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "solve_ocp_server");
   ros::NodeHandle n;
+
+  // Wait for
+  ros::service::waitForService("read_obstacles", 5000);
 
   ros::ServiceServer service = n.advertiseService("solve_ocp", solve);
   ROS_INFO("Ready to solve OCP.");

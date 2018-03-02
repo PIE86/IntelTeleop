@@ -14,7 +14,7 @@ PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def check_if_valid(req):
-    print "Checking if point is valid: [%s %s]" % (req.x, req.y)
+    print("Checking if point is valid: [%s %s]" % (req.x, req.y))
 
     # Retrieve obstacles from Parameter Server
     try:

@@ -12,7 +12,7 @@ def read_obstacles_client(file_name):
         resp = get_obstacles(file_name)
         return resp.vec, resp.size
     except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
+        print("Service call failed: %s" % e)
 
 
 if __name__ == "__main__":
@@ -21,6 +21,6 @@ if __name__ == "__main__":
     else:
         print "%s [file_name(.obs)]" % sys.argv[0]
         sys.exit(1)
-    print "Requesting obstacles from file : %s" % file_name
+    print("Requesting obstacles from file : %s" % file_name)
     vec, size = read_obstacles_client(file_name)
-    print "Read obstacles of size %s : %s" % (size, vec)
+    print("Read obstacles of size %s : %s" % (size, vec))

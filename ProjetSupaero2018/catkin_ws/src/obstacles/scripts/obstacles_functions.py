@@ -157,6 +157,6 @@ if __name__ == "__main__":
     y_vec = [1]
 
     for i in range(len(x_vec)):
-        print check_validity(x_vec[i], y_vec[i], obstacles, size)
+        print(check_validity(x_vec[i], y_vec[i], obstacles, size))
 
     plot_obstacles(obstacles, size, x_vec, y_vec)
