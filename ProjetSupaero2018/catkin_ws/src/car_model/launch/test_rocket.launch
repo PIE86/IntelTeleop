@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="car_model" type="acado_test_service" name="NameRocket"/>
+  <node pkg="car_model" type="acado_client_example.py" name="NameAcadoClientExample"/>
+
+</launch>

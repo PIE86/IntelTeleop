@@ -1,0 +1,12 @@
+float64[] s1
+float64[] s2
+float64[] states
+float64[] controls
+float64 cost
+int32 NX
+int32 NU
+---
+int16 success
+float64 time
+float64[] states
+float64[] controls

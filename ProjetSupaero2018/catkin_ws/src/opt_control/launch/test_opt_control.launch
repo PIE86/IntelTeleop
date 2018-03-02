@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="opt_control" type="acado_opt_control" name="ACADOOptControl"/>
+  <node pkg="opt_control" type="acado_client_example.py" name="AcadoClientExample"/>
+
+</launch>
