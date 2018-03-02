@@ -21,7 +21,6 @@ USING_NAMESPACE_ACADO
 const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
 // state vector norm threshold above which 2 states are considered differents
 const double THRESHOLD = 0.1;
-double TMIN = 0.0;
 
 void log_results(VariablesGrid states, VariablesGrid controls, VariablesGrid parameters);
 
@@ -141,8 +140,8 @@ OptimizationAlgorithm create_algorithm_car(
   ocp.subjectTo(X_MIN <= x <= X_MAX);
   ocp.subjectTo(Y_MIN <= y <= Y_MAX);
 
-	ocp.subjectTo(-2 <= v <= 5);
-	ocp.subjectTo(-1 <= w <= 1);
+	ocp.subjectTo(V_MIN <= v <= V_MAX);
+	ocp.subjectTo(W_MIN <= w <= W_MAX);
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
   OptimizationAlgorithm algorithm(ocp);
