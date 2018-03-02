@@ -34,8 +34,8 @@ try:
     # success rocket example, corresonds to states and controls init vectors
     # p1 = np.array((0, 0, 1))
     # p2 = np.array((10, 0, 0))
-    p1 = np.array((1, 0, 1))
-    p2 = np.array((2, 1, 0))
+    p1 = np.array((0.0, 0.5, 1))
+    p2 = np.array((3.1, 2, 0))
     # p1 = np.array((.922, 0.435, 2.651))
     # p2 = np.array((8.764, 1.573, 4.118))
     # with init
