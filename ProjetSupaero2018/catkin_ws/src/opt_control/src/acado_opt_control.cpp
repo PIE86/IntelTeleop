@@ -144,6 +144,13 @@ OptimizationAlgorithm create_algorithm_car(
 	ocp.subjectTo(W_MIN <= w <= W_MAX);
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
+  std::vector<double> obstacles;
+  if (ros::param::get("/obstacles/obstacles_vec", obstacles)){
+    ROS_INFO("Found obstacles");
+  } else {
+    ROS_INFO("\033[1;31mCould not read obstacles... Please run the obstacles/read_obstacles_server node before !!! \033[0m");
+  }
+
   OptimizationAlgorithm algorithm(ocp);
 
   algorithm.set( MAX_NUM_ITERATIONS, 80 );
@@ -229,6 +236,9 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "solve_ocp_server");
   ros::NodeHandle n;
+
+  // Wait for
+  ros::service::waitForService("read_obstacles", 5000);
 
   ros::ServiceServer service = n.advertiseService("solve_ocp", solve);
   ROS_INFO("Ready to solve OCP.");
