@@ -140,8 +140,8 @@ OptimizationAlgorithm create_algorithm_car(
   ocp.subjectTo(X_MIN <= x <= X_MAX);
   ocp.subjectTo(Y_MIN <= y <= Y_MAX);
 
-	ocp.subjectTo(V_MIN <= v <= V_MAX);
-	ocp.subjectTo(W_MIN <= w <= W_MAX);
+  ocp.subjectTo(V_MIN <= v <= V_MAX);
+  ocp.subjectTo(W_MIN <= w <= W_MAX);
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
   // The car has to avoid obstacles
