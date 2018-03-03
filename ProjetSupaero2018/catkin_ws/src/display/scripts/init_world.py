@@ -148,9 +148,9 @@ def spawn_obstacles():
             print('Obstacles parameters found')
     except KeyError:
         rospy.loginfo('Obstacles parameters not set - '
-                     'You may have to launch a server that reads obstacles '
-                     'from an input file '
-                     '(see obstacles/read_obstacles_server)')
+                      'You may have to launch a server that reads obstacles '
+                      'from an input file '
+                      '(see obstacles/read_obstacles_server)')
         if DEBUG:
             print('Obstacles parameters not found')
         sys.exit(1)
