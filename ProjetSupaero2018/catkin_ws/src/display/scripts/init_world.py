@@ -155,7 +155,7 @@ def spawn_obstacles():
             print('Obstacles parameters not found')
         sys.exit(1)
 
-    n = len(vec) / size
+    n = int(len(vec) / size)
     obstacles = np.reshape(np.array(vec), (n, size))
 
     for obs in obstacles:
@@ -164,8 +164,8 @@ def spawn_obstacles():
 
 def init_world():
     # initial car position and orientation as [x, y, z, alpha, beta, gamma]
-    start_pose = [0, 0, 0, 0, 0, 0]
-    end_pose = [2, -3, 0, 0, 0, 20]
+    start_pose = [4, 6, 0, 0, 0, 1]
+    end_pose = [12, 8, 0, 0, 0, 20]
 
     spawn_car(start_pose)
     spawn_start_point(start_pose)

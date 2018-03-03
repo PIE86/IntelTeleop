@@ -3,18 +3,21 @@
 import numpy as np
 import rospy
 import actionlib
-from opt_control.msg import Control, OptControlAction, OptControlGoal
+from roadmap.msg import OptControlAction, OptControlGoal
+from display.msg import Command, State
 
 from networks import Networks, resample
 from irepa import NX, NU, X_MIN, X_MAX, U_MIN, U_MAX
 
-OPT_CONTROL_ACTION_SERVER = 'solve_ocp'
-#
+OPT_CONTROL_SERVER = 'solve_ocp'
+COMMAND_TOPIC = '/car_control/command'
+STATE_TOPIC = '/car_control/state'
+
 # rospy.wait_for_service(OPT_CONTROL_SERVICE)
 # rospy.loginfo('End of wait for ocp')
 
 # Control frequency
-CPS = 1
+CPS = 10
 
 
 class Controller:
@@ -34,20 +37,32 @@ class Controller:
         self.t = 0  # useless as attribute?
         self.t_idx = 0
 
-        self.client = actionlib.SimpleActionClient(OPT_CONTROL_ACTION_SERVER,
-                                                   OptControlAction)
-        self.client.wait_for_server()
-        self.pub = rospy.Publisher('controller', Control, queue_size=10)
+        self.ocp_client = actionlib.SimpleActionClient(OPT_CONTROL_SERVER,
+                                                       OptControlAction)
+        self.ocp_client.wait_for_server()
+        self.pub = rospy.Publisher(COMMAND_TOPIC, Command, queue_size=10)
+        rospy.Subscriber(STATE_TOPIC, State, self.update_state)
 
     def next_control(self):
         """Choose next control depending on the current_state and self.U
         Callback to service controller"""
         self.t += 1 / CPS  # Maybe useless after init
         self.t_idx += 1
-        u = self.U[self.t_idx, :]
+        if self.t_idx < self.U.shape[0]:
+            u = self.U[self.t_idx, :]
+        else:
+            u = np.zeros(NU)
         print('Control:', u)
-        # self.pub(u)
+        self.pub.publish(u)
         return u
+
+    def update_state(self, msg):
+        # Not supposed to be that!
+        # TODO
+        print(msg)
+        # x, y, theta = msg.x[0], msg.x[1], msg.x[5]
+        # print(x, y, theta)
+        self.state = np.array(msg.x[3:])
 
     def update_trajectory(self, state, resp):
         """Callback to topic simulation"""
@@ -94,8 +109,9 @@ class Controller:
             list(self.end),
             Xe, Ue, Ve, NX, NU)
         # Fill in the goal here
-        self.client.send_goal(goal, self.update_trajectory)
-        # self.client.wait_for_result(rospy.Duration.from_sec(5.0))  # Nope!
+        self.ocp_client.send_goal(goal, self.update_trajectory)
+        # Nope!
+        # self.ocp_client.wait_for_result(rospy.Duration.from_sec(5.0))
 
     def new_end(self, end_state):
         """More after that?"""
@@ -111,10 +127,12 @@ if __name__ == '__main__':
 
     # TODO: start not
     print('FIX CURRENT STATE AND END')
-    controller.current_state = np.array((1, 0, 1))
-    controller.end = np.array((2, 1, 0))
+    start = np.array((4, 6, 1))
+    controller.current_state = start
+    end1 = np.array((12, 8, 1.5))
+    controller.end = end1
 
     while not rospy.is_shutdown():
         controller.call_update_trajectory_action()
+        controller.next_control()
         rate.sleep()
-        controller.next_control

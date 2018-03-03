@@ -42,15 +42,14 @@ namespace gazebo
 
       // Data to be sent
       display::State msg_state;
-  		std::vector<double> state(3);
-      
+
       math::Pose pose = this->model->GetWorldPose();
 			double theta = pose.rot.GetAsEuler().z;
 
-      state.push_back(pose.pos.x);
-      state.push_back(pose.pos.y);
-      state.push_back(theta);
-      
+      std::vector<double> state {pose.pos.x, pose.pos.y, theta};
+
+      std::cout << "COUCOU  " << pose.pos.x << " " << pose.pos.y << " " << theta << '\n';
+
       msg_state.x = state;
 
 			// Publish data
