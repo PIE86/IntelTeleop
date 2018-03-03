@@ -76,7 +76,7 @@ class PRM:
                     self.graph.nodes[node1].state,
                     self.graph.nodes[node2].state,
                     init=path_est)
-                nb_est += success_est
+                nb_est += success
 
             # If successing while attempting to connect the two nodes
             # then add the new edge to the graph
@@ -312,8 +312,8 @@ class PRM:
             init_path = (X_est, U_est, V_est)
         else:
             init_path = None
-        if verbose:
-            print(f"\t\t Trying...")
+        # if verbose:
+        #     print("               Trying...")
         return self.ACADO_connect(states[0], states[1], init=init_path)
 
 

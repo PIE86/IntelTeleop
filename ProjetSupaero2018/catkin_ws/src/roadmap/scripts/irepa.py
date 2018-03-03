@@ -21,7 +21,7 @@ VERBOSE = False
 INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 5
-NB_SAMPLE = 20
+NB_SAMPLE = 5  # must be at least 5
 # NB_CONNECT = 3
 # Densify longer
 # NB_ATTEMPS_DENSIFY_LONGER = 10
@@ -90,7 +90,8 @@ class Irepa:
             #   E <- ACADO(init = 0 or estimator)
             print('\n\n\n######################')
             print('EXPAND')
-            nb_astar, nb_est, nb_attempt = prm.expand(self.estimator, first=(not bool(i)))
+            nb_astar, nb_est, nb_attempt = prm.expand(
+                        self.estimator, first=(not bool(i)))
             astar_successes[i] = nb_astar
             est_successes[i] = nb_est
             nb_attempts[i] = nb_attempt
@@ -149,14 +150,17 @@ class Irepa:
             print('Euclidian value')
             print(self.euclid(x0, x1))
 
-        plt.plot(np.arange(IREPA_ITER), astar_successes, color='blue', label='astar')
-        plt.plot(np.arange(IREPA_ITER), est_successes, color='green', label='estimator')
-        plt.plot(np.arange(IREPA_ITER), nb_attempts, color='orange', label='attempts')
+        plt.plot(np.arange(IREPA_ITER),
+                 astar_successes, color='blue', label='astar')
+        plt.plot(np.arange(IREPA_ITER),
+                 est_successes, color='green', label='estimator')
+        plt.plot(np.arange(IREPA_ITER),
+                 nb_attempts, color='orange', label='attempts')
         plt.legend()
         plt.show()
 
         print('Saving estimator weights')
-        self.estimator.save()
+        # self.estimator.save()
         print('Saved')
 
         tend = time.time()
