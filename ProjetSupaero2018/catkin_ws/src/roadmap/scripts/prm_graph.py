@@ -34,7 +34,7 @@ class PRM:
         """Add a given number of nodes"""
         samples = self.sample(nb_sample)
         for state in samples:
-            node_index = self.graph.add_node(state)
+            self.graph.add_node(state)
 
     def expand(self, estimator, first=False):
         """ Expand PRM
@@ -156,9 +156,9 @@ class PRM:
         - Replace some edges with betters paths
         - Tries to connect unconnected states
         """
-        self.graph.edges.update(self.better_edges(nets, verbose=verbose))
-        self.densify_random(nets, 20, verbose=verbose)
-        self.connexify(nets, 5, verbose=verbose)
+        self.graph.edges.update(self.better_edges(estimator, verbose=verbose))
+        self.densify_random(estimator, 20, verbose=verbose)
+        self.connexify(estimator, 5, verbose=verbose)
 
     def improve(self, estimator, verbose=True):
         """Improve the prm using the approximators:
@@ -253,10 +253,6 @@ class PRM:
         the shortest path.
         - min_path: Minimum size of longer paths to consider
         """
-
-        # TODO: Precise this min
-        # Minimum size of longer paths to consider
-        MIN_PATH_LEN = 3
 
         # TODO: new argument
         for _ in range(10):

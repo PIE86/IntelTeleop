@@ -90,8 +90,8 @@ class Irepa:
             #   E <- ACADO(init = 0 or estimator)
             print('\n\n\n######################')
             print('EXPAND')
-            nb_astar, nb_est, nb_attempt = prm.expand(
-                        self.estimator, first=(not bool(i)))
+            nb_astar, nb_est, nb_attempt = prm.expand(self.estimator,
+                                                      first=(not bool(i)))
             astar_successes[i] = nb_astar
             est_successes[i] = nb_est
             nb_attempts[i] = nb_attempt
@@ -232,8 +232,8 @@ class Irepa:
 if __name__ == '__main__':
     rospy.init_node('irepa_node')
 
-    ocp_client = actionlib.SimpleActionClient(
-                            OPT_CONTROL_ACTION_SERVER, OptControlAction)
+    ocp_client = actionlib.SimpleActionClient(OPT_CONTROL_ACTION_SERVER,
+                                              OptControlAction)
     ocp_client.wait_for_server()
     rospy.loginfo('End of wait for ocp action server')
 

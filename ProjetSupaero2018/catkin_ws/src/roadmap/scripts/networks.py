@@ -61,19 +61,16 @@ class Networks:
     def test(self, dset):
         """Test over the whole dataset"""
         xbatch = self.xs_scaler.transform(np.hstack([dset.x1s, dset.x2s]))
-        value_metrics = self.value.evaluate(
-                                    xbatch,
-                                    dset.vs,
-                                    batch_size=self.BATCH_SIZE)
-        states_metrics = self.ptrajx.evaluate(
-                                    xbatch,
-                                    self.x_scaler.transform(dset.trajxs),
-                                    batch_size=self.BATCH_SIZE)
-        controls_metrics = self.ptraju.evaluate(
-                                    xbatch,
-                                    self.u_scaler.transform(dset.trajus),
-                                    batch_size=self.BATCH_SIZE)
-        return value_metrics, states_metrics, controls_metrics
+        v_metrics = self.value.evaluate(xbatch,
+                                        dset.vs,
+                                        batch_size=self.BATCH_SIZE)
+        s_metrics = self.ptrajx.evaluate(xbatch,
+                                         self.x_scaler.transform(dset.trajxs),
+                                         batch_size=self.BATCH_SIZE)
+        u_metrics = self.ptraju.evaluate(xbatch,
+                                         self.u_scaler.transform(dset.trajus),
+                                         batch_size=self.BATCH_SIZE)
+        return v_metrics, s_metrics, u_metrics
 
     def trajectories(self, x1, x2):
         """
@@ -92,11 +89,11 @@ class Networks:
             print(x1, x2)
             print(self.state_size)
 
-        X = self.x_scaler.inverse_transform(
-                    self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
+        X_scaled = self.ptrajx.predict(x, batch_size=self.BATCH_SIZE)
+        X = self.x_scaler.inverse_transform(X_scaled)
         X = X.reshape((self.TRAJLENGTH, self.state_size))
-        U = self.u_scaler.inverse_transform(
-                    self.ptraju.predict(x, batch_size=self.BATCH_SIZE))
+        U_scaled = self.ptraju.predict(x, batch_size=self.BATCH_SIZE)
+        U = self.u_scaler.inverse_transform(U_scaled)
         U = U.reshape((self.TRAJLENGTH, self.control_size))
         V = self.value.predict(x, batch_size=self.BATCH_SIZE)
         return X, U, V
