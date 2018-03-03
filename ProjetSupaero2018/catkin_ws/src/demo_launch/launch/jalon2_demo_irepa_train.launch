@@ -1,5 +1,7 @@
 <launch>
   <!-- Controller, roadmap and model -->
+  <node pkg="obstacles" type="check_point_server.py" name="check_obstacle_service"/>
+  <node pkg="opt_control" type="sampling_service" name="sampling_service"/>
   <node pkg="opt_control" type="acado_opt_control" name="NameOptControl"/>
   <node pkg="roadmap" type="irepa.py" name="NameIrepa"/>
 

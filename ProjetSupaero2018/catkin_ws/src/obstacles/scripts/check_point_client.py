@@ -14,7 +14,7 @@ def check_point_client(x, y):
         resp = get_if_valid(x, y)
         return resp.is_valid
     except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
+        print("Service call failed: %s" % e)
 
 
 if __name__ == "__main__":

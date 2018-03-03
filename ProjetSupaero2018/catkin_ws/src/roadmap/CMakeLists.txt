@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   message_generation
+  genmsg actionlib_msgs actionlib
 )
 
 add_service_files(
@@ -15,10 +16,16 @@ add_service_files(
    PathFinding.srv
 )
 
+add_action_files(
+  DIRECTORY action
+  FILES OptControl.action
+)
+
 generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  actionlib_msgs
 )
 
 catkin_package(

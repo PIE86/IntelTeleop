@@ -13,8 +13,8 @@ try:
 
     print("Generating 30 samples:")
     resp = create_samples(30)
-    samples = np.matrix(resp.samples).reshape(30, len(resp.samples)/30)
-    print samples
+    samples = np.matrix(resp.samples).reshape(30, int(len(resp.samples)/30))
+    print(samples)
 
-except rospy.ServiceException, e:
-    print "Service call failed: %s" % e
+except rospy.ServiceException as e:
+    print("Service call failed: %s" % e)

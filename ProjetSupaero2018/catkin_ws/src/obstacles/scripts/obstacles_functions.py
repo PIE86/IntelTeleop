@@ -140,7 +140,7 @@ def list_to_array(vec, size):
 
     """ Provided that length(vec)/size is an integer, transforms the given list
     into a numpy array"""
-    n = len(vec) / size
+    n = int(len(vec) / size)
     arr = np.reshape(np.array(vec), (n, size))
     return arr
 

@@ -19,7 +19,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         file_name = str(sys.argv[1])
     else:
-        print "%s [file_name(.obs)]" % sys.argv[0]
+        print("%s [file_name(.obs)]" % sys.argv[0])
         sys.exit(1)
     print("Requesting obstacles from file : %s" % file_name)
     vec, size = read_obstacles_client(file_name)

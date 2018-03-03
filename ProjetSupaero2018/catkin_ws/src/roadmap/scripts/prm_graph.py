@@ -1,10 +1,14 @@
 import random
-from itertools import permutations
-import numpy as np
-from os.path import join as pjoin
 import heapq
-
+import numpy as np
+from itertools import permutations
+from os.path import join as pjoin
 from collections import namedtuple
+
+from networks import resample
+
+# Resampled shortest path trajectories size
+MAXTRAJLENGTH = 40
 
 
 Path = namedtuple('Path', ['X', 'U', 'V'])
@@ -24,17 +28,15 @@ class PRM:
         self.sample = sample_fun
         self.ACADO_connect = connect_fun
         self.graph = Graph(hdistance)
-        self.visibility_horizon = 5
+        self.visibility_horizon = 10
 
     def add_nodes(self, nb_sample=40, verbose=True):
         """Add a given number of nodes"""
-        # TODO: add an option to "guide this adding"
-        # Ex: add nodes between 2 unconnectable nodes...
-        for _ in range(nb_sample):
-            state = self.sample()
+        samples = self.sample(nb_sample)
+        for state in samples:
             self.graph.add_node(state)
 
-    def expand(self, first=False):
+    def expand(self, estimator, first=False):
         """ Expand PRM
         -----------------
         Pick a pair of unconnected nearest neighbors
@@ -44,27 +46,44 @@ class PRM:
         else: # equivalent to densify knn
           E <- ACADO(init = 0 or estimator)
         """
+        # for monitoring purposes: compare astar and estimator inits
+        nb_astar, nb_est, nb_attempt = 0, 0, 0
 
         for (node1, node2), distance in zip(*self.unconnected_2_nn()):
+            nb_attempt += 1
 
-            if distance > self.visibility_horizon:
-                if first:
+            # TODO: figure out this visibility horizon
+            # Maybe try the first iteration with a low MAX_ITERATIONS
+            # WITHOUT the visibility_horizon to have a heuristic?
+            # arbitrary euclidian distance value seems to be too... arbitrary
+            if first:
+                if distance > self.visibility_horizon:
                     print(node1, node2, 'too far')
                     continue
-                path = self.graph.get_path(node1, node2)
+                path_astar = self.graph.get_path(node1, node2)
+
+                success, X, U, V = self.ACADO_connect(
+                    self.graph.nodes[node1].state,
+                    self.graph.nodes[node2].state,
+                    init=path_astar)
+                nb_astar += success
 
             else:
-                # TODO: path = estimator.predict(X)
-                path = None  # or estimator
+                s1 = self.graph.nodes[node1].state
+                s2 = self.graph.nodes[node2].state
+                path_est = estimator.trajectories(s1, s2)
+                success, X, U, V = self.ACADO_connect(
+                    self.graph.nodes[node1].state,
+                    self.graph.nodes[node2].state,
+                    init=path_est)
+                nb_est += success
 
-            success, X, U, V = self.ACADO_connect(
-                self.graph.nodes[node1].state,
-                self.graph.nodes[node2].state,
-                init=path)
             # If successing while attempting to connect the two nodes
             # then add the new edge to the graph
             if success:
                 self.graph.add_edge((node1, node2), X, U, V)
+
+        return nb_astar, nb_est, nb_attempt
 
     def unconnected_2_nn(self):
         unconnected_pairs = [
@@ -81,8 +100,8 @@ class PRM:
         return unconnected_pairs, distance_list
 
     def is_fully_connected(self):
-        return len(self.graph.edges) == len(
-            self.graph.nodes) * (len(self.graph.nodes)-1)
+        nb_nodes, nb_edges = len(self.graph.nodes), len(self.graph.edges)
+        return nb_edges == nb_nodes*(nb_nodes-1)
 
     def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
         """Build the prm graph
@@ -137,36 +156,9 @@ class PRM:
         - Replace some edges with betters paths
         - Tries to connect unconnected states
         """
-        # Nets is undefined here !
-        # self.graph.edges.update(self.better_edges(nets, verbose=verbose))
-        # self.densify_random(nets, 20, verbose=verbose)
-        # self.connexify(nets, 5, verbose=verbose)
-
-    def better_edges(self, nets, verbose=True):
-        '''Return a ditc of edges that improve the PRM edge cost.'''
-        EPS = 0.05
-
-        edges_patch = {}
-        for node0_index, node1_index in self.graph.edges:
-            state0 = self.graph.nodes[node0_index].state
-            state1 = self.graph.nodes[node1_index].state
-
-            V_prm = self.graph.edges[(node0_index, node1_index)].V
-
-            X_est, U_est, V_est = nets.trajectories(state0, state1)
-            success, X, U, V = self.ACADO_connect(
-                state0, state1, init=(X_est, U_est, V_est))
-
-            if success:
-                if (V < (1 - EPS) * V_prm):
-                    if verbose:
-                        print("Better connection: %d to %d (%.2f < %.2f)" % (
-                            node0_index, node1_index, V, V_prm))
-
-                    edges_patch[(node0_index, node1_index)
-                                ] = Graph.new_path([X, U, V])
-
-        return edges_patch
+        self.graph.edges.update(self.better_edges(estimator, verbose=verbose))
+        self.densify_random(estimator, 20, verbose=verbose)
+        self.connexify(estimator, 5, verbose=verbose)
 
     def improve(self, estimator, verbose=True):
         """Improve the prm using the approximators:
@@ -189,7 +181,8 @@ class PRM:
                     state0, state1, init=(X_est, U_est, V_est))
                 if success and V < (1 - EPS) * V_prm:
                     if verbose:
-                        print("Better connection: %d to %d (%.2f < %.2f)" % (
+                        print("""    ---------> BETTER connection:
+                        %d to %d (%.2f < %.2f)""" % (
                             node0_index, node1_index, V, V_prm))
                     better_edges[(node0_index, node1_index)
                                  ] = Graph.new_path([X, U, V])
@@ -261,10 +254,6 @@ class PRM:
         - min_path: Minimum size of longer paths to consider
         """
 
-        # TODO: Precise this min
-        # Minimum size of longer paths to consider
-        # MIN_PATH_LEN = 3
-
         # TODO: new argument
         for _ in range(10):
             X_prm = []
@@ -319,8 +308,8 @@ class PRM:
             init_path = (X_est, U_est, V_est)
         else:
             init_path = None
-        if verbose:
-            print("Trying...")
+        # if verbose:
+        #     print("               Trying...")
         return self.ACADO_connect(states[0], states[1], init=init_path)
 
 
@@ -347,9 +336,9 @@ class Graph:
         self.hdistance = hdistance
 
     def __str__(self):
-        return "{} nodes, {} edges \nNodes: {} \nEdges: {}".format(
-            len(self.nodes), len(self.edges), self.nodes, self.edges
-        )
+        return """{} nodes, {} edges \n
+                Nodes: {self.nodes} \n
+                Edges: {self.edges}""".format(len(self.nodes), len(self.edges))
 
     def save(self, directory):
         """Save the graphs attributes to files in the directory"""
@@ -449,10 +438,8 @@ class Graph:
         shortest_path = self.astar(node1, node2)
         if shortest_path is None:
             return None
-        print()
-        print()
-        print()
-        print('SHORTEST PATH:', shortest_path)
+
+        print('\nSHORTEST PATH:', shortest_path)
         for i in range(len(shortest_path)-1):
             pair = shortest_path[i], shortest_path[i+1]
             X_edge, U_edge, V_edge = self.edges[pair]
@@ -460,8 +447,8 @@ class Graph:
             U_prm.append(U_edge)
             V_prm += V_edge
 
-        X_prm = np.vstack(X_prm)
-        U_prm = np.vstack(U_prm)
+        X_prm = resample(np.vstack(X_prm), MAXTRAJLENGTH)
+        U_prm = resample(np.vstack(U_prm), MAXTRAJLENGTH)
 
         return X_prm, U_prm, V_prm
 
