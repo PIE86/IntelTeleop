@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
   genmsg actionlib_msgs actionlib
+  roadmap
 )
 
 add_service_files(
@@ -33,7 +34,7 @@ generate_messages(
 
 catkin_package(
  # LIBRARIES car_model
- CATKIN_DEPENDS rospy roscpp std_msgs geometry_msgs message_runtime
+ CATKIN_DEPENDS rospy roscpp std_msgs geometry_msgs message_runtime roadmap
 )
 
 FIND_PACKAGE(ACADO REQUIRED)
@@ -59,9 +60,6 @@ add_dependencies(acado_opt_control ${catkin_EXPORTED_TARGETS})
 add_executable(sampling_service src/sampling_service.cpp)
 target_link_libraries(sampling_service ${roscpp_LIBRARIES} ${catkin_LIBRARIES})
 add_dependencies(sampling_service ${catkin_EXPORTED_TARGETS})
-
-add_dependencies(acado_opt_control opt_control_generate_messages_cpp)
-add_dependencies(sampling_service opt_control_generate_messages_cpp) 
 
 
 

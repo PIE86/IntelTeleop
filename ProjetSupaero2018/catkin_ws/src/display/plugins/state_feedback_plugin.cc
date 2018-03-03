@@ -4,14 +4,13 @@
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
-#include <geometry_msgs/Vector3.h>
-#include <geometry_msgs/Quaternion.h>
 #include <gazebo/math/Pose.hh>
 #include <stdio.h>
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <thread>
-#include "std_msgs/Int32MultiArray.h"
+#include <display/State.h>
+#include <vector>
 
 namespace gazebo
 {
@@ -29,7 +28,7 @@ namespace gazebo
 
 			// Create node associated to plugin & subscribe
       this->rosNode.reset(new ros::NodeHandle("car_control"));
-      this->state_pub = this->rosNode->advertise<std_msgs::Int32MultiArray>("state", 100);
+      this->state_pub = this->rosNode->advertise<display::State>("state", 100);
       this->updateConnection = event::Events::ConnectWorldUpdateBegin(
       	std::bind(&StateFeedbackPlugin::OnUpdate, this));
       this->rosQueueThread = std::thread(std::bind(&StateFeedbackPlugin::QueueThread, this));
@@ -42,17 +41,20 @@ namespace gazebo
       ros::Rate loop_rate(10);
 
       // Data to be sent
-      std_msgs::Int32MultiArray state;
-      state.data.clear();
+      display::State msg_state;
+  		std::vector<double> state(3);
       
       math::Pose pose = this->model->GetWorldPose();
+			double theta = pose.rot.GetAsEuler().z;
 
-      state.data.push_back(pose.pos.x);
-      state.data.push_back(pose.pos.y);
-      state.data.push_back(pose.rot.GetAsEuler().z);
+      state.push_back(pose.pos.x);
+      state.push_back(pose.pos.y);
+      state.push_back(theta);
+      
+      msg_state.x = state;
 
 			// Publish data
-      state_pub.publish(state);
+      state_pub.publish(msg_state);
     }
 
 		// ROS helper function that processes messages (compulsory)
