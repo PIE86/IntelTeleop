@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+import os.path as pp
 import tf
 import sys
 import rospy
@@ -8,84 +8,105 @@ import numpy as np
 from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Point, Quaternion, Pose
 
+# set to True to enable debug mode (verbose)
+DEBUG = True
+
 # car model name:
-_car_name = 'my_car'
+CAR_NAME = 'my_car'
 # get the relative path to display package
-_path = os.path.realpath(__file__).split("scripts")[0]
-# set to True to enable debug mode
-_debug = True
+PATH_TO_DISPLAY_PKG = os.path.realpath(__file__).split("scripts")[0]
 # rosrun xacro xacro.py model.xacro > model.urdf
-_cylinder_path = _path + 'models/cylinder/'
+CYLINDER_PATH = PATH_TO_DISPLAY_PKG + 'models/cylinder/'
 # count the total amount of obstacles
-_model_count = 0
+MODEL_COUNT = 0
+
+PARAM_NAME_SIZE = 'utils/obstacles/obstacles_size'
+PARAM_NAME_OBSTACLES = 'utils/obstacles/obstacles_vec'
+READ_OBSTACLES_SERVICE = 'read_obstacles'
+
+
+def build_model(path_to_model, pose_vector):
+    """ Get model parameters required to spawn it"""
+    """ Namely, from path and pose_vector, get:
+     model as string (xml syntax)
+     pose as Pose(Point, Quaternion)"""
+    # Get model and read as string
+    with open(path_to_model, "r") as f:
+        model_xml = f.read()
+
+    # Get pose
+    angle = tf.transformations.quaternion_from_euler(
+        pose_vector[3],
+        pose_vector[4],
+        pose_vector[5])
+    orientation = Quaternion(angle[0],
+                             angle[1],
+                             angle[2],
+                             angle[3])
+    pose = Pose(Point(x=pose_vector[0],
+                      y=pose_vector[1],
+                      z=pose_vector[2]),
+                orientation)
+
+    return model_xml, pose
+
+
+def spawn_model(model_name, model_xml, pose):
+    """ Spawns model using Gazebo service """
+    rospy.wait_for_service("gazebo/spawn_sdf_model")
+    spawn_sdf_model = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
+    spawn_sdf_model(model_name, model_xml, "", pose, "world")
+    print('Model spawned as: ' + model_name)
 
 
 def spawn_car(pose0):
-
-    with open(_path + "models/my_wheel/model.sdf", "r") as f:
-        model_xml = f.read()
-
-    angle = tf.transformations.quaternion_from_euler(
-        pose0[3],
-        pose0[4],
-        pose0[5])
-    orient = Quaternion(angle[0], angle[1], angle[2], angle[3])
-    pose = Pose(Point(x=pose0[0], y=pose0[1], z=pose0[2]), orient)
-
-    rospy.wait_for_service("gazebo/spawn_sdf_model")
-    spawn_sdf_model = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
-    spawn_sdf_model(_car_name, model_xml, "", pose, "world")
-    f.close()
-    print('Car spawned as: '+_car_name)
+    """ Spawn car specifically """
+    # Get model and read as string
+    path_to_model = pp.join(PATH_TO_DISPLAY_PKG,
+                            "models",
+                            "my_wheel",
+                            "model.sdf")
+    # Get model params
+    model_xml, pose = build_model(path_to_model, pose0)
+    # Actually spawn model
+    spawn_model(CAR_NAME, model_xml, pose)
 
 
-def spawn_start_end_points(sartPose, endPose):
-
-    startPointName = 'start_point'
-    endPointName = 'end_point'
-
-    with open(_path + "models/StartCone/model.sdf", "r") as f:
-        model_xml = f.read()
-
-    angle = tf.transformations.quaternion_from_euler(
-        sartPose[3],
-        sartPose[4],
-        sartPose[5])
-    orient = Quaternion(angle[0], angle[1], angle[2], angle[3])
-    pose = Pose(Point(x=sartPose[0], y=sartPose[1], z=sartPose[2]), orient)
-
-    rospy.wait_for_service("gazebo/spawn_sdf_model")
-    spawn_sdf_model = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
-    spawn_sdf_model(startPointName, model_xml, "", pose, "world")
-    f.close()
-    print('Car start point set as: '+startPointName)
-
-    with open(_path + "models/EndSign/model.sdf", "r") as f:
-        model_xml = f.read()
-
-    angle = tf.transformations.quaternion_from_euler(
-        endPose[3],
-        endPose[4],
-        endPose[5])
-    orient = Quaternion(angle[0], angle[1], angle[2], angle[3])
-    pose = Pose(Point(x=endPose[0], y=endPose[1], z=endPose[2]), orient)
-
-    rospy.wait_for_service("gazebo/spawn_sdf_model")
-    spawn_sdf_model = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
-    spawn_sdf_model(endPointName, model_xml, "", pose, "world")
-    f.close()
-    print('End point set as: '+endPointName)
+def spawn_start_point(start_pose):
+    start_point_name = 'start_point'
+    path_to_mdl = pp.join(PATH_TO_DISPLAY_PKG,
+                          "models",
+                          "StartCone",
+                          "model.sdf")
+    model_xml, pose = build_model(path_to_mdl, start_pose)
+    spawn_model(start_point_name, model_xml, pose)
+    print('Car start point set as: '+start_point_name)
 
 
-def creat_cylinder(radius):
+def spawn_end_point(end_pose):
+    end_point_name = 'end_point'
+    path_to_mdl = pp.join(PATH_TO_DISPLAY_PKG,
+                          "models",
+                          "EndSign",
+                          "model.sdf")
+    model_xml, pose = build_model(path_to_mdl, end_pose)
+    spawn_model(end_point_name, model_xml, pose)
+    print('End point set as: '+end_point_name)
 
+
+def create_cylinder_urdf(radius):
     str_whitespace = str(' ')
+    # Set up xacro instructions and args
     xacro_instruction = 'rosrun xacro xacro --inorder -o'
-    xacro_path = _cylinder_path + 'cylinder.xacro'
+    xacro_path = CYLINDER_PATH + 'cylinder.xacro'
     xacro_args = 'x:=' + str(0) + str_whitespace \
                  + 'y:=' + str(0) + str_whitespace \
                  + 'radius:=' + str(radius)
-    urdf_path = _cylinder_path + 'cylinder.urdf'
+
+    # Set up urdf path
+    urdf_path = CYLINDER_PATH + 'cylinder.urdf'
+
+    # Execute xacro instruction
     launch_xacro_instructions = str_whitespace.join([xacro_instruction,
                                                      urdf_path,
                                                      xacro_path,
@@ -95,65 +116,42 @@ def creat_cylinder(radius):
         subprocess.call(launch_xacro_instructions, shell=True)
     except OSError as e:
         rospy.logerr("Subprocess call failed: %s" % e)
-    pass
+        return 0  # as failure
+
+    return urdf_path  # as success
 
 
 def spawn_cylinder(x, y, radius):
+    global MODEL_COUNT
+    model_path = create_cylinder_urdf(radius)
+    model_name = 'my_cylinder_' + str(MODEL_COUNT)
 
-    global _model_count
-    creat_cylinder(radius)
-
-    rospy.wait_for_service("gazebo/spawn_sdf_model")
-    spawn_model = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
-
-    model_name = 'my_cylinder' + str(_model_count)
-
-    # model_xml
-    with open(_cylinder_path + 'cylinder.urdf', 'r') as cylinder_file:
-        model_xml = cylinder_file.readlines()
-        model_xml = ''.join(model_xml)
-
-    # robot_namespace
-    robot_namespace = ''
-
-    # initial_pose
-    initial_pose = Pose()
-    initial_pose.position = Point(x, y, 0.0)
-    initial_pose.orientation = Quaternion(0, 0, 0, 1)
+    pose_vector = [x, y, 0,  # position
+                   0, 0, 0]  # orientation
+    model_xml, pose = build_model(model_path, pose_vector)
 
     # reference_frame
-    reference_frame = 'world'
+    spawn_model(model_name, model_xml, pose)
 
-    spawn_model(model_name,
-                model_xml,
-                robot_namespace,
-                initial_pose,
-                reference_frame)
-
-    _model_count += 1
-    rospy.loginfo(str("Spawned cylinder nr" + str(_model_count)))
+    MODEL_COUNT += 1
+    rospy.loginfo(str("Spawned cylinder nr" + str(MODEL_COUNT)))
 
 
 def spawn_obstacles():
-
-    PARAM_NAME_SIZE = 'utils/obstacles/obstacles_size'
-    PARAM_NAME_OBSTACLES = 'utils/obstacles/obstacles_vec'
-    READ_OBSTACLES_SERVICE = 'read_obstacles'
-
     rospy.wait_for_service(READ_OBSTACLES_SERVICE)
 
     try:
         vec = rospy.get_param(PARAM_NAME_OBSTACLES)
         size = rospy.get_param(PARAM_NAME_SIZE)
-        if _debug:
-            print('obstacles parameters found')
+        if DEBUG:
+            print('Obstacles parameters found')
     except KeyError:
         rospy.logerr('Obstacles parameters not set - '
                      'You may have to launch a server that reads obstacles '
                      'from an input file '
                      '(see obstacles/read_obstacles_server)')
-        if _debug:
-            print('obstacles parameters not found')
+        if DEBUG:
+            print('Obstacles parameters not found')
         sys.exit(1)
 
     n = len(vec) / size
@@ -163,19 +161,19 @@ def spawn_obstacles():
         spawn_cylinder(obs[0], obs[1], obs[2])
 
 
-def initWorld():
-
+def init_world():
     # initial car position and orientation as [x, y, z, alpha, beta, gamma]
-    startPose = [0, 0, 0, 0, 0, 0]
-    endPose = [2, -3, 0, 0, 0, 20]
-    spawn_car(startPose)
-    spawn_start_end_points(startPose, endPose)
+    start_pose = [0, 0, 0, 0, 0, 0]
+    end_pose = [2, -3, 0, 0, 0, 20]
+
+    spawn_car(start_pose)
+    spawn_start_point(start_pose)
+    spawn_end_point(end_pose)
     spawn_obstacles()
 
 
 if __name__ == '__main__':
-
     try:
-        initWorld()
+        init_world()
     except rospy.ROSInterruptException:
         pass
