@@ -13,8 +13,8 @@ PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def check_if_valid(req):
-    print "Checking if connection is valid between: (%s, %s) - (%s, %s)" \
-          % (req.x1, req.y1, req.x2, req.y2)
+    print("Checking if connection is valid between: (%s, %s) - (%s, %s)"
+          % (req.x1, req.y1, req.x2, req.y2))
 
     # Retrieve obstacles from Parameter Server
     try:
@@ -29,7 +29,7 @@ def check_if_valid(req):
 
     is_valid = obstacles_functions.check_validity_connection(
         req.x1, req.y1, req.x2, req.y2, vec, size)
-    print "Connection is valid: [%s]" % is_valid
+    print("Connection is valid: [%s]" % is_valid)
     return CheckConnectionResponse(is_valid)
 
 
@@ -42,8 +42,8 @@ def check_connection_server(file_path):
     rospy.set_param(PARAM_NAME_OBSTACLES, vec)
     rospy.set_param(PARAM_NAME_SIZE, size)
 
-    print "Loaded obstacles from file: " + file_path
-    print "Now ready to check if connections are valid"
+    print("Loaded obstacles from file: " + file_path)
+    print("Now ready to check if connections are valid")
     rospy.spin()
 
 

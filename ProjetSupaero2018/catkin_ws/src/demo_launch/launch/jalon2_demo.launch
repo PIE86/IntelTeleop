@@ -1,5 +1,6 @@
 <launch>
   <!-- Controller, roadmap and model -->
+  <node pkg="obstacles" type="read_obstacles_server.py" name="ObstaclesReader"/>
   <node pkg="opt_control" type="acado_opt_control" name="NameOptControl"/>
   <node pkg="roadmap" type="irepa.py" name="NameIrepa"/>
 

@@ -14,7 +14,7 @@ PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def check_if_valid(req):
-    print "Checking if point is valid: [%s %s]" % (req.x, req.y)
+    # print("Checking if point is valid: [%s %s]" % (req.x, req.y))
 
     # Retrieve obstacles from Parameter Server
     try:
@@ -28,7 +28,7 @@ def check_if_valid(req):
         return
 
     is_valid = obstacles_functions.check_validity(req.x, req.y, vec, size)
-    print "Point is valid: [%s]" % is_valid
+    # print("Point is valid: [%s]" % is_valid)
     return CheckPointResponse(is_valid)
 
 
@@ -41,8 +41,8 @@ def check_point_server(file_path):
     rospy.set_param(PARAM_NAME_OBSTACLES, vec)
     rospy.set_param(PARAM_NAME_SIZE, size)
 
-    print "Loaded obstacles in file: " + file_path
-    print "Now ready to check if point is valid"
+    print("Loaded obstacles in file: " + file_path)
+    print("Now ready to check if point is valid")
     rospy.spin()
 
 
