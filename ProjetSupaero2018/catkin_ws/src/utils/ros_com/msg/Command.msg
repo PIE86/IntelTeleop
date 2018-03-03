@@ -1,2 +1,2 @@
 float32 velocity
-float32 theta
+float32 omega

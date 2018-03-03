@@ -54,7 +54,7 @@
     <plugin name="car_control" filename="libcar_control.so">
       <X_velocity>0</X_velocity>
       <Y_velocity>0</Y_velocity>
-      <Z_velocity>0</Z_velocity>
+      <theta>0</theta>
     </plugin>
     <plugin name="car_state_feedback" filename="libstate_feedback.so">
     </plugin>

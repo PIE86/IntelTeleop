@@ -13,46 +13,49 @@
 #include <thread>
 #include "std_msgs/Int32MultiArray.h"
 
-#define PI 3.14159265
-
 namespace gazebo
-
 {
   class StateFeedbackPlugin : public ModelPlugin
   {
-
+  	// Empty constructor
   	public: StateFeedbackPlugin() {}
 
+
+		// On launch (= once)
     public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     {
-
+			// Model shortcut
   		this->model = _model;
 
-      this->rosNode.reset(new ros::NodeHandle("StateTalker"));
-      this->state_pub = this->rosNode->advertise<std_msgs::Int32MultiArray>("/state", 1000);
+			// Create node associated to plugin & subscribe
+      this->rosNode.reset(new ros::NodeHandle("car_control"));
+      this->state_pub = this->rosNode->advertise<std_msgs::Int32MultiArray>("state", 100);
       this->updateConnection = event::Events::ConnectWorldUpdateBegin(
-          std::bind(&StateFeedbackPlugin::OnUpdate, this));
+      	std::bind(&StateFeedbackPlugin::OnUpdate, this));
       this->rosQueueThread = std::thread(std::bind(&StateFeedbackPlugin::QueueThread, this));
-
     }
+
 
     public: void OnUpdate()
     {
+    	// Publish rate
       ros::Rate loop_rate(10);
 
-      // utils::State state;
+      // Data to be sent
       std_msgs::Int32MultiArray state;
       state.data.clear();
-      gazebo::math::Pose pose;
+      
+      math::Pose pose = this->model->GetWorldPose();
 
-      pose = this->model->GetWorldPose();
       state.data.push_back(pose.pos.x);
       state.data.push_back(pose.pos.y);
       state.data.push_back(pose.rot.GetAsEuler().z);
 
+			// Publish data
       state_pub.publish(state);
     }
 
+		// ROS helper function that processes messages (compulsory)
     private: void QueueThread()
   	{
   	  static const double timeout = 0.01;
@@ -68,7 +71,6 @@ namespace gazebo
     private: ros::CallbackQueue rosQueue;
   	private: std::thread rosQueueThread;
     private: event::ConnectionPtr updateConnection;
-
   };
 
   GZ_REGISTER_MODEL_PLUGIN(StateFeedbackPlugin)

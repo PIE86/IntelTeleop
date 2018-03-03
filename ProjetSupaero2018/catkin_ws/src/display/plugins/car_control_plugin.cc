@@ -18,94 +18,100 @@
 
 #include <math.h>
 
-#define PI 3.14159265
-
 namespace gazebo
-
 {
-  class CarControlPlugin : public ModelPlugin
-  {
+	class CarControlPlugin : public ModelPlugin
+	{
+		// Empty constructor
+		public: CarControlPlugin() {}
 
-  	public: CarControlPlugin() {}
 
-    public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
-    {
+		// On launch (= once)
+		public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
+		{
+			// Model shortcut
 			this->model = _model;
 
-			this->velocity = math::Vector3();
-			//this->velocity.Set(_sdf->Get<double>("X_velocity"), _sdf->Get<double>("Y_velocity"), _sdf->Get<double>("Z_velocity"));
+			// Set velocity according to sdf file (if relevant)
+			this->velocity = math::Vector3(_sdf->Get<double>("X_velocity"),
+																		 _sdf->Get<double>("Y_velocity"),
+																		 0);
 			this->SetVelocity(this->velocity);
 
-			this->orientation = math::Vector3();
-			this->orientation.Set(0,0,0);
+			// Set orientation according to sdf file (if relevant) -- in degrees
+			// Warning: this is an angle, not an angular rate
+			double thetaInit = _sdf->Get<double>("theta");
+			this->SetOrientation(thetaInit);
 
+			// Create node associated to plugin
 			this->rosNode.reset(new ros::NodeHandle("car_control"));
-			this->rosSub = this->rosNode->subscribe("command", 10 , &CarControlPlugin::OnRosMsg, this);
+			// Subscribe to node "name" with queue size as 2nd param
+			this->rosSub = this->rosNode->subscribe("command", 100, &CarControlPlugin::OnRosMsg, this);
 			this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
-			
-			time_step = 0.001;
-    }
-
-    public: void SetVelocity(const gazebo::math::Vector3 &_vel)
-    {
-			this->model->SetLinearVel(_vel);
-			gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
-    }
-
-    /*public: void SetOrientation(const float &_theta)
-    {
-    	this->orientation.Set(0,0,_theta *PI/180.0);
-    	math::Pose initPose(this->model->GetWorldPose().pos, math::Quaternion(0, 0, _theta *PI/180.0));
+		}
+		
+		public: void SetOrientation(const double& _thetaDegree)
+		{
+			double thetaRad = _thetaDegree * M_PI/180;
+			math::Pose initPose(this->model->GetWorldPose().pos,
+													math::Quaternion(0, 0, thetaRad));
 			this->model->SetWorldPose(initPose);
-			gzmsg << "Orientation set to: " << _theta << "\n";
-    }*/
-    
-    public: void SetAngularVelocity(const float &_omega)
-    {
-    	this->model->SetAngularVel({0, 0, _omega});
-    	gzmsg << "Angular velocity set to: " << _omega << "\n";
-    }
+		}
 
-    public: void OnRosMsg(const utils::CommandConstPtr &_msg)
-	{
-		//gazebo::common:Time gz_time_now = _model->GetWorld()->GetSimTime();
-		//ros_time = ros::Time(gz_time_now.sec, gz_time_now.nsec);
-		
-		//ros::Duration time_step = ros_time - old_ros_time;
-		
-		//this->SetOrientation(_msg->theta);
-		this->SetAngularVelocity(_msg->theta);
-		
-		math::Quaternion pose = this->model->GetWorldPose().rot;
-		double yaw = pose.GetYaw();
-		//double yaw_next = yaw + _msg->theta * time_step;
-		
-		this->velocity.Set(-_msg->velocity*sin(yaw), _msg->velocity*cos(yaw), 0);
-    this->SetVelocity(this->velocity);
-	}
 
-    /// \brief ROS helper function that processes messages
-	private: void QueueThread()
-	{
-	  static const double timeout = 0.01;
-	  while (this->rosNode->ok())
-	  {
-	    this->rosQueue.callAvailable(ros::WallDuration(timeout));
-	  }
-	}
+		public: void SetVelocity(const gazebo::math::Vector3 &_vel)
+		{
+			// Set linear velocity as vector
+			this->model->SetLinearVel(_vel);
+			// If --screen
+			gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
+		}
 
-	private: gazebo::math::Vector3 velocity;
-	private: gazebo::math::Vector3 orientation;
-  private: physics::ModelPtr model;
-	private: std::unique_ptr<ros::NodeHandle> rosNode;
-	private: ros::Subscriber rosSub;
-	private: ros::CallbackQueue rosQueue;
-	private: std::thread rosQueueThread;
-	private: double time_step;
 
-  };
+		public: void SetAngularVelocity(const float &_omega)
+		{
+			// Set anglular velocity omega around axis z
+			this->model->SetAngularVel({0, 0, _omega});
+			// If --screen
+			gzmsg << "Angular velocity set to: " << _omega << "\n";
+		}
 
-  GZ_REGISTER_MODEL_PLUGIN(CarControlPlugin)
+
+		// Is triggered on every ROS message received (i.e. command)
+		public: void OnRosMsg(const utils::CommandConstPtr &_msg)
+		{
+			// Set angular velocity
+			this->SetAngularVelocity(_msg->omega);
+
+			// Set velocity
+			// Get yaw from pose
+			math::Quaternion pose = this->model->GetWorldPose().rot;
+			double yaw = pose.GetYaw();
+			// Set velocity as (vx, vy)
+			this->velocity.Set(-_msg->velocity*sin(yaw), _msg->velocity*cos(yaw), 0);
+			this->SetVelocity(this->velocity);
+		}
+
+		// ROS helper function that processes messages (compulsory)
+		private: void QueueThread()
+		{
+			static const double timeout = 0.01;
+			while (this->rosNode->ok())
+			{
+				this->rosQueue.callAvailable(ros::WallDuration(timeout));
+			}
+		}
+
+			private: gazebo::math::Vector3 velocity;
+			private: gazebo::math::Vector3 orientation;
+			private: physics::ModelPtr model;
+			private: std::unique_ptr<ros::NodeHandle> rosNode;
+			private: ros::Subscriber rosSub;
+			private: ros::CallbackQueue rosQueue;
+			private: std::thread rosQueueThread;
+	};
+
+	GZ_REGISTER_MODEL_PLUGIN(CarControlPlugin)
 }
 
 #endif
