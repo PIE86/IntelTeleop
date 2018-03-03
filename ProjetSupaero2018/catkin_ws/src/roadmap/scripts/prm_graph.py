@@ -28,17 +28,15 @@ class PRM:
         self.sample = sample_fun
         self.ACADO_connect = connect_fun
         self.graph = Graph(hdistance)
-        self.visibility_horizon = 5
+        self.visibility_horizon = 10
 
     def add_nodes(self, nb_sample=40, verbose=True):
         """Add a given number of nodes"""
-        # TODO: add an option to "guide this adding" ?
-        # Ex: add nodes between 2 unconnectable nodes...
         samples = self.sample(nb_sample)
         for state in samples:
             node_index = self.graph.add_node(state)
 
-    def expand(self, first=False):
+    def expand(self, estimator, first=False):
         """ Expand PRM
         -----------------
         Pick a pair of unconnected nearest neighbors
@@ -48,28 +46,45 @@ class PRM:
         else: # equivalent to densify knn
           E <- ACADO(init = 0 or estimator)
         """
+        # for monitoring purposes: compare astar and estimator inits
+        nb_astar, nb_est, nb_attempt = 0, 0, 0
 
         for (node1, node2), distance in zip(*self.unconnected_2_nn()):
+            nb_attempt += 1
 
-            if distance > self.visibility_horizon:
-                if first:
+            # TODO: figure out this visibility horizon
+            # Maybe try the first iteration with a low MAX_ITERATIONS
+            # WITHOUT the visibility_horizon to have a heuristic?
+            # arbitrary euclidian distance value seems to be too... arbitrary
+            if first:
+                if distance > self.visibility_horizon:
                     print(node1, node2, 'too far')
                     continue
-                path = self.graph.get_path(node1, node2)
-
-            else:
-                # TODO: path = estimator.predict(X)
-                path = None  # or estimator
+            path_astar = self.graph.get_path(node1, node2)
 
             success, X, U, V = self.ACADO_connect(
                 self.graph.nodes[node1].state,
                 self.graph.nodes[node2].state,
-                init=path)
+                init=path_astar)
+            nb_astar += success
+
+            if not first and path_astar is not None:
+                s1 = self.graph.nodes[node1].state
+                s2 = self.graph.nodes[node2].state
+                path_est = estimator.trajectories(s1, s2)
+                success_est, X_est, U_est, V_est = self.ACADO_connect(
+                    self.graph.nodes[node1].state,
+                    self.graph.nodes[node2].state,
+                    init=path_est)
+                nb_est += success_est
+
 
             # If successing while attempting to connect the two nodes
             # then add the new edge to the graph
             if success:
                 self.graph.add_edge((node1, node2), X, U, V)
+
+        return nb_astar, nb_est, nb_attempt
 
     def unconnected_2_nn(self):
         unconnected_pairs = [
@@ -428,10 +443,8 @@ class Graph:
         shortest_path = self.astar(node1, node2)
         if shortest_path is None:
             return None
-        print()
-        print()
-        print()
-        print('SHORTEST PATH:', shortest_path)
+
+        print('\nSHORTEST PATH:', shortest_path)
         for i in range(len(shortest_path)-1):
             pair = shortest_path[i], shortest_path[i+1]
             X_edge, U_edge, V_edge = self.edges[pair]

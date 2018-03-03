@@ -37,8 +37,6 @@ class Networks:
 
     def train(self, dset, nepisodes=int(1e2)):
         # TODO track
-        # TODO normalization
-        # TODO: value outputs a np.array instead of double like get_path
         batch = random.choices(
             range(len(dset.us)), k=self.BATCH_SIZE*16)
 
@@ -77,13 +75,22 @@ class Networks:
                                     batch_size=self.BATCH_SIZE)
         return value_metrics, states_metrics, controls_metrics
 
-    def trajectories(self, x1=None, x2=None):
+    def trajectories(self, x1, x2):
         """
         Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).
         """
-        x = self.xs_scaler.transform(np.hstack([x1, x2])
-                                       .reshape((1, 2*self.state_size)))
+        try:
+            x = self.xs_scaler.transform(np.hstack([x1, x2])
+                                           .reshape((1, 2*self.state_size)))
+        except ValueError as e:
+            print(e)
+            print()
+            print()
+            print()
+            print()
+            print(x1, x2)
+            print(self.state_size)
 
         X = self.x_scaler.inverse_transform(
                     self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))

@@ -226,7 +226,6 @@ bool check_success(
     return false;
   }
   if (returnValue == RET_MAX_NUMBER_OF_STEPS_EXCEEDED){
-    std::cout << "\n\n\n\n\n\n" << '\n';
     std::cout << "MAX ITERATIONS REACHED" << '\n'; // Never seen ?
     return false;
   }

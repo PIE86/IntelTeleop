@@ -3,6 +3,7 @@
 import random
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 import rospy
 import actionlib
 from roadmap.msg import OptControlAction, OptControlGoal
@@ -19,7 +20,7 @@ VERBOSE = False
 # True PRM should be computed, False if  loaded from file
 INIT_PRM = True
 # Number of total iteration of the IREPA
-IREPA_ITER = 4
+IREPA_ITER = 5
 NB_SAMPLE = 20
 # NB_CONNECT = 3
 # Densify longer
@@ -53,6 +54,7 @@ class Irepa:
                                   u_range=np.array([U_MIN, U_MAX]))
 
     def irepa_algo(self):
+        tstart = time.time()
 
         # Initialize PRM with a sampling function,
         # a connect function and an heuristic distance
@@ -72,6 +74,9 @@ class Irepa:
 
         i = 0
         stop = False
+        astar_successes = np.zeros(IREPA_ITER)
+        est_successes = np.zeros(IREPA_ITER)
+        nb_attempts = np.zeros(IREPA_ITER)
         while not stop and i < IREPA_ITER:
             print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
 
@@ -85,7 +90,10 @@ class Irepa:
             #   E <- ACADO(init = 0 or estimator)
             print('\n\n\n######################')
             print('EXPAND')
-            prm.expand(first=(not bool(i)))
+            nb_astar, nb_est, nb_attempt = prm.expand(self.estimator, first=(not bool(i)))
+            astar_successes[i] = nb_astar
+            est_successes[i] = nb_est
+            nb_attempts[i] = nb_attempt
             print()
             print('Edge number:', len(prm.graph.edges))
             print('######################\n\n\n')
@@ -141,7 +149,21 @@ class Irepa:
             print('Euclidian value')
             print(self.euclid(x0, x1))
 
+        plt.plot(np.arange(IREPA_ITER), astar_successes, color='blue', label='astar')
+        plt.plot(np.arange(IREPA_ITER), est_successes, color='green', label='estimator')
+        plt.plot(np.arange(IREPA_ITER), nb_attempts, color='orange', label='attempts')
+        plt.legend()
+        plt.show()
+
+        print('Saving estimator weights')
         self.estimator.save()
+        print('Saved')
+
+        tend = time.time()
+
+        print('\n##############')
+        print('IREPA was executed in ', (tend-tstart)/60, 'minutes')
+        print()
 
     def connect(self, s1, s2, init=None):
         """Tries to connect 2 sets by calling the Acado optimizer service.
@@ -192,11 +214,6 @@ class Irepa:
         V = self.euclid(s1, s2) + 0.02*random.random()
 
         return success, X, U, V
-
-    # def sample_test(self):
-    #     return (round(random.uniform(0, 10), 3),
-    #             round(random.uniform(0, 5), 3),
-    #             round(random.uniform(0, 2*np.pi), 3))
 
     def sample(self, n):
         """n: number of samples to be returned"""
