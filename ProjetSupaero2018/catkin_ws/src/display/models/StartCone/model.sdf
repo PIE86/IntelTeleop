@@ -1,0 +1,28 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='StartCone'>
+    <model name='Construction Cone'>
+      <static>1</static>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>10 10 10</scale>
+              <uri>model://construction_cone/meshes/construction_cone.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://construction_cone/materials/scripts</uri>
+              <uri>model://construction_cone/materials/textures</uri>
+              <name>construction_cone/Diffuse</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+      <pose frame=''>2e-06 -0 0 0 -0 0</pose>
+    </model>
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>
