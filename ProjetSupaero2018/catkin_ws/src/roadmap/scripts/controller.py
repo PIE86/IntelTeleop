@@ -23,7 +23,7 @@ class Controller:
         self.estimator = Networks(NX, NU,
                                   x_range=np.array([X_MIN, X_MAX]),
                                   u_range=np.array([U_MIN, U_MAX]))
-        # self.estimator.load()
+        self.estimator.load()
         # Last state trajectory calculated
         self.X = np.array([])
         self.U = np.array([])

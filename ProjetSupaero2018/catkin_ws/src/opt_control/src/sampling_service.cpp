@@ -10,8 +10,15 @@
 
 #include "modelConstants.h"
 
+#define CHECK_OBSTACLES true
+#define VERBOSE true
+
 
 bool checkValidity(float x, float y){
+  if (!CHECK_OBSTACLES){
+    // bypass the call to the
+    return true;
+  }
   ros::NodeHandle n;
   ros::ServiceClient client = \
     n.serviceClient<obstacles::CheckPoint>("check_point");
@@ -20,6 +27,11 @@ bool checkValidity(float x, float y){
   srv.request.y = y;
 
   if (client.call(srv)) {
+    if (VERBOSE){
+      if (!srv.response.is_valid){
+        std::cout << x << " " << y << " not valid" << '\n';
+      }
+    }
     return srv.response.is_valid;
   } else {
     ROS_ERROR("Failed to call service check_point");
@@ -65,7 +77,9 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "sampling_service");
   ros::NodeHandle n;
 
-  ros::service::waitForService("check_point", 5000);
+  if (CHECK_OBSTACLES){
+    ros::service::waitForService("check_point", 5000);
+  }
 
   ros::ServiceServer service = n.advertiseService(
     "create_samples", create_sample);

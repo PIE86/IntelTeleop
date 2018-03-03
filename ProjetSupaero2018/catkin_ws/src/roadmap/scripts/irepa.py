@@ -20,13 +20,13 @@ INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 4
 NB_SAMPLE = 20
-NB_CONNECT = 3
+# NB_CONNECT = 3
 # Densify longer
-NB_ATTEMPS_DENSIFY_LONGER = 10
-MIN_PATH_LEN = 3
+# NB_ATTEMPS_DENSIFY_LONGER = 10
+# MIN_PATH_LEN = 3
 
 # connexify
-NB_ATTEMPT_PER_CONNEX_PAIR = 5
+# NB_ATTEMPT_PER_CONNEX_PAIR = 5
 
 # TODO: To get from Model node
 NX = 3
@@ -34,9 +34,9 @@ NU = 2
 
 # Range of the variables
 X_MIN = 0 * np.ones(NX)
-X_MAX = 10 * np.ones(NX)
-U_MIN = -10 * np.ones(NU)
-U_MAX = 10 * np.ones(NU)
+X_MAX = 20 * np.ones(NX)
+U_MIN = -3 * np.ones(NU)
+U_MAX = 3 * np.ones(NU)
 
 random.seed(42)
 
@@ -92,13 +92,13 @@ class Irepa:
 
             # Build a dataset of subtrajectories
             # to train the estimator
-            dataset = Dataset(prm.graph)
+            dset = Dataset(prm.graph)
 
             # Train the estimator on the dataset
-            self.estimator.train(dataset)
+            self.estimator.train(dset)
 
             # Test the estimator networks
-            metrics = self.estimator.test(dataset)
+            metrics = self.estimator.test(dset)
             print('\n##########')
             print('TEST ESTIMATOR')
             print('    value', metrics[0])
@@ -122,9 +122,9 @@ class Irepa:
             print("\nEstimations at iteration", i)
             # test_traj_idx = random.sample(range(len(dataset.us)), 1)
             test_traj_idx = 18
-            print('Dataset size:', len(dataset.x1s), 'trajectories')
-            x0 = dataset.x1s[test_traj_idx, :].T
-            x1 = dataset.x2s[test_traj_idx, :].T
+            print('Dataset size:', len(dset.x1s), 'trajectories')
+            x0 = dset.x1s[test_traj_idx, :].T
+            x1 = dset.x2s[test_traj_idx, :].T
             print('x0 x1')
             print(x0)
             print(x1)
@@ -138,6 +138,8 @@ class Irepa:
             print(V)
             print('Euclidian value')
             print(self.euclid(x0, x1))
+
+        self.estimator.save()
 
     def connect(self, s1, s2, init=None):
         """Tries to connect 2 sets by calling the Acado optimizer service.

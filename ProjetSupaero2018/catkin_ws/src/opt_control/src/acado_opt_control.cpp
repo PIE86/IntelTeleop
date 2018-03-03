@@ -17,7 +17,8 @@
 #include "modelConstants.h"
 
 #define ACADO_VERBOSE false
-#define PLOT true
+#define PLOT false
+#define OBSTACLES true
 
 USING_NAMESPACE_ACADO
 
@@ -159,17 +160,19 @@ OptimizationAlgorithm create_algorithm_car(
   ocp.subjectTo(TMIN <= T); // and the time horizon T.
 
   // The car has to avoid obstacles
-  std::vector<double> obstacles;
-  if (ros::param::get("/obstacles/obstacles_vec", obstacles)){
-    for(unsigned int obstacle_index = 0; obstacle_index < obstacles.size()/3; obstacle_index++){
-      double obs_x = obstacles.at(3 * obstacle_index);
-      double obs_y = obstacles.at(3 * obstacle_index + 1);
-      double obs_r = obstacles.at(3 * obstacle_index + 2);
+  if (OBSTACLES){
+    std::vector<double> obstacles;
+    if (ros::param::get("/obstacles/obstacles_vec", obstacles)){
+      for(unsigned int obstacle_index = 0; obstacle_index < obstacles.size()/3; obstacle_index++){
+        double obs_x = obstacles.at(3 * obstacle_index);
+        double obs_y = obstacles.at(3 * obstacle_index + 1);
+        double obs_r = obstacles.at(3 * obstacle_index + 2);
 
-      ocp.subjectTo(pow(x - obs_x, 2) + pow(y - obs_y, 2) >= pow(obs_r, 2));
+        ocp.subjectTo(pow(x - obs_x, 2) + pow(y - obs_y, 2) >= pow(obs_r, 2));
+      }
+    } else {
+      ROS_INFO("\033[1;31mCould not read obstacles... Please run the obstacles/read_obstacles_server node before !!! \033[0m");
     }
-  } else {
-    ROS_INFO("\033[1;31mCould not read obstacles... Please run the obstacles/read_obstacles_server node before !!! \033[0m");
   }
 
   OptimizationAlgorithm algorithm(ocp);

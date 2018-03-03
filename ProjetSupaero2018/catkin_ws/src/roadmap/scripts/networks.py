@@ -31,46 +31,50 @@ class Networks:
                                          control_size * self.TRAJLENGTH)
 
         # Fit standard scalers with data ranges
-        self.xs_scaler = StandardScaler().fit(np.tile(x_range,2))
-        self.x_scaler = StandardScaler().fit(np.tile(x_range,TRAJLENGTH))
-        self.u_scaler = StandardScaler().fit(np.tile(u_range,TRAJLENGTH))
+        self.xs_scaler = StandardScaler().fit(np.tile(x_range, 2))
+        self.x_scaler = StandardScaler().fit(np.tile(x_range, TRAJLENGTH))
+        self.u_scaler = StandardScaler().fit(np.tile(u_range, TRAJLENGTH))
 
-    def train(self, dataset, nepisodes=int(1e2)):
+    def train(self, dset, nepisodes=int(1e2)):
         # TODO track
         # TODO normalization
         # TODO: value outputs a np.array instead of double like get_path
         batch = random.choices(
-            range(len(dataset.us)), k=self.BATCH_SIZE*16)
+            range(len(dset.us)), k=self.BATCH_SIZE*16)
 
-        xbatch = self.xs_scaler.transform(np.hstack([dataset.x1s[batch, :], dataset.x2s[batch, :]]))
+        xbatch = self.xs_scaler.transform(np.hstack([dset.x1s[batch, :],
+                                                     dset.x2s[batch, :]]))
 
         self.value.fit(xbatch,
-                       dataset.vs[batch, :],
+                       dset.vs[batch, :],
                        batch_size=self.BATCH_SIZE,
                        epochs=nepisodes, verbose=True)
 
         self.ptrajx.fit(xbatch,
-                        self.x_scaler.transform(dataset.trajxs[batch, :]),
+                        self.x_scaler.transform(dset.trajxs[batch, :]),
                         batch_size=self.BATCH_SIZE,
                         epochs=nepisodes, verbose=False)
 
         self.ptraju.fit(xbatch,
-                        self.u_scaler.transform(dataset.trajus[batch, :]),
+                        self.u_scaler.transform(dset.trajus[batch, :]),
                         batch_size=self.BATCH_SIZE,
                         epochs=nepisodes, verbose=False)
 
-    def test(self, dataset):
+    def test(self, dset):
         """Test over the whole dataset"""
-        xbatch = self.xs_scaler.transform(np.hstack([dataset.x1s, dataset.x2s]))
-        value_metrics = self.value.evaluate(xbatch,
-                                            dataset.vs,
-                                            batch_size=self.BATCH_SIZE)
-        states_metrics = self.ptrajx.evaluate(xbatch,
-                                              self.x_scaler.transform(dataset.trajxs),
-                                              batch_size=self.BATCH_SIZE)
-        controls_metrics = self.ptraju.evaluate(xbatch,
-                                                self.u_scaler.transform(dataset.trajus),
-                                                batch_size=self.BATCH_SIZE)
+        xbatch = self.xs_scaler.transform(np.hstack([dset.x1s, dset.x2s]))
+        value_metrics = self.value.evaluate(
+                                    xbatch,
+                                    dset.vs,
+                                    batch_size=self.BATCH_SIZE)
+        states_metrics = self.ptrajx.evaluate(
+                                    xbatch,
+                                    self.x_scaler.transform(dset.trajxs),
+                                    batch_size=self.BATCH_SIZE)
+        controls_metrics = self.ptraju.evaluate(
+                                    xbatch,
+                                    self.u_scaler.transform(dset.trajus),
+                                    batch_size=self.BATCH_SIZE)
         return value_metrics, states_metrics, controls_metrics
 
     def trajectories(self, x1=None, x2=None):
@@ -78,11 +82,14 @@ class Networks:
         Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).
         """
-        x = self.xs_scaler.transform(np.hstack([x1, x2]).reshape((1, 2*self.state_size)))
+        x = self.xs_scaler.transform(np.hstack([x1, x2])
+                                       .reshape((1, 2*self.state_size)))
 
-        X = self.x_scaler.inverse_transform(self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
+        X = self.x_scaler.inverse_transform(
+                    self.ptrajx.predict(x, batch_size=self.BATCH_SIZE))
         X = X.reshape((self.TRAJLENGTH, self.state_size))
-        U = self.u_scaler.inverse_transform(self.ptraju.predict(x, batch_size=self.BATCH_SIZE))
+        U = self.u_scaler.inverse_transform(
+                    self.ptraju.predict(x, batch_size=self.BATCH_SIZE))
         U = U.reshape((self.TRAJLENGTH, self.control_size))
         V = self.value.predict(x, batch_size=self.BATCH_SIZE)
         return X, U, V
@@ -115,9 +122,14 @@ class Networks:
         self.ptrajx.save("model_ptrajx.hd5")
 
     def load(self):
-        self.value = load_model("model_value.hd5")
-        self.ptraju = load_model("model_ptraju.hd5")
-        self.ptrajx = load_model("model_ptrajx.hd5")
+        try:
+            self.value = load_model("model_value.hd5")
+            self.ptraju = load_model("model_ptraju.hd5")
+            self.ptrajx = load_model("model_ptrajx.hd5")
+        except Exception:
+            print()
+            print()
+            print("No weights saved")
 
 
 class Dataset:
