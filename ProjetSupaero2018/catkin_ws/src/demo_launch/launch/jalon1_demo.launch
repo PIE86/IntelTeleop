@@ -1,0 +1,19 @@
+<launch>
+
+  <!-- World -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find display)/worlds/basic_car.world"/>
+  </include>
+
+  <!-- Controller, roadmap and model -->
+  <node pkg="controller" type="controller_server.py" name="NameController"/>
+  <node pkg="roadmap" type="path_finding_service.py" name="NamePathFinding"/>
+  <node pkg="car_model" type="car_position_publisher.py" name="NameCarPosition"/>
+  
+  <!-- Display -->
+  <node pkg="display" type="spawn_cylinder_server.py" name="NameSpawnCylinder"/>
+  <node pkg="display" type="gazebo_display.py" name="NameGazeboDisplay"/>
+  <node pkg="obstacles" type="read_obstacles_server.py" name="NameReadObstacles"/>
+  <node pkg="display" type="spawn_all_cylinders.py" name="NameSpawnAll"/>
+
+</launch>
