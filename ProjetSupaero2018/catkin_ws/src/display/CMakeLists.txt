@@ -11,15 +11,18 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  utils
+  geometry_msgs
+  gazebo_ros
+  obstacles
 )
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#  DIRECTORY msg
-#  FILES 
-#  Control.msg
-#)
+add_message_files(
+	DIRECTORY msg
+  FILES 
+  State.msg
+  Command.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -36,13 +39,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-# )
+generate_messages(DEPENDENCIES geometry_msgs)
 
 catkin_package(
    CATKIN_DEPENDS
-   utils
+   obstacles
+   message_runtime
 #  INCLUDE_DIRS include
 #  LIBRARIES display
 #  CATKIN_DEPENDS roscpp rospy std_msgs
@@ -54,8 +56,8 @@ catkin_package(
 ####################
 
 find_package(gazebo REQUIRED)
-include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
+include_directories(${GAZEBO_INCLUDE_DIRS})
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 add_library(car_control SHARED plugins/car_control_plugin.cc)
@@ -64,6 +66,9 @@ target_link_libraries(car_control ${GAZEBO_LIBRARIES})
 add_library(state_feedback SHARED plugins/state_feedback_plugin.cc)
 target_link_libraries(state_feedback ${GAZEBO_LIBRARIES})
 
+add_dependencies(car_control  
+			${${PROJECT_NAME}_EXPORTED_TARGETS} 
+			display_generate_messages_cpp)
 
 ###########
 ## Build ##
@@ -75,3 +80,8 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
+
+
+
+
+

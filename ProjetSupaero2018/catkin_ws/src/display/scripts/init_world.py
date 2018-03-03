@@ -21,8 +21,8 @@ CYLINDER_PATH = PATH_TO_DISPLAY_PKG + 'models/cylinder/'
 # count the total amount of obstacles
 MODEL_COUNT = 0
 
-PARAM_NAME_SIZE = 'utils/obstacles/obstacles_size'
-PARAM_NAME_OBSTACLES = 'utils/obstacles/obstacles_vec'
+PARAM_NAME_SIZE = 'obstacles/obstacles_size'
+PARAM_NAME_OBSTACLES = 'obstacles/obstacles_vec'
 READ_OBSTACLES_SERVICE = 'read_obstacles'
 
 
@@ -116,7 +116,7 @@ def create_cylinder_urdf(radius):
         # shell=True so that .bashrc is sourced
         subprocess.call(launch_xacro_instructions, shell=True)
     except OSError as e:
-        rospy.logerr("Subprocess call failed: %s" % e)
+        rospy.loginfo("Subprocess call failed: %s" % e)
         return 0  # as failure
 
     return urdf_path  # as success
@@ -147,7 +147,7 @@ def spawn_obstacles():
         if DEBUG:
             print('Obstacles parameters found')
     except KeyError:
-        rospy.logerr('Obstacles parameters not set - '
+        rospy.loginfo('Obstacles parameters not set - '
                      'You may have to launch a server that reads obstacles '
                      'from an input file '
                      '(see obstacles/read_obstacles_server)')

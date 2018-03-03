@@ -14,7 +14,7 @@
 #include <thread>
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
-#include <utils/Command.h>
+#include <display/Command.h>
 
 #include <math.h>
 
@@ -78,7 +78,7 @@ namespace gazebo
 
 
 		// Is triggered on every ROS message received (i.e. command)
-		public: void OnRosMsg(const utils::CommandConstPtr &_msg)
+		public: void OnRosMsg(const display::CommandConstPtr &_msg)
 		{
 			// Set angular velocity
 			this->SetAngularVelocity(_msg->omega);
