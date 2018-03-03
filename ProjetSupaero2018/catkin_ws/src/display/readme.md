@@ -1,11 +1,20 @@
-To run the simulation:
-roslaunch display gazdisplay.launch
-rosrun car_model car_position_publisher.py
-rosrun display gazebo_display.py
+# Launch file
+To initiate the world with the car & obstacles:
+roslaunch display display.launch
 
-To spawn custom cylinders onto Gazebo:
-rosrun display spawn_cylinder_service.py
-rosrun display spawn_cylinder_client.py x_c y_c r_c        *(potentially several times)
+# Topics for command and state
+## Command
+Command should be applied on: /car_control/command
 
-Todo next:
-retrieve obstacles from package osbtacles
+The command is given as a (v, omega) (float)
+
+## State
+State is broadcast on: /car_control/state
+
+The state is given as a MultiArray but you can retrieve data with msg.data
+msg.data is a vector [x, y, theta]
+
+# TODO
+Obstacles are retrieved from pkg:utils/obstacles/... using the service from this package
+I have to merge this with pkg:obstacles directly (more up-to-date)
+
