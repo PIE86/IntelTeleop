@@ -60,24 +60,23 @@ class PRM:
                 if distance > self.visibility_horizon:
                     print(node1, node2, 'too far')
                     continue
-            path_astar = self.graph.get_path(node1, node2)
+                path_astar = self.graph.get_path(node1, node2)
 
-            success, X, U, V = self.ACADO_connect(
-                self.graph.nodes[node1].state,
-                self.graph.nodes[node2].state,
-                init=path_astar)
-            nb_astar += success
+                success, X, U, V = self.ACADO_connect(
+                    self.graph.nodes[node1].state,
+                    self.graph.nodes[node2].state,
+                    init=path_astar)
+                nb_astar += success
 
-            if not first and path_astar is not None:
+            else:
                 s1 = self.graph.nodes[node1].state
                 s2 = self.graph.nodes[node2].state
                 path_est = estimator.trajectories(s1, s2)
-                success_est, X_est, U_est, V_est = self.ACADO_connect(
+                success, X, U, V = self.ACADO_connect(
                     self.graph.nodes[node1].state,
                     self.graph.nodes[node2].state,
                     init=path_est)
                 nb_est += success_est
-
 
             # If successing while attempting to connect the two nodes
             # then add the new edge to the graph
@@ -461,7 +460,8 @@ class Graph:
         """
         Find the shortest between two nodes in the graph.
         node1 and node2 are both indices of nodes that should be in the graph.
-        hdistance: heuristic distance used in the algorithm (euclidian, Value f)
+        hdistance: heuristic distance used in the algorithm
+        (euclidian, Value f)
         """
         if node1 not in self.nodes:
             raise ValueError('node ' + str(node1) + ' not in the graph')
