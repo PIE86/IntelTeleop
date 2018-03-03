@@ -6,6 +6,7 @@ import numpy as np
 import rospy
 import actionlib
 from roadmap.msg import OptControlAction, OptControlGoal
+from opt_control.srv import Samples
 from prm_graph import PRM
 from networks import Dataset, Networks
 
@@ -43,8 +44,9 @@ random.seed(42)
 
 class Irepa:
 
-    def __init__(self, ocp_client):
+    def __init__(self, ocp_client, sampling_client):
         self.ocp_client = ocp_client
+        self.sampling_client = sampling_client
         # Define an estimator
         self.estimator = Networks(NX, NU,
                                   x_range=np.array([X_MIN, X_MAX]),
@@ -54,7 +56,7 @@ class Irepa:
 
         # Initialize PRM with a sampling function,
         # a connect function and an heuristic distance
-        prm = PRM(sample_fun=self.sample_test, connect_fun=self.connect,
+        prm = PRM(sample_fun=self.sample, connect_fun=self.connect,
                   hdistance=self.euclid)
 
         # Add NN_SAMPLE random nodes to the PRM
@@ -191,14 +193,15 @@ class Irepa:
 
         return success, X, U, V
 
-        # def sample(self, nb):
-        #     res = create_samples(nb)
-        #
+    # def sample_test(self):
+    #     return (round(random.uniform(0, 10), 3),
+    #             round(random.uniform(0, 5), 3),
+    #             round(random.uniform(0, 2*np.pi), 3))
 
-    def sample_test(self):
-        return (round(random.uniform(0, 10), 3),
-                round(random.uniform(0, 5), 3),
-                round(random.uniform(0, 2*np.pi), 3))
+    def sample(self, n):
+        """n: number of samples to be returned"""
+        resp = self.sampling_client(n)
+        return np.array(resp.samples).reshape(n, int(len(resp.samples)/n))
 
     def euclid(self, s1, s2):
         #   print(s1, s2)
@@ -207,11 +210,14 @@ class Irepa:
 
 if __name__ == '__main__':
     rospy.init_node('irepa_node')
-    opt_control_client = actionlib.SimpleActionClient(
-                            OPT_CONTROL_ACTION_SERVER, OptControlAction)
-    opt_control_client.wait_for_server()
-    rospy.loginfo('End of wait for ocp action server')
-    # create_samples_proxy = rospy.ServiceProxy(SAMPLING_SERVICE, Samples)
 
-    irepa = Irepa(opt_control_client)
+    ocp_client = actionlib.SimpleActionClient(
+                            OPT_CONTROL_ACTION_SERVER, OptControlAction)
+    ocp_client.wait_for_server()
+    rospy.loginfo('End of wait for ocp action server')
+
+    rospy.wait_for_service('create_samples')
+    sampling_client = rospy.ServiceProxy('create_samples', Samples)
+
+    irepa = Irepa(ocp_client, sampling_client)
     irepa.irepa_algo()

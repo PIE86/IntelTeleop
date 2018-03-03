@@ -32,11 +32,10 @@ class PRM:
 
     def add_nodes(self, nb_sample=40, verbose=True):
         """Add a given number of nodes"""
-        # TODO: add an option to "guide this adding"
+        # TODO: add an option to "guide this adding" ?
         # Ex: add nodes between 2 unconnectable nodes...
-        for _ in range(nb_sample):
-
-            state = self.sample()
+        samples = self.sample(nb_sample)
+        for state in samples:
             node_index = self.graph.add_node(state)
 
     def expand(self, first=False):
