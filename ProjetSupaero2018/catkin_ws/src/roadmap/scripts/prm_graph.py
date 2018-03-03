@@ -340,9 +340,9 @@ class Graph:
         self.hdistance = hdistance
 
     def __str__(self):
-        return f"""{len(self.nodes)} nodes, {len(self.edges)} edges \n
+        return """{} nodes, {} edges \n
                 Nodes: {self.nodes} \n
-                Edges: {self.edges}"""
+                Edges: {self.edges}""".format(len(self.nodes), len(self.edges))
 
     def save(self, directory):
         """Save the graphs attributes to files in the directory"""
@@ -366,9 +366,9 @@ class Graph:
         # Creates a new connex group and adds to it the new node
         self.add_to_new_connex_group(node_index)
         if verbose:
-            print(f"Added node [{node_index}:{state}] to graph")
-            print(f"Node {node_index} is in connex element " +
-                  f"{self.connex_elements[node_index]}\n")
+            print("Added node [{}:{}] to graph".format(node_index, state))
+            print("Node {} is in connex element ".format(node_index) +
+                  "{}\n".format(self.connex_elements[node_index]))
         return node_index
 
     @staticmethod
