@@ -3,6 +3,6 @@
     <arg name="world_name" value="$(find display)/worlds/basic_car_world.world"/>
     <arg name="verbose" value="true"/>
   </include>
-  <node pkg="utils" name="read_obstacles" type="read_obstacles_server.py">
-  <node pkg="display" name="init_world" type="Init_world.py">
+  <node pkg="utils" name="read_obstacles" type="read_obstacles_server.py"/>
+  <node pkg="display" name="init_world" type="Init_world.py"/>
 </launch>
