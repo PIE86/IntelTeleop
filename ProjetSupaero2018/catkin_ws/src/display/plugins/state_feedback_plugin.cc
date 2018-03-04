@@ -12,6 +12,9 @@
 #include <display/State.h>
 #include <vector>
 
+// fresquency of the simulation
+#define FREQ 10
+
 namespace gazebo
 {
   class StateFeedbackPlugin : public ModelPlugin
@@ -38,7 +41,7 @@ namespace gazebo
     public: void OnUpdate()
     {
     	// Publish rate
-      ros::Rate loop_rate(10);
+      ros::Rate loop_rate(FREQ);
 
       // Data to be sent
       display::State msg_state;
@@ -48,7 +51,7 @@ namespace gazebo
 
       std::vector<double> state {pose.pos.x, pose.pos.y, theta};
 
-      std::cout << "COUCOU  " << pose.pos.x << " " << pose.pos.y << " " << theta << '\n';
+      // std::cout << "SIMU STATE  " << pose.pos.x << " " << pose.pos.y << " " << theta << '\n';
 
       msg_state.x = state;
 

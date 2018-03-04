@@ -121,6 +121,8 @@ class Networks:
         pass
 
     def save(self):
+        # Saved in .ros directory
+        # TODO: change default behaviour
         self.value.save("model_value.hd5")
         self.ptraju.save("model_ptraju.hd5")
         self.ptrajx.save("model_ptrajx.hd5")

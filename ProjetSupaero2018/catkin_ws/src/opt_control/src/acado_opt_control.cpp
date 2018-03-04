@@ -10,7 +10,6 @@
 
 #include "ros/ros.h"
 
-#include "opt_control/OptControl.h"
 #include "roadmap/OptControlAction.h"
 
 
@@ -23,7 +22,7 @@
 USING_NAMESPACE_ACADO
 
 // default nb_controls
-const unsigned int DEFAULT_NB_CONTROLS = 20; // path length -> 21
+const unsigned int DEFAULT_NB_CONTROLS = 21; // path length -> 21
 // state vector norm threshold above which 2 states are considered differents
 const double THRESHOLD = 0.1;
 
@@ -67,6 +66,7 @@ bool solve(const roadmap::OptControlGoalConstPtr& goal, Server* as)
   // std::cout << "s1:" << s1 << '\n';
   // std::cout << "s2:" << s2 << '\n';
 
+  // TODO: proper renaming
   auto toto = goal->states;
   auto titi = goal->controls;
 
@@ -100,10 +100,10 @@ bool solve(const roadmap::OptControlGoalConstPtr& goal, Server* as)
   {
     time_arr[i] = states.getTime(i);
     for (unsigned j = 0; j < goal->NX; j++){
-      states_arr[i+j] = states.getVector(i)[j];
+      states_arr[goal->NX*i+j] = states.getVector(i)[j];
     }
     for (unsigned j = 0; j < goal->NU; j++){
-      controls_arr[i+j] = controls.getVector(i)[j];
+      controls_arr[goal->NU*i+j] = controls.getVector(i)[j];
     }
   }
 
@@ -115,7 +115,6 @@ bool solve(const roadmap::OptControlGoalConstPtr& goal, Server* as)
   result.success = check_success(returnValue, s1, s2, states, controls, result.time, THRESHOLD);
 
   as->setSucceeded(result, "coucou");
-
 
   return true;
 }
@@ -191,8 +190,8 @@ OptimizationAlgorithm create_algorithm_car(
 
     for (unsigned i = 0; i < nb_controls; i++){
       for (unsigned j = 0; j < 3; j++){
-        x_init(i, j) = init_states[i+j];
-        u_init(i, j) = init_controls[i+j];
+        x_init(i, j) = init_states[NX*i+j];
+        u_init(i, j) = init_controls[NU*i+j];
       }
     }
     p_init(0, 0) = init_cost;

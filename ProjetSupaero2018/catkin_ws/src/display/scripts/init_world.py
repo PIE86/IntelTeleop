@@ -165,7 +165,7 @@ def spawn_obstacles():
 def init_world():
     # initial car position and orientation as [x, y, z, alpha, beta, gamma]
     start_pose = [4, 6, 0, 0, 0, 1]
-    end_pose = [12, 8, 0, 0, 0, 20]
+    end_pose = [12, 8, 0, 0, 0, 1]
 
     spawn_car(start_pose)
     spawn_start_point(start_pose)

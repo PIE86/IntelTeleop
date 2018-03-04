@@ -2,6 +2,6 @@
 
   <node pkg="obstacles" type="read_obstacles_server.py" name="ObstaclesReader"/>
   <node pkg="opt_control" type="acado_opt_control" name="ACADOOptControl"/>
-  <node pkg="opt_control" type="acado_client_example.py" name="AcadoClientExample"/>
+  <node pkg="roadmap" type="acado_client_example.py" name="AcadoClientExample"/>
 
 </launch>

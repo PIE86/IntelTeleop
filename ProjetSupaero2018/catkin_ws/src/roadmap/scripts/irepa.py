@@ -21,7 +21,7 @@ VERBOSE = False
 INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 5
-NB_SAMPLE = 5  # must be at least 5
+NB_SAMPLE = 30  # must be at least 5
 # NB_CONNECT = 3
 # Densify longer
 # NB_ATTEMPS_DENSIFY_LONGER = 10
@@ -54,6 +54,7 @@ class Irepa:
                                   u_range=np.array([U_MIN, U_MAX]))
 
     def irepa_algo(self):
+        MAX_EDGE_NB = NB_SAMPLE * (NB_SAMPLE - 1)
         tstart = time.time()
 
         # Initialize PRM with a sampling function,
@@ -77,7 +78,10 @@ class Irepa:
         astar_successes = np.zeros(IREPA_ITER)
         est_successes = np.zeros(IREPA_ITER)
         nb_attempts = np.zeros(IREPA_ITER)
+        edge_numbers_arr = np.zeros(IREPA_ITER)
         while not stop and i < IREPA_ITER:
+            print('\n'*5)
+            print('################')
             print((('--- IREPA %d ---' % i)+'---'*10+'\n')*3, time.ctime())
 
             # Expand PRM
@@ -97,6 +101,7 @@ class Irepa:
             nb_attempts[i] = nb_attempt
             print()
             print('Edge number:', len(prm.graph.edges))
+            edge_numbers_arr[i] = len(prm.graph.edges)
             print('######################\n\n\n')
 
             stop = prm.is_fully_connected()
@@ -150,24 +155,26 @@ class Irepa:
             print('Euclidian value')
             print(self.euclid(x0, x1))
 
-        plt.plot(np.arange(IREPA_ITER),
-                 astar_successes, color='blue', label='astar')
-        plt.plot(np.arange(IREPA_ITER),
-                 est_successes, color='green', label='estimator')
-        plt.plot(np.arange(IREPA_ITER),
-                 nb_attempts, color='orange', label='attempts')
-        plt.legend()
-        plt.show()
-
-        print('Saving estimator weights')
-        # self.estimator.save()
-        print('Saved')
-
         tend = time.time()
-
         print('\n##############')
         print('IREPA was executed in ', (tend-tstart)/60, 'minutes')
         print()
+
+        print('Saving estimator weights')
+        self.estimator.save()
+        print('Saved')
+        #
+        # plt.plot(np.arange(IREPA_ITER),
+        #          astar_successes, color='blue', label='astar')
+        # plt.plot(np.arange(IREPA_ITER),
+        #          est_successes, color='green', label='estimator')
+        # plt.plot(np.arange(IREPA_ITER),
+        #          nb_attempts, color='orange', label='attempts')
+        plt.axhline(y=MAX_EDGE_NB, color='black', linestyle='-')
+        plt.plot(np.arange(IREPA_ITER),
+                 edge_numbers_arr, color='green', label='attempts')
+        plt.legend()
+        plt.show()
 
     def connect(self, s1, s2, init=None):
         """Tries to connect 2 sets by calling the Acado optimizer service.

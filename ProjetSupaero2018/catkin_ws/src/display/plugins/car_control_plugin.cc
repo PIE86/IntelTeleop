@@ -18,6 +18,8 @@
 
 #include <math.h>
 
+#define VERBOSE false
+
 namespace gazebo
 {
 	class CarControlPlugin : public ModelPlugin
@@ -41,7 +43,7 @@ namespace gazebo
 			// Set orientation according to sdf file (if relevant) -- in degrees
 			// Warning: this is an angle, not an angular rate
 			double thetaInit = _sdf->Get<double>("theta");
-			this->SetOrientation(thetaInit);
+			// this->SetOrientation(thetaInit);
 
 			// Create node associated to plugin
 			this->rosNode.reset(new ros::NodeHandle("car_control"));
@@ -49,7 +51,7 @@ namespace gazebo
 			this->rosSub = this->rosNode->subscribe("command", 100, &CarControlPlugin::OnRosMsg, this);
 			this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
 		}
-		
+
 		public: void SetOrientation(const double& thetaRad)
 		{
 			//double thetaRad = _thetaDegree * M_PI/180;
@@ -63,8 +65,9 @@ namespace gazebo
 		{
 			// Set linear velocity as vector
 			this->model->SetLinearVel(vel);
-			// If --screen
-			gzmsg << "Linear velocity set to: " << vel << "\n";
+			if (VERBOSE){
+				gzmsg << "Linear velocity set to: " << vel << "\n";
+			}
 		}
 
 
@@ -72,8 +75,9 @@ namespace gazebo
 		{
 			// Set anglular velocity omega around axis z
 			this->model->SetAngularVel({0, 0, omega});
-			// If --screen
-			gzmsg << "Angular velocity set to: " << omega << "\n";
+			if (VERBOSE){
+				gzmsg << "Angular velocity set to: " << omega << "\n";
+			}
 		}
 
 
@@ -83,7 +87,7 @@ namespace gazebo
 			// Get message
 			double v = _msg->u[0];
 			double omega = _msg->u[1];
-			
+
 			// Set angular velocity
 			this->SetAngularVelocity(omega);
 

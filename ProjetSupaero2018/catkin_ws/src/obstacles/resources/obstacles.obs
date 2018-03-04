@@ -2,5 +2,5 @@
 <obstacles>
 	<obstacle x="4" y="16" R="2"/>
 	<obstacle x="10" y="12" R="2"/>
-	<obstacle x="28" y="6" R="1"/>
+	<!-- <obstacle x="28" y="6" R="1"/> -->
 </obstacles>
