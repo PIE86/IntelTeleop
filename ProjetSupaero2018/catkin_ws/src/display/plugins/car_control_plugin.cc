@@ -18,6 +18,8 @@
 
 #include <math.h>
 
+#define VERBOSE false
+
 namespace gazebo
 {
 	class CarControlPlugin : public ModelPlugin
@@ -41,7 +43,7 @@ namespace gazebo
 			// Set orientation according to sdf file (if relevant) -- in degrees
 			// Warning: this is an angle, not an angular rate
 			double thetaInit = _sdf->Get<double>("theta");
-			this->SetOrientation(thetaInit);
+			// this->SetOrientation(thetaInit);
 
 			// Create node associated to plugin
 			this->rosNode.reset(new ros::NodeHandle("car_control"));
@@ -49,46 +51,52 @@ namespace gazebo
 			this->rosSub = this->rosNode->subscribe("command", 100, &CarControlPlugin::OnRosMsg, this);
 			this->rosQueueThread = std::thread(std::bind(&CarControlPlugin::QueueThread, this));
 		}
-		
-		public: void SetOrientation(const double& _thetaDegree)
+
+		public: void SetOrientation(const double& thetaRad)
 		{
-			double thetaRad = _thetaDegree * M_PI/180;
+			//double thetaRad = _thetaDegree * M_PI/180;
 			math::Pose initPose(this->model->GetWorldPose().pos,
 													math::Quaternion(0, 0, thetaRad));
 			this->model->SetWorldPose(initPose);
 		}
 
 
-		public: void SetVelocity(const gazebo::math::Vector3 &_vel)
+		public: void SetVelocity(const gazebo::math::Vector3 & vel)
 		{
 			// Set linear velocity as vector
-			this->model->SetLinearVel(_vel);
-			// If --screen
-			gzmsg << "Linear velocity set to: " << _vel.GetLength() << "\n";
+			this->model->SetLinearVel(vel);
+			if (VERBOSE){
+				gzmsg << "Linear velocity set to: " << vel << "\n";
+			}
 		}
 
 
-		public: void SetAngularVelocity(const float &_omega)
+		public: void SetAngularVelocity(const double & omega)
 		{
 			// Set anglular velocity omega around axis z
-			this->model->SetAngularVel({0, 0, _omega});
-			// If --screen
-			gzmsg << "Angular velocity set to: " << _omega << "\n";
+			this->model->SetAngularVel({0, 0, omega});
+			if (VERBOSE){
+				gzmsg << "Angular velocity set to: " << omega << "\n";
+			}
 		}
 
 
 		// Is triggered on every ROS message received (i.e. command)
 		public: void OnRosMsg(const display::CommandConstPtr &_msg)
 		{
+			// Get message
+			double v = _msg->u[0];
+			double omega = _msg->u[1];
+
 			// Set angular velocity
-			this->SetAngularVelocity(_msg->omega);
+			this->SetAngularVelocity(omega);
 
 			// Set velocity
 			// Get yaw from pose
 			math::Quaternion pose = this->model->GetWorldPose().rot;
 			double yaw = pose.GetYaw();
 			// Set velocity as (vx, vy)
-			this->velocity.Set(-_msg->velocity*sin(yaw), _msg->velocity*cos(yaw), 0);
+			this->velocity.Set(-v*sin(yaw), v*cos(yaw), 0);
 			this->SetVelocity(this->velocity);
 		}
 

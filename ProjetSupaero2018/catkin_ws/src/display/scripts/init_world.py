@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import os.path as pp
-import tf
+import pyquaternion
 import sys
 import rospy
 import subprocess
@@ -36,14 +36,14 @@ def build_model(path_to_model, pose_vector):
         model_xml = f.read()
 
     # Get pose
-    angle = tf.transformations.quaternion_from_euler(
-        pose_vector[3],
-        pose_vector[4],
-        pose_vector[5])
-    orientation = Quaternion(angle[0],
-                             angle[1],
-                             angle[2],
-                             angle[3])
+    angles = pose_vector[:3]
+    # get quaternion from angle: quat=[w,x,y,z]
+    quat = pyquaternion.Quaternion(axis=[0, 0, 1], angle=angles[-1])
+    # build ros quaternion: rosquat=[x,y,z,w]
+    orientation = Quaternion(quat[1],
+                             quat[2],
+                             quat[3],
+                             quat[0])
     pose = Pose(Point(x=pose_vector[0],
                       y=pose_vector[1],
                       z=pose_vector[2]),
@@ -155,7 +155,7 @@ def spawn_obstacles():
             print('Obstacles parameters not found')
         sys.exit(1)
 
-    n = len(vec) / size
+    n = int(len(vec) / size)
     obstacles = np.reshape(np.array(vec), (n, size))
 
     for obs in obstacles:
@@ -164,8 +164,8 @@ def spawn_obstacles():
 
 def init_world():
     # initial car position and orientation as [x, y, z, alpha, beta, gamma]
-    start_pose = [0, 0, 0, 0, 0, 0]
-    end_pose = [2, -3, 0, 0, 0, 20]
+    start_pose = [4, 6, 0, 0, 0, 1]
+    end_pose = [12, 8, 0, 0, 0, 1]
 
     spawn_car(start_pose)
     spawn_start_point(start_pose)

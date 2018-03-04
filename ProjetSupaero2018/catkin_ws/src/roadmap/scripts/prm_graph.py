@@ -57,10 +57,10 @@ class PRM:
             # WITHOUT the visibility_horizon to have a heuristic?
             # arbitrary euclidian distance value seems to be too... arbitrary
             if first:
+                path_astar = None
                 if distance > self.visibility_horizon:
                     print(node1, node2, 'too far')
-                    continue
-                path_astar = self.graph.get_path(node1, node2)
+                    path_astar = self.graph.get_path(node1, node2)
 
                 success, X, U, V = self.ACADO_connect(
                     self.graph.nodes[node1].state,
