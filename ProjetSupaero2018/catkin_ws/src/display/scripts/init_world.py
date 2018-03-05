@@ -60,12 +60,12 @@ def spawn_model(model_name, model_xml, pose):
     print('Model spawned as: ' + model_name)
 
 
-def spawn_car(pose0):
+def spawn_car(pose0, sdf_name):
     """ Spawn car specifically """
     # Get model and read as string
     path_to_model = pp.join(PATH_TO_DISPLAY_PKG,
                             "models",
-                            "my_wheel",
+                            sdf_name,
                             "model.sdf")
     # Get model params
     model_xml, pose = build_model(path_to_model, pose0)
@@ -167,7 +167,11 @@ def init_world():
     start_pose = [4, 6, 0, 0, 0, 1]
     end_pose = [12, 8, 0, 0, 0, 1]
 
-    spawn_car(start_pose)
+    # my_car
+    # my_wheel
+    # my_rover
+
+    spawn_car(start_pose, "my_rover")
     spawn_start_point(start_pose)
     spawn_end_point(end_pose)
     spawn_obstacles()
