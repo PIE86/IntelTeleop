@@ -22,6 +22,7 @@ INIT_PRM = True
 # Number of total iteration of the IREPA
 IREPA_ITER = 5
 NB_SAMPLE = 30  # must be at least 5
+SAVE = False  # save the NN weights at the end
 # NB_CONNECT = 3
 # Densify longer
 # NB_ATTEMPS_DENSIFY_LONGER = 10
@@ -160,9 +161,10 @@ class Irepa:
         print('IREPA was executed in ', (tend-tstart)/60, 'minutes')
         print()
 
-        print('Saving estimator weights')
-        self.estimator.save()
-        print('Saved')
+        if SAVE:
+            print('Saving estimator weights')
+            self.estimator.save()
+            print('Saved')
         #
         # plt.plot(np.arange(IREPA_ITER),
         #          astar_successes, color='blue', label='astar')

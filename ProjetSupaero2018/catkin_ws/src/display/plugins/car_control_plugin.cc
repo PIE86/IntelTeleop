@@ -96,7 +96,8 @@ namespace gazebo
 			math::Quaternion pose = this->model->GetWorldPose().rot;
 			double yaw = pose.GetYaw();
 			// Set velocity as (vx, vy)
-			this->velocity.Set(-v*sin(yaw), v*cos(yaw), 0);
+			// this->velocity.Set(-v*sin(yaw), v*cos(yaw), 0);
+			this->velocity.Set(v*cos(yaw), v*sin(yaw), 0);
 			this->SetVelocity(this->velocity);
 		}
 

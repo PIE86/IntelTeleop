@@ -17,9 +17,9 @@ STATE_TOPIC = '/car_control/state'
 # rospy.loginfo('End of wait for ocp')
 
 # Control frequency
-CPS = 4
+CPS = 10
 # 4 Hz -> UPDATE every 40 iterations -> ~ 0.4 Hz = 2.5s
-UPDATE_TIMES = 10*CPS
+UPDATE_TIMES = 2*CPS
 
 
 class Controller:
@@ -58,15 +58,17 @@ class Controller:
         self.t_idx += 1
         if self.t_idx < self.U.shape[0]:
             self.u = self.U[self.t_idx, :]
+        else:
+            self.u = np.zeros(NU)
         print('  CONTROL:', self.u)
         self.pub.publish(self.u)
         return self.u
 
     def update_state(self, msg):
-        # try:
-        #     print('STATE received:', msg, 'End traj:', self.X[-1])
-        # except Exception:
-        #     pass
+        try:
+            print('STATE received:', msg, 'End traj:', self.X[-1])
+        except Exception:
+            pass
         self.current_state = np.array(msg.x)
 
     def update_trajectory(self, state, resp):
@@ -79,6 +81,8 @@ class Controller:
             X = np.array(resp.states).reshape(len(resp.states)//NX, NX)
             U = np.array(resp.controls).reshape(len(resp.controls)//NU, NU)
             self.time = resp.time
+
+            dt_acado = self.time/(X.shape[0]-1)
             # Resample the trajectories
             nb_control = int(resp.time * CPS) + 1
             print('X ACADO', X.shape)
@@ -89,8 +93,18 @@ class Controller:
             self.U = resample(U, nb_control)
             tend = rospy.get_rostime()
             self.t = (tend.nsecs - self.tstart.nsecs)/1e9
-            print('UPDATE TOOK', self.t, 'secs')
             self.t_idx = int(self.t * CPS)
+
+            print()
+            print()
+            print('IMPORTANT')
+            print('Size traj', X.shape[0])
+            print('Time traj', resp.time)
+            print('Dt acado', dt_acado)
+            print('nb_control', nb_control)
+            print('UPDATE TOOK', self.t, 'secs')
+            print(self.t)
+            print(self.t_idx)
 
         else:
             # TODO
@@ -140,12 +154,20 @@ if __name__ == '__main__':
 
     # TODO: start not
     print('FIX CURRENT STATE AND END')
-    start = np.array((4, 6, 0))
+    start = np.array((2, 2, 0))
     controller.current_state = start
-    end1 = np.array((12, 8, 0))
-    controller.end = end1
+    end = np.array((10, 15, 0))
+    controller.end = end
 
     i = 0
+
+    print('Waiting Gazebo for 50 seconds')
+    rospy.sleep(50)
+    print('20 seconds to go')
+    rospy.sleep(25)
+    print('5 s')
+    rospy.sleep(5)
+    print('Go')
 
     while not rospy.is_shutdown():
         i += 1
