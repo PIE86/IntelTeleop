@@ -24,11 +24,11 @@
           <surface>
             <friction>
               <ode>
-                <mu>0</mu>
-                <mu2>0</mu2>
+                <mu>1</mu>
+                <mu2>1</mu2>
                 <fdir1>0 0 1</fdir1>
-                <slip1>1</slip1>
-                <slip2>1</slip2>
+                <slip1>0</slip1>
+                <slip2>0</slip2>
               </ode>
             </friction>
             <contact>
@@ -54,7 +54,7 @@
     <plugin name="car_control" filename="libcar_control.so">
       <X_velocity>0</X_velocity>
       <Y_velocity>0</Y_velocity>
-      <theta>0</theta>
+      <Z_velocity>0</Z_velocity>
     </plugin>
     <plugin name="car_state_feedback" filename="libstate_feedback.so">
     </plugin>
