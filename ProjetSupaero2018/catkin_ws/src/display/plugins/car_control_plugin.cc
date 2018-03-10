@@ -42,7 +42,7 @@ namespace gazebo
 
 			// Set orientation according to sdf file (if relevant) -- in degrees
 			// Warning: this is an angle, not an angular rate
-			double thetaInit = _sdf->Get<double>("theta");
+			//double thetaInit = _sdf->Get<double>("theta");
 			// this->SetOrientation(thetaInit);
 
 			// Create node associated to plugin
