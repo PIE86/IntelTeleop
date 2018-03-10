@@ -4,6 +4,9 @@ import rospy
 from obstacles.srv import ReadObstacles
 import sys
 
+'''
+Client: ask to read obstacles from given file
+'''
 
 def read_obstacles_client(file_name):
     rospy.wait_for_service('read_obstacles')

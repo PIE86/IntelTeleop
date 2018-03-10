@@ -12,7 +12,7 @@
 #include <display/State.h>
 #include <vector>
 
-// fresquency of the simulation
+// Rate of the simulation
 #define FREQ 10
 
 namespace gazebo
@@ -22,14 +22,13 @@ namespace gazebo
   	// Empty constructor
   	public: StateFeedbackPlugin() {}
 
-
 		// On launch (= once)
     public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     {
-			// Model shortcut
-  		this->model = _model;
+      // Model shortcut
+      this->model = _model;
 
-			// Create node associated to plugin & subscribe
+	  // Create node associated to plugin & subscribe
       this->rosNode.reset(new ros::NodeHandle("car_control"));
       this->state_pub = this->rosNode->advertise<display::State>("state", 100);
       this->updateConnection = event::Events::ConnectWorldUpdateBegin(
@@ -40,26 +39,24 @@ namespace gazebo
 
     public: void OnUpdate()
     {
-    	// Publish rate
+      // Publish rate
       ros::Rate loop_rate(FREQ);
 
       // Data to be sent
+      // Init structure
       display::State msg_state;
 
+      // Get pose and build state vector consequently
       math::Pose pose = this->model->GetWorldPose();
-			double theta = pose.rot.GetAsEuler().z;
-
+	  double theta = pose.rot.GetAsEuler().z;
       std::vector<double> state {pose.pos.x, pose.pos.y, theta};
 
-      // std::cout << "SIMU STATE  " << pose.pos.x << " " << pose.pos.y << " " << theta << '\n';
-
-      msg_state.x = state;
-
-			// Publish data
+	  // Assign and publish data
+	  msg_state.x = state;
       state_pub.publish(msg_state);
     }
 
-		// ROS helper function that processes messages (compulsory)
+	// ROS helper function that processes messages (compulsory)
     private: void QueueThread()
   	{
   	  static const double timeout = 0.01;
