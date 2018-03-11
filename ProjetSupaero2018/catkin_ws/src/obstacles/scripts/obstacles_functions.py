@@ -15,11 +15,11 @@ def read_obstacles_function(obstacles_file):
     :param obstacles_file: file to get obstacles from
     :return: a list of obstacles and the size of an obstacle in the list
     """
-    """ 
+    """
     An obstacle has fields (x,y,R) defining its spatial extent
     The obstacles files should be located somewhere near
-    the following location : ./resources/obstacles.obs 
-    
+    the following location : ./resources/obstacles.obs
+
     TODO: for moving obstacles, add fields vx, vy"""
 
     # parse xml file and get root element

@@ -10,9 +10,9 @@ from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Point, Quaternion, Pose
 
 
-''' 
+'''
 Filed used to initialize the environment from various parameters
-Currently, the world is generated with obstacles, a start point, an end point 
+Currently, the world is generated with obstacles, a start point, an end point
 and the car
 '''
 
