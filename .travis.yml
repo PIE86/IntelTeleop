@@ -7,5 +7,4 @@ before_install:
 
 script:
   # Check python code
-  - flake8 catkin_ws/src/
-  - popd
+  - flake8 ProjetSupaero2018/catkin_ws/src/
