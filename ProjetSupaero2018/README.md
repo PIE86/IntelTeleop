@@ -22,8 +22,10 @@ cmake .. && make
 sudo make install
 ```
 
-### add the models directory to your Gazebo model path
+### Add the models directory to your Gazebo model path
+```
 export GAZEBO_MODEL_PATH=$(rospack find display)/models:$GAZEBO_MODEL_PATH
+```
 
 You might want to add this line to your bashrc, after sourcing the ROS environment. You can also specify the full path. In the future, we hope that we will be able to do otherwise (without being constraining for the user)
 
