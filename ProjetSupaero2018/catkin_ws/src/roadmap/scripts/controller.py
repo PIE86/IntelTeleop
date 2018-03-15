@@ -156,18 +156,19 @@ if __name__ == '__main__':
     print('FIX CURRENT STATE AND END')
     start = np.array((2, 2, 0))
     controller.current_state = start
-    end = np.array((10, 15, 0))
+    end = np.array((12, 4, 0))
     controller.end = end
 
     i = 0
 
-    print('Waiting Gazebo for 50 seconds')
-    rospy.sleep(50)
-    print('20 seconds to go')
-    rospy.sleep(25)
-    print('5 s')
-    rospy.sleep(5)
-    print('Go')
+    # print('Waiting Gazebo for 50 seconds')
+    # rospy.sleep(50)
+    # print('20 seconds to go')
+    # rospy.sleep(25)
+    # print('5 s')
+    # rospy.sleep(5)
+    # print('Go')
+    input('Waiting for user input')
 
     while not rospy.is_shutdown():
         i += 1
