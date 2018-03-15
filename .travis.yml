@@ -5,29 +5,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq python-flake8
 
-  # Install ros kinetic
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-  - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
-  - sudo apt-get update
-  - apt list | grep "ros"
-  - apt list | grep "ros-kinetic"
-  - sudo apt-get install ros-kinetic-desktop-full
-
-  # Install ACADO
-  - sudo apt-get install -qq gcc g++ cmake git gnuplot doxygen graphviz
-  - git clone https://github.com/acado/acado.git -b stable ACADOtoolkit && cd ACADOtoolkit
-  - git reset --hard 88c441b6bedee039ef8cb81d34fcd9377fb6d138
-  - mkdir build
-  - pushd build
-  - cmake .. && make
-  - sudo make install
-  - popd
-
 script:
-  # Check compilation
-  - pushd ProjetSupaero2018/
-  - catkin_make
-
   # Check python code
   - flake8 catkin_ws/src/
   - popd
