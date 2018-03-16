@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="obstacles" type="check_point_server.py" name="check_obstacle_service"/>
+  <node pkg="obstacles" type="read_obstacles_server.py" name="ObstaclesReader"/>
+  <node pkg="opt_control" type="sampling_service" name="sampling_service"/>
+  <node pkg="opt_control" type="acado_opt_control" name="ACADOOptControl"/>
+
+  <node pkg="roadmap" type="acado_performance_test.py" name="perfo"/>
+</launch>

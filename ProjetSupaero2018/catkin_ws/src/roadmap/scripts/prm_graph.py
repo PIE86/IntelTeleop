@@ -1,4 +1,3 @@
-import random
 import heapq
 import numpy as np
 from itertools import permutations
@@ -17,7 +16,7 @@ Node = namedtuple('Node', ['state', 'linked_to'])
 
 class PRM:
     """
-    Simple generic PRM implementation using the Graph structure
+    Simple generic PRM implementation using the Graph structure.
 
     sample: generate a random state in the admissible state space
     connect: determines if 2 states are connectable and return the edges
@@ -103,63 +102,6 @@ class PRM:
         nb_nodes, nb_edges = len(self.graph.nodes), len(self.graph.edges)
         return nb_edges == nb_nodes*(nb_nodes-1)
 
-    def densify_knn(self, hdistance, nb_connect=3, nb_best=None):
-        """Build the prm graph
-        nb_sample: number of samples taken from the state space
-        nb_connect: number of nearest state to try to connect with
-        nb_best: number of the best edges to keep
-        """
-        new_edges = []
-        for node_index, node in self.graph.nodes.items():
-            nearest_nodes = self.graph.nn_from_state(node.state, hdistance,
-                                                     nb_connect)
-            for nn_node_index in nearest_nodes:
-                success, X, U, V = self.ACADO_connect(
-                    self.graph.nodes[node_index].state,
-                    self.graph.nodes[nn_node_index].state)
-                # If successing while attempting to connect the two nodes
-                # then add the new edge to the graph
-                if success:
-                    new_edges.append([(node_index, nn_node_index),
-                                      Graph.new_path([X, U, V])])
-
-                success, X, U, V = self.ACADO_connect(
-                    self.graph.nodes[nn_node_index].state,
-                    self.graph.nodes[node_index].state)
-                # If successing while attempting to connect the two nodes
-                # in reverse order then add the new edge to the graph
-                if success:
-                    new_edges.append([(nn_node_index, node_index),
-                                      Graph.new_path([X, U, V])])
-
-            if nb_best is not None:
-                # TODO: explain to Guillermo why best = longest
-                # best edges: the longest ones
-                new_edges_states_array = np.array(
-                    [edge[0] for edge in new_edges])
-                new_edges_V_array = np.array([edge[1].V for edge in new_edges])
-
-                best_edges_indexes = np.argpartition(
-                    new_edges_V_array, self.nb_best)[:-(self.nb_best+1):-1]
-
-                new_edges = [[new_edges_states_array[index],
-                              new_edges[index][1]]
-                             for index in best_edges_indexes]
-
-        for new_edge in new_edges:
-            self.graph.add_edge(new_edge[0], new_edge[1].X,
-                                new_edge[1].U, new_edge[1].V)
-        return len(new_edges)
-
-    def improve_old(self, estimator, verbose=False):
-        """Improve the prm using the approximators:
-        - Replace some edges with betters paths
-        - Tries to connect unconnected states
-        """
-        self.graph.edges.update(self.better_edges(estimator, verbose=verbose))
-        self.densify_random(estimator, 20, verbose=verbose)
-        self.connexify(estimator, 5, verbose=verbose)
-
     def improve(self, estimator, verbose=True):
         """Improve the prm using the approximators:
         - Replace some edges with betters paths
@@ -190,128 +132,6 @@ class PRM:
         self.graph.edges.update(better_edges)
         return not bool(better_edges)
 
-    def densify_random(self, estimator=None, n=10, max_iter=10, verbose=False):
-        """Try to connect more nodes using the NN approx.
-        Randomly select n nodes in the graph and try to connect them
-        to any other node of the graph.
-
-        - estimator: networks estimating trajectories and value function
-        - n: number of nodes to connect
-        - max_iter: max number of connection attempt from each chose node
-        """
-
-        for i in range(n):
-            # TODO: maybe something better than just random? Least connected?
-            # use the V-value for a horizon limited vue?
-            success = False
-            areConnected = True
-            iteration = 0
-
-            # Selects two random nodes until it finds two unconnected nodes
-            # or exceeds the max_iter iterations
-            while areConnected and iteration < max_iter:
-                iteration += 1
-                nodes_indexes = random.choices(list(self.graph.nodes), k=2)
-                areConnected = (tuple(nodes_indexes)
-                                in self.graph.edges.keys()
-                                or nodes_indexes[0] == nodes_indexes[1])
-
-            if not areConnected:
-
-                states = (self.graph.nodes[nodes_indexes[0]],
-                          self.graph.nodes[nodes_indexes[1]])
-
-                if verbose:
-                    print('#%d: Connecting %d to %d' % (i,
-                                                        nodes_indexes[0],
-                                                        nodes_indexes[1]))
-
-                # Tries to optimally connect the two nodes
-                # TODO: Not done initially in the irepa code
-                success, X_opt, U_opt, V_opt = self.opt_trajectories(
-                    states, estimator,
-                    verbose=True)
-            # TODO: except ACADOerror
-
-            # If an optimal path between the two nodes was found, then adds it
-            # to the graph as a new edge
-                if success:
-                    self.graph.add_edge((nodes_indexes[0],
-                                         nodes_indexes[1]),
-                                        X_opt, U_opt, V_opt)
-                    if verbose:
-                        print('\t\t\t... Yes!')
-                else:
-                    if verbose:
-                        print('\t\t\t... No!')
-
-        return
-
-    def densify_longer_traj(self, nb_attempt, min_path):
-        """Picks two random states, finds their shortest path in the graph
-        and then tries to directly connect them using the OCP warm-node1ed with
-        the shortest path.
-        - min_path: Minimum size of longer paths to consider
-        """
-
-        # TODO: new argument
-        for _ in range(10):
-            X_prm = []
-            # TODO: random or function of "connectability"
-            node1, node2 = random.choices(list(self.graph.nodes.keys()), k=2)
-            if node1 in self.graph.nodes[node1].linked_to:
-                continue
-            shortest_path = self.graph.astar(node1, node2)
-            if shortest_path is not None and len(shortest_path) >= min_path:
-                state1 = self.graph.nodes[node1]
-                state2 = self.graph.nodes[node2]
-                for i in range(len(shortest_path)-1):
-                    edge = shortest_path[i], shortest_path[i+1]
-                    X_edge, _, _ = self.graph.edges[edge]
-                    X_prm.append(X_edge)
-
-                X_prm = np.vstack(X_prm)
-
-                success, X, U, V = self.ACADO_connect(state1, state2, X_prm)
-                if success:
-                    self.graph.add_edge((node1, node2), X, U, V)
-
-    def connexify(self, estimator, nb_connect=5, verbose=False):
-        """
-        For every pair of connex components in the graph, tries to connect
-        nb_connect pairs of nodes.
-        """
-        connex_groups_id = list(self.graph.connex_groups)
-        connex_pairs = permutations(connex_groups_id, 2)
-        new_edges = []
-        for conidx1, conidx2 in connex_pairs:
-            for _ in range(nb_connect):
-                node_idx1 = random.choice(self.graph.connex_groups[conidx1])
-                node_idx2 = random.choice(self.graph.connex_groups[conidx2])
-                state1 = self.graph.nodes[node_idx1]
-                state2 = self.graph.nodes[node_idx2]
-                success, X_opt, U_opt, V_opt = self.opt_trajectories(
-                    (state1, state2), estimator,
-                    verbose=verbose)
-                if success:
-                    new_edges.append(((node_idx1, node_idx2),
-                                      X_opt, U_opt, V_opt))
-
-        for edge in new_edges:
-            self.graph.add_edge(*edge)
-
-    def opt_trajectories(self, states, estimator=None, verbose=False):
-        """Make an estimate of the trajectories to warm up the optimizer or
-        just call the optimizer if no estimator"""
-        if estimator:
-            X_est, U_est, V_est = estimator.trajectories(*states)
-            init_path = (X_est, U_est, V_est)
-        else:
-            init_path = None
-        # if verbose:
-        #     print("               Trying...")
-        return self.ACADO_connect(states[0], states[1], init=init_path)
-
 
 class Graph:
 
@@ -330,6 +150,7 @@ class Graph:
         self.connex_groups = {}
 
         # connex_elements = {nodes_id : [connex_group_id]}
+        # not used in final version but useful to check connexity
         self.connex_elements = {}
 
         # ditance metric
@@ -407,28 +228,6 @@ class Graph:
         """Given a list of node indices, return the list of associated states
         """
         return [self.nodes[node].state for node in node_list]
-
-    # TODO finalize
-    def nn_from_state(self, state, max_nn=1):
-        """
-        Return the max_nn nearest neighbours nodes indexes of state.
-        """
-
-        distances = np.array(
-            [[node_index,
-              self.hdistance(state, node.state)] for node_index, node
-             in self.nodes.items() if node.state != state])
-
-        if len(distances) <= max_nn:
-            return list(self.nodes.keys())
-
-        """ np.argpartition([hdistance],max_nn)[:max_nn] returns an unsorted
-        list of node indices for the max_nn nearest neighbours nodes of state
-        """
-        nn_indexes = np.argpartition(distances[:, 1], max_nn)[:max_nn]
-
-        # FIXME
-        return distances[nn_indexes, 0]
 
     def get_path(self, node1, node2):
         # If nodes already connected, return edge path
