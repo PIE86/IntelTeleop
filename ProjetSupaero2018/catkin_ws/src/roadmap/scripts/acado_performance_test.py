@@ -5,6 +5,7 @@ Script ploting 3 graphs exploring the relation between calculation time
 for the opt control, actual time of the trajectories and euclidian distance
 between start and end states. The opt_control can be initialized by the
 estimator so training should have been occured beforehand.
+
 To be launched with:
 roslaunch roadmap test_latency_acado_init.launch --screen
 """
@@ -21,9 +22,9 @@ from irepa import Irepa, NX, NU
 
 OPT_CONTROL_SERVER = 'solve_ocp'
 
-NB_SAMPLES = 300
+NB_SAMPLES = 400
 # Initialize with the estimator
-INITIALIZE = True
+INITIALIZE = False
 
 
 class LatencyTest:
@@ -90,7 +91,8 @@ class LatencyTest:
                  marker='.', linestyle='', label='Calculation times')
         plt.xlabel('euclidian dist')
         plt.ylabel('time (s)')
-        plt.title('Calculation time = f(euclidian distance)')
+        plt.title("""Calculation time = f(euclidian distance)
+                  {} samples""".format(NB_SAMPLES))
         plt.xlim(0, 20)
         plt.ylim(0, 2)
         plt.legend()
@@ -105,7 +107,8 @@ class LatencyTest:
         plt.axhline(y=0, color='black', linestyle='-')
         plt.xlabel('euclidian dist')
         plt.ylabel('time (s)')
-        plt.title('Trajectory time = f(euclidian distance)')
+        plt.title("""Trajectory time = f(euclidian distance)
+                  {} samples""".format(NB_SAMPLES))
         plt.xlim(0, 20)
         plt.ylim(-2, 20)
         plt.legend()
@@ -116,7 +119,8 @@ class LatencyTest:
                  marker='.', linestyle='')
         plt.xlabel('Calculation time (s)')
         plt.ylabel('Trajectory time (s)')
-        plt.title('Calculation time = f(Trajectory time)')
+        plt.title("""Calculation time = f(Trajectory time)
+                  {} samples""".format(NB_SAMPLES))
         plt.legend()
         plt.xlim(0, 20)
         plt.ylim(0, 2)

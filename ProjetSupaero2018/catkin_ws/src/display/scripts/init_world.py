@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import math
 import os.path as pp
 import pyquaternion
 import sys
@@ -166,7 +165,7 @@ def spawn_obstacles():
 def init_world():
     # initial car position and orientation as [x, y, z, alpha, beta, gamma]
     start_pose = [2, 2, 0, 0, 0, 0]
-    end_pose = [10, 15, 0, 0, 0, 0]
+    end_pose = [12, 4, 0, 0, 0, 0]
     # start_pose = [2, 2, 0, 0, 0, -math.pi/2]
     # end_pose = [16, 3, 0, 0, 0, -math.pi/2]
 

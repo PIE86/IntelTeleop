@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+
+"""
+Example script explaining how to create a service for the opt_control service.
+
+To be launched with:
+roslaunch roadmap test_opt_control.launch --screen
+"""
+
 import numpy as np
 import rospy
 import actionlib

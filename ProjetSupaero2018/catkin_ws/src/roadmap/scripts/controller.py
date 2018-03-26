@@ -1,5 +1,25 @@
 #!/usr/bin/env python
 
+"""
+Online controller to test the trajectory estimator built using IREPA.
+Work locked with the simulation to produce control according to the current
+state and the end state. At each iteration a state is received from the
+simulation and a control is sent. Optimal trajectories are generated at a
+lower frequency to prevent optimal control node overloading. This call is
+asynchronious, meaning that the control trajectory is computed in a non
+blocking way to enable the controls to be sent continuously.
+
+To be launched with:
+roslaunch demo_launch jalon2_online.launch --screen
+
+Then wait for Gazebo to display the the environment. When it is ready press any
+key to start the visualization.
+
+Start and end states are hard coded both here and in
+display/scripts/init_world.py
+"""
+
+import time
 import numpy as np
 import rospy
 import actionlib
@@ -13,18 +33,21 @@ OPT_CONTROL_SERVER = 'solve_ocp'
 COMMAND_TOPIC = '/car_control/command'
 STATE_TOPIC = '/car_control/state'
 
-# rospy.wait_for_service(OPT_CONTROL_SERVICE)
-# rospy.loginfo('End of wait for ocp')
-
-# Control frequency
+# Control frequency (Hz)
 CPS = 10
-# 4 Hz -> UPDATE every 40 iterations -> ~ 0.4 Hz = 2.5s
-UPDATE_TIMES = 2*CPS
 
 
 class Controller:
 
+    """
+    Online controller sending commands/controls to the simulation node
+    """
+
     def __init__(self):
+        """
+        Load the irepa built estimator then create clients for simulation
+        and optimal control nodes
+        """
         self.estimator = Networks(NX, NU,
                                   x_range=np.array([X_MIN, X_MAX]),
                                   u_range=np.array([U_MIN, U_MAX]))
@@ -37,8 +60,9 @@ class Controller:
         self.current_state = np.zeros(NX)
         self.end = np.zeros(NX)
         # time from the start of the current trajectory in ns
-        self.t = 0  # useless as attribute?
         self.t_idx = 0
+        # update trajectory every update_times iteration
+        self.update_times = 10
 
         self.ocp_client = actionlib.SimpleActionClient(OPT_CONTROL_SERVER,
                                                        OptControlAction)
@@ -47,32 +71,44 @@ class Controller:
         rospy.Subscriber(STATE_TOPIC, State, self.update_state)
 
         # test state rate
-        self.x_rate_test = 0
         self.t1 = rospy.get_rostime()
         self.t2 = rospy.get_rostime()
 
     def next_control(self):
-        """Choose next control depending on the current_state and self.U
-        Callback to service controller"""
-        self.t += 1 / CPS  # Maybe useless after init
+        """
+        Choose next control to send to the simulation.
+        """
         self.t_idx += 1
         if self.t_idx < self.U.shape[0]:
             self.u = self.U[self.t_idx, :]
+            print('  CONTROL:', self.u)
         else:
-            self.u = np.zeros(NU)
-        print('  CONTROL:', self.u)
+            print('  !! No more control --> previous')
         self.pub.publish(self.u)
         return self.u
 
     def update_state(self, msg):
-        try:
-            print('STATE received:', msg, 'End traj:', self.X[-1])
-        except Exception:
-            pass
+        """
+        Callback function for the simulation Subscriber.
+        """
+        # print('STATE received:', msg, 'End traj:', self.X[-1])
         self.current_state = np.array(msg.x)
 
     def update_trajectory(self, state, resp):
-        """Callback to topic simulation"""
+        """
+        Callback function for the optimal control action server.
+
+        Once a control trajectory is received, it is resampled using trajectory
+        time so that the time difference between to consecutive controls is
+        at the CPS.
+
+        :param state: state of the action server (nothing to do with
+                      the state of the system)
+        :param resp: response of the action server containing
+                     - states: states trajectory
+                     - controls: controls trajectory
+                     - time: time length of the trajectory
+        """
         # print('UPDATE TRAJECTORYYYYY')
         # print(state)
         # print(resp)
@@ -86,14 +122,14 @@ class Controller:
             # Resample the trajectories
             nb_control = int(resp.time * CPS) + 1
             print('X ACADO', X.shape)
-            print(X)
+            # print(X)
             self.X = resample(X, nb_control)  # maybe not necessary
             print('X resampled', self.X.shape)
-            print(self.X)
+            # print(self.X)
             self.U = resample(U, nb_control)
-            tend = rospy.get_rostime()
-            self.t = (tend.nsecs - self.tstart.nsecs)/1e9
-            self.t_idx = int(self.t * CPS)
+            tend = time.time()
+            t_calc = (tend - self.tstart)
+            self.t_idx = int(t_calc * CPS)
 
             print()
             print()
@@ -102,8 +138,7 @@ class Controller:
             print('Time traj', resp.time)
             print('Dt acado', dt_acado)
             print('nb_control', nb_control)
-            print('UPDATE TOOK', self.t, 'secs')
-            print(self.t)
+            print('UPDATE TOOK', t_calc, 'secs')
             print(self.t_idx)
 
         else:
@@ -114,20 +149,20 @@ class Controller:
 
     def call_update_trajectory_action(self):
         """
-        Call ACADO warm started by the estimator.
-        Update the current trajectory (X, U, time).
-        Maybe start a timer at the beginning?
+        Call ACADO warm started by the estimator. The result is handled by
+        update_trajectory function.
         """
-        self.tstart = rospy.get_rostime()
+        self.tstart = time.time()
+        # self.tstart = rospy.get_rostime()
         Xe, Ue, Ve = self.estimator.trajectories(self.current_state, self.end)
 
         Xe = Xe.flatten()
         Ue = Ue.flatten()
         print()
-        print('current_state, end')
-        print(self.current_state, self.end)
-        print('Xe')
-        print(Xe)
+        print('current_state, end:', self.current_state, self.end)
+        print()
+        # print('Xe')
+        # print(Xe)
         # print(Ue)
         # print(Ve)
 
@@ -145,10 +180,29 @@ class Controller:
     #     self.end = end_state
     #     self.call_update_trajectory_action()
 
+    def start_control(self):
+        """
+        Start the control loop at rate CPS
+        """
+        i = 0
+        t1 = time.time()
+        while not rospy.is_shutdown():
+            i += 1
+            # print('EVERY')
+            if i % self.update_times == 0:
+                t2 = time.time()
+                print('Time since last update:', t2-t1)
+                t1 = t2
+                # print('ONLY')
+                self.call_update_trajectory_action()
+                i = 0
+            self.next_control()
+            rate.sleep()
+
 
 if __name__ == '__main__':
-    rospy.init_node('tototo', anonymous=True)
-    rate = rospy.Rate(CPS)  # 10hz
+    rospy.init_node('controller_node', anonymous=True)
+    rate = rospy.Rate(CPS)
     print('CREATE CONTROLLER')
     controller = Controller()
 
@@ -159,23 +213,6 @@ if __name__ == '__main__':
     end = np.array((12, 4, 0))
     controller.end = end
 
-    i = 0
+    input('\nPress key when gazebo is ready\n')
 
-    # print('Waiting Gazebo for 50 seconds')
-    # rospy.sleep(50)
-    # print('20 seconds to go')
-    # rospy.sleep(25)
-    # print('5 s')
-    # rospy.sleep(5)
-    # print('Go')
-    input('Waiting for user input')
-
-    while not rospy.is_shutdown():
-        i += 1
-        # print('EVERY')
-        if i % UPDATE_TIMES == 0:
-            # print('ONLY')
-            controller.call_update_trajectory_action()
-            i = 0
-        controller.next_control()
-        rate.sleep()
+    controller.start_control()
