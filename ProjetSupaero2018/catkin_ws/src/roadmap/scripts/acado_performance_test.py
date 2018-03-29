@@ -10,13 +10,12 @@ To be launched with:
 roslaunch roadmap test_latency_acado_init.launch --screen
 """
 
+import sys
 import time
 import numpy as np
 from matplotlib import pyplot as plt
 import rospy
-import actionlib
-from roadmap.msg import OptControlAction, OptControlGoal
-from opt_control.srv import Samples
+from roadmap.msg import OptControlGoal
 
 from irepa import Irepa, NX, NU
 
@@ -24,7 +23,7 @@ OPT_CONTROL_SERVER = 'solve_ocp'
 
 NB_SAMPLES = 400
 # Initialize with the estimator
-INITIALIZE = False
+INITIALIZE = True
 
 
 class LatencyTest:
@@ -33,13 +32,13 @@ class LatencyTest:
         rospy.init_node('test_latency', anonymous=True)
 
         rospy.wait_for_service('create_samples')
-        sampling_client = rospy.ServiceProxy('create_samples', Samples)
-        self.ocp_client = actionlib.SimpleActionClient(OPT_CONTROL_SERVER,
-                                                       OptControlAction)
-        self.ocp_client.wait_for_server()
-        rospy.loginfo('End of wait for ocp action server')
+        # sampling_client = rospy.ServiceProxy('create_samples', Samples)
+        # self.ocp_client = actionlib.SimpleActionClient(OPT_CONTROL_SERVER,
+        #                                                OptControlAction)
+        # self.ocp_client.wait_for_server()
+        # rospy.loginfo('End of wait for ocp action server')
 
-        self.irepa = Irepa(self.ocp_client, sampling_client)
+        self.irepa = Irepa()
         self.irepa.estimator.load()
 
         self.calc_times = []
@@ -62,7 +61,9 @@ class LatencyTest:
 
         print('Start in 2 seconds')
         time.sleep(2)
-        for state in samples:
+        for i, state in enumerate(samples):
+            sys.stdout.write("\r{}%".format(round(100*float(i)/len(samples), 0)))
+            sys.stdout.flush()
             if INITIALIZE:
                 Xe, Ue, Ve = self.irepa.estimator.trajectories(state, end)
                 Xe = Xe.flatten()
@@ -75,8 +76,8 @@ class LatencyTest:
                 list(end),
                 Xe, Ue, Ve, NX, NU)
             t1 = time.time()
-            self.ocp_client.send_goal(goal, self.callback)
-            self.ocp_client.wait_for_result(rospy.Duration.from_sec(5.0))
+            self.irepa.ocp_client.send_goal(goal, self.callback)
+            self.irepa.ocp_client.wait_for_result(rospy.Duration.from_sec(5.0))
             t2 = time.time()
             self.calc_times.append(round(t2-t1, 2))
             self.euclid.append(round(self.irepa.euclid(state, end), 2))
@@ -117,8 +118,8 @@ class LatencyTest:
         # 3rd plot
         plt.plot(times_arr,  calc_times_arr,
                  marker='.', linestyle='')
-        plt.xlabel('Calculation time (s)')
-        plt.ylabel('Trajectory time (s)')
+        plt.xlabel('Trajectory time (s)')
+        plt.ylabel('Calculation time (s)')
         plt.title("""Calculation time = f(Trajectory time)
                   {} samples""".format(NB_SAMPLES))
         plt.legend()

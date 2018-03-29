@@ -6,6 +6,7 @@ import sys
 import rospy
 import subprocess
 import numpy as np
+from display.msg import State
 from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Point, Quaternion, Pose
 
@@ -24,6 +25,41 @@ MODEL_COUNT = 0
 PARAM_NAME_SIZE = 'obstacles/obstacles_size'
 PARAM_NAME_OBSTACLES = 'obstacles/obstacles_vec'
 READ_OBSTACLES_SERVICE = 'read_obstacles'
+
+END_STATE_TOPIC = 'end_state'
+ESPS = 2  # Hz
+
+
+class World:
+
+    def __init__(self):
+        # initial car position and orientation as [x, y, z, alpha, beta, gamma]
+
+        # Easy one
+        self.start_pose = [2, 2, 0, 0, 0, 2]
+        self.end_pose = [12, 4, 0, 0, 0, 0]
+
+        # Long one
+        # self.start_pose = [2, 2, 0, 0, 0, 0]
+        # self.end_pose = [15, 15, 0, 0, 0, np.pi/2]
+
+        # Long and hard
+        # self.start_pose = [2, 2, 0, 0, 0, np.pi/3]
+        # self.end_pose = [11, 16, 0, 0, 0, 0]
+
+        self.pub = rospy.Publisher(END_STATE_TOPIC, State, queue_size=10)
+
+    def init_world(self):
+        spawn_car(self.start_pose)
+        spawn_start_point(self.start_pose)
+        spawn_end_point(self.end_pose)
+        spawn_obstacles()
+
+    def send_end_state(self):
+        self.pub.publish([self.end_pose[0],
+                          self.end_pose[1],
+                          self.end_pose[5],
+                          ])
 
 
 def build_model(path_to_model, pose_vector):
@@ -96,22 +132,19 @@ def spawn_end_point(end_pose):
 
 
 def create_cylinder_urdf(radius):
-    str_whitespace = str(' ')
     # Set up xacro instructions and args
     xacro_instruction = 'rosrun xacro xacro --inorder -o'
     xacro_path = CYLINDER_PATH + 'cylinder.xacro'
-    xacro_args = 'x:=' + str(0) + str_whitespace \
-                 + 'y:=' + str(0) + str_whitespace \
+    xacro_args = 'x:=' + str(0) + ' ' \
+                 + 'y:=' + str(0) + ' ' \
                  + 'radius:=' + str(radius)
 
     # Set up urdf path
     urdf_path = CYLINDER_PATH + 'cylinder.urdf'
 
     # Execute xacro instruction
-    launch_xacro_instructions = str_whitespace.join([xacro_instruction,
-                                                     urdf_path,
-                                                     xacro_path,
-                                                     xacro_args])
+    launch_xacro_instructions = ' '.join([xacro_instruction, urdf_path,
+                                          xacro_path, xacro_args])
     try:
         # shell=True so that .bashrc is sourced
         subprocess.call(launch_xacro_instructions, shell=True)
@@ -162,21 +195,11 @@ def spawn_obstacles():
         spawn_cylinder(obs[0], obs[1], obs[2])
 
 
-def init_world():
-    # initial car position and orientation as [x, y, z, alpha, beta, gamma]
-    start_pose = [2, 2, 0, 0, 0, 0]
-    end_pose = [12, 4, 0, 0, 0, 0]
-    # start_pose = [2, 2, 0, 0, 0, -math.pi/2]
-    # end_pose = [16, 3, 0, 0, 0, -math.pi/2]
-
-    spawn_car(start_pose)
-    spawn_start_point(start_pose)
-    spawn_end_point(end_pose)
-    spawn_obstacles()
-
-
 if __name__ == '__main__':
-    try:
-        init_world()
-    except rospy.ROSInterruptException:
-        pass
+    rospy.init_node('task', anonymous=True)
+    world = World()
+    world.init_world()
+    rate = rospy.Rate(ESPS)
+    while not rospy.is_shutdown():
+        world.send_end_state()
+        rate.sleep()

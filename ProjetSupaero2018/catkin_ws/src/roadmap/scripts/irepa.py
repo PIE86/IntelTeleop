@@ -16,12 +16,11 @@ SAMPLING_SERVICE = 'create_samples'
 
 VERBOSE = False
 
-# True PRM should be computed, False if loaded from file
-INIT_PRM = True
 # Number of total iteration of the IREPA
-IREPA_ITER = 6
-NB_SAMPLE = 30  # must be at least 5
-SAVE = False  # save the NN weights at the end
+IREPA_ITER = 7
+NB_SAMPLE = 35  # must be at least 5
+SAVE = True  # save the NN weights at the end
+PLOT = False  # plot the iterations
 
 # TODO: To get from Model node
 NX = 3
@@ -39,7 +38,7 @@ random.seed(42)
 class Irepa:
     """Irepa algorithm as described in Nicolas Mansard's paper."""
 
-    def __init__(self, ocp_client, sampling_client):
+    def __init__(self):
         """
         Create ROS clients and a the estimator model
         """
@@ -64,7 +63,7 @@ class Irepa:
         # Initialize PRM with a sampling function,
         # a connect function and an heuristic distance
         prm = PRM(sample_fun=self.sample, connect_fun=self.connect,
-                  hdistance=self.euclid)
+                  hdistance=euclid)
 
         # Add NN_SAMPLE random nodes to the PRM
         prm.add_nodes(NB_SAMPLE, verbose=VERBOSE)
@@ -141,9 +140,10 @@ class Irepa:
             self.estimator.save()
             print('Saved')
 
-        self.plot_results(astar_successes, est_successes, nb_attempts,
-                          edge_numbers_arr, total_edges_cost_before,
-                          total_edges_cost_after)
+        if PLOT:
+            self.plot_results(astar_successes, est_successes, nb_attempts,
+                              edge_numbers_arr, total_edges_cost_before,
+                              total_edges_cost_after)
 
     def connect(self, s1, s2, init=None):
         """
@@ -219,7 +219,7 @@ class Irepa:
 
         X = np.vstack([Xx, Xy, Xtheta]).T
         U = X.copy()[:, 0:2]
-        V = self.euclid(s1, s2) + 0.02*random.random()
+        V = euclid(s1, s2) + 0.02*random.random()
 
         return success, X, U, V
 
@@ -233,12 +233,6 @@ class Irepa:
         """
         resp = self.sampling_client(n)
         return np.array(resp.samples).reshape(n, int(len(resp.samples)/n))
-
-    def euclid(self, s1, s2):
-        """
-        Compute euclidian distance between 2 states (numpy arrays)
-        """
-        return np.sqrt(sum((x1i - x2i)**2 for (x1i, x2i) in zip(s1, s2)))
 
     def plot_results(self, astar_successes, est_successes, nb_attempts,
                      edge_numbers_arr, total_edges_cost_before,
@@ -322,7 +316,14 @@ class Irepa:
         print('Value')
         print(V)
         print('Euclidian value')
-        print(self.euclid(x0, x1))
+        print(euclid(x0, x1))
+
+
+def euclid(s1, s2):
+    """
+    Compute euclidian distance between 2 states (numpy arrays)
+    """
+    return np.sqrt(sum((x1i - x2i)**2 for (x1i, x2i) in zip(s1, s2)))
 
 
 if __name__ == '__main__':
