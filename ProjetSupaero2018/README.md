@@ -1,6 +1,33 @@
 # Installation
-##ACADO
-TODO
+
+ROS Kinetic (full install) is required. See http://wiki.ros.org/ROS/Installation
+For example for Ubuntu, that would be:
+
+```
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+sudo apt-get update
+sudo apt-get install ros-kinetic-desktop-full
+```
+
+ACADO Toolkit is also required.
+
+```
+sudo apt-get install gcc g++ cmake git gnuplot doxygen graphviz
+
+git clone https://github.com/acado/acado.git -b stable ACADOtoolkit && cd ACADOtoolkit
+git reset --hard 88c441b6bedee039ef8cb81d34fcd9377fb6d138
+mkdir build && cd build
+cmake .. && make
+sudo make install
+```
+
+### Add the models directory to your Gazebo model path
+```
+export GAZEBO_MODEL_PATH=$(rospack find display)/models:$GAZEBO_MODEL_PATH
+```
+
+You might want to add this line to your bashrc, after sourcing the ROS environment. You can also specify the full path. In the future, we hope that we will be able to do otherwise (without being constraining for the user)
 
 ##Set up a virtual environement
 ### Using Conda
@@ -18,25 +45,19 @@ TODO
 http://sametmax.com/les-environnement-virtuels-python-virtualenv-et-virtualenvwrapper/
 
 
-# Reminders
-## Add project path to ROS_PACKAGE_PATH:
-In catkin_ws directory of 2018 project, run `source devel/setup.bash`
+## Install the demo
+
+```
+git clone https://github.com/PIE86/MemoryEnhancedPredictiveControl.git
+cd MemoryEnhancedPredictiveControl/ProjetSupaero2018/
+catkin_make
+source devel/setup.bash
+```
+
+## And launch it
+```
+roslaunch demo_launch jalon1_demo.launch
+```
 
 ### Git
-When doing a pull request, choose "develop" as the target branch and PAY ATTENTION to
-choose right repo for develop (default is Diane's repo)
-
-
-## launch demo
-The demo for J1 might be launched using the following commands:
-
-### add the models directory to your Gazebo model path
-export GAZEBO_MODEL_PATH=$(rospack find display)/models:$GAZEBO_MODEL_PATH
-
-You might want to add this line to your bashrc, after sourcing the ROS environment. You can also specify the full path. In the future, we hope that we will be able to do otherwise (without being constraining for the user)
-
-### build your catkin_ws
-using catkin_make from the workspace
-
-### roslaunch
-roslaunch demo_launch jalon1_demo.launch
+When doing a pull request, choose "develop" as the target branch and PAY ATTENTION to choose right repo for develop (default is Diane's repo)
