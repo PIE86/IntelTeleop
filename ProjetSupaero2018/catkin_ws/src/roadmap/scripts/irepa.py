@@ -43,8 +43,7 @@ class Irepa:
         Create ROS clients and a the estimator model
         """
         self.ocp_client = actionlib.SimpleActionClient(
-                                            OPT_CONTROL_ACTION_SERVER,
-                                            OptControlAction)
+            OPT_CONTROL_ACTION_SERVER, OptControlAction)
         self.ocp_client.wait_for_server()
         rospy.loginfo('End of wait for ocp action server')
         rospy.wait_for_service('create_samples')
