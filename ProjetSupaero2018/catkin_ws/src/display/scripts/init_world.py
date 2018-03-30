@@ -29,6 +29,7 @@ READ_OBSTACLES_SERVICE = 'read_obstacles'
 
 END_STATE_TOPIC = 'end_state'
 ESPS = 2  # Hz
+SECOND_END = False
 
 
 class World:
@@ -72,7 +73,7 @@ class World:
         while not rospy.is_shutdown():
             t2 = time.time()
             # TODO: Change end is hard coded but should be part of the GUI
-            if not self.spawned_end2 and (t2-t1) > 30:
+            if SECOND_END and not self.spawned_end2 and (t2-t1) > 30:
                 self.new_end()
                 self.spawned_end2 = True
             self.send_end_state()
