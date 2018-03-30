@@ -62,7 +62,8 @@ class LatencyTest:
         print('Start in 2 seconds')
         time.sleep(2)
         for i, state in enumerate(samples):
-            sys.stdout.write("\r{}%".format(round(100*float(i)/len(samples), 0)))
+            sys.stdout.write("\r{}%".format(
+                             round(100*float(i)/len(samples), 0)))
             sys.stdout.flush()
             if INITIALIZE:
                 Xe, Ue, Ve = self.irepa.estimator.trajectories(state, end)

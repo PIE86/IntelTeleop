@@ -16,8 +16,9 @@ U(a,b) which are the state and control trajectories to go from a to b.
 """
 
 TRAJLENGTH = 21
-# Directory where the networks models should be stored (in ~/.ros/)
-DATADIR = 'irepa_data'
+PATH_TO_ROADMAP_PKG = os.path.realpath(__file__).split("scripts")[0]
+opj = os.path.join
+DATA_DIR = opj(PATH_TO_ROADMAP_PKG, 'data')
 
 
 class Networks:
@@ -40,9 +41,6 @@ class Networks:
         self.xs_scaler = StandardScaler().fit(np.tile(x_range, 2))
         self.x_scaler = StandardScaler().fit(np.tile(x_range, TRAJLENGTH))
         self.u_scaler = StandardScaler().fit(np.tile(u_range, TRAJLENGTH))
-
-        if not os.path.exists(DATADIR):
-            os.makedirs(DATADIR)
 
     def train(self, dset, nepisodes=int(1e2)):
         """Train the networks using the built dataset."""
@@ -95,18 +93,8 @@ class Networks:
                  - controls trajectory
                  - value
         """
-        try:
-            x = self.xs_scaler.transform(np.hstack([x1, x2])
-                                           .reshape((1, 2*self.state_size)))
-        except ValueError as e:
-            print(e)
-            print()
-            print()
-            print()
-            print()
-            print(x1, x2)
-            print(self.state_size)
-
+        x = self.xs_scaler.transform(np.hstack([x1, x2])
+                                       .reshape((1, 2*self.state_size)))
         X_scaled = self.ptrajx.predict(x, batch_size=self.BATCH_SIZE)
         X = self.x_scaler.inverse_transform(X_scaled)
         X = X.reshape((self.TRAJLENGTH, self.state_size))
@@ -136,20 +124,20 @@ class Networks:
 
     def save(self):
         """Save the model"""
-        self.value.save(os.path.join(DATADIR, 'model_value.hd5'))
-        self.ptraju.save(os.path.join(DATADIR, 'model_ptraju.hd5'))
-        self.ptrajx.save(os.path.join(DATADIR, 'model_ptrajx.hd5'))
+        self.value.save(opj(DATA_DIR, 'model_value.hd5'))
+        self.ptraju.save(opj(DATA_DIR, 'model_ptraju.hd5'))
+        self.ptrajx.save(opj(DATA_DIR, 'model_ptrajx.hd5'))
 
     def load(self):
         """Load a saved model"""
         try:
-            self.value = load_model(os.path.join(DATADIR, 'model_value.hd5'))
-            self.ptraju = load_model(os.path.join(DATADIR, 'model_ptraju.hd5'))
-            self.ptrajx = load_model(os.path.join(DATADIR, 'model_ptrajx.hd5'))
+            self.value = load_model(opj(DATA_DIR, 'model_value.hd5'))
+            self.ptraju = load_model(opj(DATA_DIR, 'model_ptraju.hd5'))
+            self.ptrajx = load_model(opj(DATA_DIR, 'model_ptrajx.hd5'))
         except Exception:
             print()
+            print("!! No weights saved in ", DATA_DIR)
             print()
-            print("No weights saved in ", DATADIR)
 
 
 class Dataset:

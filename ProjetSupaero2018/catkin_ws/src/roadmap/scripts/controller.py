@@ -4,10 +4,17 @@
 Online controller to test the trajectory estimator built using IREPA.
 Work locked with the simulation to produce control according to the current
 state and the end state. At each iteration a state is received from the
-simulation and a control is sent. Optimal trajectories are generated at a
-lower frequency to prevent optimal control node overloading. This call is
-asynchronious, meaning that the control trajectory is computed in a non
-blocking way to enable the controls to be sent continuously.
+simulation and a control is sent. More sparsely, a end state is also received
+so that the implementation can take into account an objective change
+Optimal trajectories are generated at a lower frequency to prevent optimal
+control node overloading. This call is asynchronious, meaning that the control
+trajectory is computed in a non blocking way to enable the controls to be sent
+continuously.
+Upon reception, the trajectory is resampled with a linear interpolation so that
+the list of commands corresponds to the control frequency. The first control
+to be sent is then chosen according to the calculation time and the trajectory
+time (e.g. if calculation time is equal to 0, the first is chosen). The SHIFT
+enable/disable this behaviour for testing purposes.
 
 To be launched with:
 roslaunch demo_launch jalon2_online.launch --screen
@@ -41,7 +48,11 @@ TUPS = 3
 STOP_RADIUS = 0.4
 UPDATE_TIME_THRES = 0.8
 
-INIT = True
+# True to use warm-start the solver with the estimator
+ESTIMATOR_INIT = True
+# For test purposes: if true, the first control to be sent is calculated
+# else the first is sent
+SHIFT = True
 
 
 class Controller:
@@ -75,7 +86,6 @@ class Controller:
                                                        OptControlAction)
         self.ocp_client.wait_for_server()
         self.pub = rospy.Publisher(COMMAND_TOPIC, Command, queue_size=10)
-        self.rate = rospy.Rate(CPS)
         rospy.Subscriber(CURRENT_STATE_TOPIC, State, self.update_current_state)
         rospy.Subscriber(END_STATE_TOPIC, State, self.update_end_state)
 
@@ -94,7 +104,11 @@ class Controller:
         """
         self.t_idx += 1
         if euclid(self.current_state, self.end_state) < STOP_RADIUS:
+            self.stop_update = True
             self.stop_controls = True
+        else:
+            self.stop_update = False
+            self.stop_controls = False
 
         if self.stop_controls:
             self.u = np.zeros(NU)
@@ -142,6 +156,8 @@ class Controller:
             X = np.array(resp.states).reshape(len(resp.states)//NX, NX)
             U = np.array(resp.controls).reshape(len(resp.controls)//NU, NU)
             self.time = resp.time
+            # if resp.time < UPDATE_TIME_THRES:
+            #     self.stop_update = True
 
             dt_acado = self.time/(X.shape[0]-1)
             nb_control = int(resp.time * CPS) + 1
@@ -149,10 +165,7 @@ class Controller:
             self.U = resample(U, nb_control)
             tend = time.time()
             t_calc = (tend - self.tstart)
-            self.t_idx = int(t_calc * CPS)
-
-            if t_calc < UPDATE_TIME_THRES:
-                self.stop_update = True
+            self.t_idx = int(t_calc * CPS) if SHIFT else 0
 
             print()
             print('RESULT TRAJECTORY')
@@ -163,7 +176,6 @@ class Controller:
             print(self.t_idx)
 
         else:
-            # TODO
             print()
             print('FAILURE OF CONTROL!!!!')
             print()
@@ -174,7 +186,7 @@ class Controller:
         update_trajectory function.
         """
         self.tstart = time.time()
-        if INIT:
+        if ESTIMATOR_INIT:
             Xe, Ue, Ve = self.estimator.trajectories(self.current_state,
                                                      self.end_state)
             Xe = Xe.flatten()
@@ -193,14 +205,16 @@ class Controller:
         Start the control loop at rate CPS
         """
         print('Control started')
+        rate = rospy.Rate(CPS)
         i = 0
         while not rospy.is_shutdown():
             i += 1
             if i % self.update_times == 0:
-                self.call_update_trajectory_action()
+                if not self.stop_update:
+                    self.call_update_trajectory_action()
                 i = 0
             self.next_control()
-            self.rate.sleep()
+            rate.sleep()
 
 
 if __name__ == '__main__':
