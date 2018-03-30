@@ -11,18 +11,23 @@ from display.msg import State
 from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Point, Quaternion, Pose
 
-# set to True to enable debug mode (verbose)
+
+"""
+Filed used to initialize the environment from various parameters
+Currently, the world is generated with obstacles, a start point, an end point
+and the car.
+"""
+
+# Debug mode (== verbose)
 DEBUG = True
 
-# car model name:
-CAR_NAME = 'my_car'
 # get the relative path to display package
-PATH_TO_DISPLAY_PKG = os.path.realpath(__file__).split('scripts')[0]
-# rosrun xacro xacro.py model.xacro > model.urdf
-CYLINDER_PATH = PATH_TO_DISPLAY_PKG + 'models/cylinder/'
-# count the total amount of obstacles
-obstacle_nb = 0
+PATH_TO_DISPLAY_PKG = os.path.realpath(__file__).split("scripts")[0]
 
+# path to the cylinder files
+CYLINDER_PATH = pp.join(PATH_TO_DISPLAY_PKG, 'models', 'cylinder')
+
+# names from the obstacles package
 PARAM_NAME_SIZE = 'obstacles/obstacles_size'
 PARAM_NAME_OBSTACLES = 'obstacles/obstacles_vec'
 READ_OBSTACLES_SERVICE = 'read_obstacles'
@@ -30,6 +35,9 @@ READ_OBSTACLES_SERVICE = 'read_obstacles'
 END_STATE_TOPIC = 'end_state'
 ESPS = 2  # Hz
 SECOND_END = False
+
+# count the total amount of obstacles generated
+obstacle_nb = 0
 
 
 class World:
@@ -58,7 +66,7 @@ class World:
         # self.end_pose = [10, 15, 0, 0, 0, 3]
 
         self.pub = rospy.Publisher(END_STATE_TOPIC, State, queue_size=10)
-
+        # used to spwan the second end once if needed
         self.spawned_end2 = False
 
     def init_world(self):
@@ -91,15 +99,19 @@ class World:
 
 
 def build_model(path_to_model, pose_vector):
-    """ Get model parameters required to spawn it"""
-    """ Namely, from path and pose_vector, get:
-     model as string (xml syntax)
-     pose as Pose(Point, Quaternion)"""
+    """
+    Get model parameters required to spawn it
+    Should be used before spawn_model
+    :param path_to_model: absolute path as a string
+    :param pose_vector: pose as a vector [x, y, z, a1, a2, a3]
+    :return: model_xml: xml read as a string,
+             pose: pose as a geometry_msg::Pose(Point, Quaternion)
+    """
     # Get model and read as string
     with open(path_to_model, 'r') as f:
         model_xml = f.read()
 
-    # Get pose
+    # Get pose from input vector
     angles = pose_vector[:3]
     # get quaternion from angle: quat=[w,x,y,z]
     quat = pyquaternion.Quaternion(axis=[0, 0, 1], angle=angles[-1])
@@ -117,7 +129,7 @@ def build_model(path_to_model, pose_vector):
 
 
 def spawn_element(pose, model_name, elt_name):
-    """ Spawn car specifically """
+
     # Get model and read as string
     path_to_model = pp.join(PATH_TO_DISPLAY_PKG,
                             'models',
@@ -130,7 +142,13 @@ def spawn_element(pose, model_name, elt_name):
 
 
 def spawn_model(model_name, model_xml, pose):
-    """ Spawns model using Gazebo service """
+    """
+    Spawn model using Gazebo service
+    build_model returns some of the input parameters of this function
+    :param model_name: name to be given in Gazebo
+    :param model_xml: xml of the model
+    :param pose: pose of the model as geometry_msg::Quaternion
+    """
     rospy.wait_for_service('gazebo/spawn_sdf_model')
     spawn_sdf_model = rospy.ServiceProxy('gazebo/spawn_sdf_model', SpawnModel)
     spawn_sdf_model(model_name, model_xml, '', pose, 'world')
@@ -138,21 +156,26 @@ def spawn_model(model_name, model_xml, pose):
 
 
 def create_cylinder_urdf(radius):
+    """
+    Generate urdf file of cylinder with given radius, using xacro
+    :param radius: radius of the cylinder
+    :return: path to urdf file
+    """
     # Set up xacro instructions and args
     xacro_instruction = 'rosrun xacro xacro --inorder -o'
-    xacro_path = CYLINDER_PATH + 'cylinder.xacro'
+    xacro_path = pp.join(CYLINDER_PATH, 'cylinder.xacro')
     xacro_args = 'x:=' + str(0) + ' ' \
                  + 'y:=' + str(0) + ' ' \
                  + 'radius:=' + str(radius)
 
-    # Set up urdf path
+    # Set up urdf path (to be returned)
     urdf_path = CYLINDER_PATH + 'cylinder.urdf'
 
     # Execute xacro instruction
     launch_xacro_instructions = ' '.join([xacro_instruction, urdf_path,
                                           xacro_path, xacro_args])
     try:
-        # shell=True so that .bashrc is sourced
+        # shell=True so that bashrc is sourced
         subprocess.call(launch_xacro_instructions, shell=True)
     except OSError as e:
         rospy.loginfo('Subprocess call failed: %s' % e)
@@ -162,15 +185,26 @@ def create_cylinder_urdf(radius):
 
 
 def spawn_cylinder(x, y, radius):
+    """
+    Spawn cylinder with given radius and at given position
+    :param x: position along x-axis (red)
+    :param y: position along y-axis (green)
+    :param radius: radius of the cylinder
+    In addition, count the number of cylinder spawned
+    """
+    # Count number of cylinders
     global obstacle_nb
+
+    # Model path to urdf and name
     model_path = create_cylinder_urdf(radius)
     model_name = 'my_cylinder_' + str(obstacle_nb)
 
+    # Pose to be given, as vector
     pose_vector = [x, y, 0,  # position
                    0, 0, 0]  # orientation
     model_xml, pose = build_model(model_path, pose_vector)
 
-    # reference_frame
+    # Spawn
     spawn_model(model_name, model_xml, pose)
 
     obstacle_nb += 1
@@ -178,8 +212,13 @@ def spawn_cylinder(x, y, radius):
 
 
 def spawn_obstacles():
+    """
+    Sequentially spawn obstacles found in param server, as cylinders
+    """
+    # Ensure obstacles are read (blocking instruction)
     rospy.wait_for_service(READ_OBSTACLES_SERVICE)
 
+    # READ_OBSTACLES_SERVICES should set these param in ros param server
     try:
         vec = rospy.get_param(PARAM_NAME_OBSTACLES)
         size = rospy.get_param(PARAM_NAME_SIZE)
@@ -194,9 +233,11 @@ def spawn_obstacles():
             print('Obstacles parameters not found')
         sys.exit(1)
 
+    # Convert list of obstacles into array
     n = int(len(vec) / size)
     obstacles = np.reshape(np.array(vec), (n, size))
 
+    # Spawn each obstacle
     for obs in obstacles:
         spawn_cylinder(obs[0], obs[1], obs[2])
 

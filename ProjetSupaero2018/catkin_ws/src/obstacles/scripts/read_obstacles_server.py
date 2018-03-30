@@ -5,21 +5,33 @@ import rospy
 import obstacles_functions
 import rospkg
 
-PACKAGE_NAME = 'obstacles'
+'''
+Server: read obstacles from file and stores the in ROS Param Server
+'''
 
+PACKAGE_NAME = 'obstacles'
 PARAM_NAME_SIZE = '/' + PACKAGE_NAME + '/obstacles_size'
 PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def handle_obstacles(req):
-    print("Returning obstacles from file [%s]" % req.file)
+    """
+    Callback to read obstacles
+    :param req:
+    :return:
+    """
+    # print("Returning obstacles from file [%s]" % req.file)
     vec, size = obstacles_functions.read_obstacles_function(req.file)
 
-    print("Obstacles of size %s are : [%s]" % (size, vec))
+    # print("Obstacles of size %s are : [%s]" % (size, vec))
     return ReadObstaclesResponse(size, vec)
 
 
 def read_obstacles_server():
+    """
+    Define server read_obstacles
+    :return:
+    """
     rospy.init_node('read_obstacles_server')
     rospy.Service('read_obstacles', ReadObstacles, handle_obstacles)
 

@@ -4,6 +4,11 @@ import rospy
 import sys
 from obstacles.srv import CheckPoint
 
+
+'''
+Client: ask to check if point (x, y) lies in an obstacle
+'''
+
 SERVICE_NAME = 'check_point'
 
 

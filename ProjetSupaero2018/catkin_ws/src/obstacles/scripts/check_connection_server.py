@@ -6,13 +6,22 @@ import obstacles_functions
 import rospkg
 import sys
 
-PACKAGE_NAME = 'obstacles'
+'''
+DEPRECATED -- was used to init PRM in J1
+Server: check if segment (p1, p2) intersects an obstacle
+'''
 
+PACKAGE_NAME = 'obstacles'
 PARAM_NAME_SIZE = '/' + PACKAGE_NAME + '/obstacles_size'
 PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def check_if_valid(req):
+    """
+    Check if connection in req is valid with respect to obstacles
+    :param req: (x1, y1, x2, y2)
+    :return: bool is_valid
+    """
     print("Checking if connection is valid between: (%s, %s) - (%s, %s)"
           % (req.x1, req.y1, req.x2, req.y2))
 
@@ -34,6 +43,10 @@ def check_if_valid(req):
 
 
 def check_connection_server(file_path):
+    """
+    Define server for check_connection
+    :param file_path: path from which one can retrieve obstacles
+    """
     rospy.init_node('check_connection_server')
     rospy.Service('check_connection', CheckConnection, check_if_valid)
 

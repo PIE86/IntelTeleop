@@ -7,16 +7,23 @@ import sys
 import obstacles_functions
 import rospkg
 
-PACKAGE_NAME = 'obstacles'
 
+'''
+Server: check if point (x, y) lies in an obstacle
+'''
+
+PACKAGE_NAME = 'obstacles'
 PARAM_NAME_SIZE = '/' + PACKAGE_NAME + '/obstacles_size'
 PARAM_NAME_OBSTACLES = '/' + PACKAGE_NAME + '/obstacles_vec'
 
 
 def check_if_valid(req):
-    # print("Checking if point is valid: [%s %s]" % (req.x, req.y))
-
-    # Retrieve obstacles from Parameter Server
+    """
+    Check validity of point in req, with respect to obstacles
+    :param req: (x, y)
+    :return: bool is_valid
+    """
+    # Retrieve obstacles from ROS Parameter Server
     try:
         vec = rospy.get_param(PARAM_NAME_OBSTACLES)
         size = rospy.get_param(PARAM_NAME_SIZE)
@@ -28,11 +35,14 @@ def check_if_valid(req):
         return
 
     is_valid = obstacles_functions.check_validity(req.x, req.y, vec, size)
-    # print("Point is valid: [%s]" % is_valid)
     return CheckPointResponse(is_valid)
 
 
 def check_point_server(file_path):
+    """
+    Define server check_point
+    :param file_path: path to get obstacles from
+    """
     rospy.init_node('check_point_server')
     rospy.Service('check_point', CheckPoint, check_if_valid)
 

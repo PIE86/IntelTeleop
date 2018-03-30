@@ -27,7 +27,6 @@ namespace gazebo
 		// Empty constructor
 		public: CarControlPlugin() {}
 
-
 		// On launch (= once)
 		public: virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 		{
@@ -36,13 +35,13 @@ namespace gazebo
 
 			// Set velocity according to sdf file (if relevant)
 			this->velocity = math::Vector3(_sdf->Get<double>("X_velocity"),
-																		 _sdf->Get<double>("Y_velocity"),
-																		 0);
+										   _sdf->Get<double>("Y_velocity"),
+										   0);
 			this->SetVelocity(this->velocity);
 
 			// Set orientation according to sdf file (if relevant) -- in degrees
 			// Warning: this is an angle, not an angular rate
-			double thetaInit = _sdf->Get<double>("theta");
+			// double thetaInit = _sdf->Get<double>("theta");
 			// this->SetOrientation(thetaInit);
 
 			// Create node associated to plugin
@@ -73,7 +72,7 @@ namespace gazebo
 
 		public: void SetAngularVelocity(const double & omega)
 		{
-			// Set anglular velocity omega around axis z
+			// Set angular velocity omega around axis z
 			this->model->SetAngularVel({0, 0, omega});
 			if (VERBOSE){
 				gzmsg << "Angular velocity set to: " << omega << "\n";
@@ -95,6 +94,7 @@ namespace gazebo
 			// Get yaw from pose
 			math::Quaternion pose = this->model->GetWorldPose().rot;
 			double yaw = pose.GetYaw();
+
 			// Set velocity as (vx, vy)
 			// this->velocity.Set(-v*sin(yaw), v*cos(yaw), 0);
 			this->velocity.Set(v*cos(yaw), v*sin(yaw), 0);
