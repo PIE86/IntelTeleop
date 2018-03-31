@@ -16,6 +16,8 @@ from geometry_msgs.msg import Point, Quaternion, Pose
 Filed used to initialize the environment from various parameters
 Currently, the world is generated with obstacles, a start point, an end point
 and the car.
+Commentaries associated with each start/end correspond to the weights saved
+in github.
 """
 
 # Debug mode (== verbose)
@@ -50,8 +52,8 @@ class World:
         # self.end_pose = [2, 2, 0, 0, 0, np.pi]
 
         # Easy one -> long without init
-        self.start_pose = [2, 2, 0, 0, 0, 0]
-        self.end_pose = [14, 4, 0, 0, 0, 0]
+        # self.start_pose = [2, 2, 0, 0, 0, 0]
+        # self.end_pose = [14, 4, 0, 0, 0, 0]
 
         # Long one -> long without init
         # self.start_pose = [2, 2, 0, 0, 0, 0]
@@ -64,6 +66,14 @@ class World:
         # obstacle, v2 -> fail without init
         # self.start_pose = [10, 8, 0, 0, 0, 0]
         # self.end_pose = [10, 15, 0, 0, 0, 3]
+
+        # obstacle positive angle -> fail without init
+        self.start_pose = [2, 2, 0, 0, 0, np.pi/2]
+        self.end_pose = [11, 15, 0, 0, 0, 0]
+
+        # NOPE for the 2
+        # self.start_pose = [2, 2, 0, 0, 0, np.pi/2]
+        # self.end_pose = [10, 17, 0, 0, 0, 0]
 
         self.pub = rospy.Publisher(END_STATE_TOPIC, State, queue_size=10)
         # used to spwan the second end once if needed
@@ -112,7 +122,7 @@ def build_model(path_to_model, pose_vector):
         model_xml = f.read()
 
     # Get pose from input vector
-    angles = pose_vector[:3]
+    angles = pose_vector[-3:]
     # get quaternion from angle: quat=[w,x,y,z]
     quat = pyquaternion.Quaternion(axis=[0, 0, 1], angle=angles[-1])
     # build ros quaternion: rosquat=[x,y,z,w]

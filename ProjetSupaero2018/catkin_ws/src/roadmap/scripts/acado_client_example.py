@@ -86,8 +86,17 @@ def callback(state, resp):
 
 # HARD -> No init does not work
 # BUG: strange, plots function but no traj retrieved
-start = np.array((1, 19, -1.5))
-end = np.array((12, 10, -3))
+# start = np.array((1, 19, -1.5))
+# end = np.array((12, 10, -3))
+
+
+# obstacle positive angle -> fail without init
+# start = np.array([2, 2, np.pi/2])
+# end = np.array([11, 15, 0])
+
+# NOPE
+start = np.array([2, 2, np.pi/2])
+end = np.array([10, 17, 0])
 
 print('Start end')
 print(start)
