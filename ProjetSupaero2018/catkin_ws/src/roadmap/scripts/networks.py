@@ -1,3 +1,4 @@
+import os
 import sys
 import random
 import numpy as np
@@ -6,17 +7,23 @@ from keras.layers.core import Dense, Dropout, Activation
 from sklearn.preprocessing import StandardScaler
 
 
-'''
-Implementation of the networks trained from the dataset.  The networks are used
-to approximate 3 functions: the value function V(a,b) which is the minimal cost
-to pay for going from a to b ; the X- ; and the U-trajectories X(a,b) and
+"""
+Implementation of the 3 estimators for the states/control trajectories and
+value. Neural networks based on keras library are used to approximate 3
+functions: the value function V(a,b) which is the minimal cost
+to pay for going from a to b ; the X- and the U-trajectories X(a,b) and
 U(a,b) which are the state and control trajectories to go from a to b.
-'''
+"""
 
 TRAJLENGTH = 21
+PATH_TO_ROADMAP_PKG = os.path.realpath(__file__).split("scripts")[0]
+opj = os.path.join
+DATA_DIR = opj(PATH_TO_ROADMAP_PKG, 'data')
 
 
 class Networks:
+    """Object containing the 3 networks trained by the IREPA loop."""
+
     BATCH_SIZE = 128
 
     def __init__(self, state_size, control_size, x_range, u_range):
@@ -36,7 +43,7 @@ class Networks:
         self.u_scaler = StandardScaler().fit(np.tile(u_range, TRAJLENGTH))
 
     def train(self, dset, nepisodes=int(1e2)):
-        # TODO track
+        """Train the networks using the built dataset."""
         batch = random.choices(
             range(len(dset.us)), k=self.BATCH_SIZE*16)
 
@@ -76,19 +83,18 @@ class Networks:
         """
         Returns a triplet X,U,V (ie a vector sampling the time function) to go
         from x0 to x1, computed from the networks (global variable).
-        """
-        try:
-            x = self.xs_scaler.transform(np.hstack([x1, x2])
-                                           .reshape((1, 2*self.state_size)))
-        except ValueError as e:
-            print(e)
-            print()
-            print()
-            print()
-            print()
-            print(x1, x2)
-            print(self.state_size)
 
+        :param x1: start from which the trajectory is estimated
+        :param x2: start to which the trajectory is estimated
+        :type x1: numpy.array
+        :type x2: numpy.array
+        :return: Tuple containing
+                 - states trajectory
+                 - controls trajectory
+                 - value
+        """
+        x = self.xs_scaler.transform(np.hstack([x1, x2])
+                                       .reshape((1, 2*self.state_size)))
         X_scaled = self.ptrajx.predict(x, batch_size=self.BATCH_SIZE)
         X = self.x_scaler.inverse_transform(X_scaled)
         X = X.reshape((self.TRAJLENGTH, self.state_size))
@@ -100,6 +106,9 @@ class Networks:
 
     def _create_model(self, input_size, output_size, nb_layer1=250,
                       nb_layer2=250):
+        """
+        Return a keras based neural network model
+        """
         model = Sequential()
         model.add(Dense(nb_layer1, kernel_initializer='lecun_uniform',
                         input_shape=(input_size,)))
@@ -113,32 +122,31 @@ class Networks:
         model.compile(loss='mse', optimizer="rmsprop")
         return model
 
-    def connect_test(self, x1, x2):
-        x = np.hstack([x1, x2]).reshape((1, 2*self.state_size))
-        return self.ptrajx.predict(x, batch_size=self.BATCH_SIZE)
-
-    def connect(self, x1, x2):
-        pass
-
     def save(self):
-        # Saved in .ros directory
-        # TODO: change default behaviour
-        self.value.save("model_value.hd5")
-        self.ptraju.save("model_ptraju.hd5")
-        self.ptrajx.save("model_ptrajx.hd5")
+        """Save the model"""
+        self.value.save(opj(DATA_DIR, 'model_value.hd5'))
+        self.ptraju.save(opj(DATA_DIR, 'model_ptraju.hd5'))
+        self.ptrajx.save(opj(DATA_DIR, 'model_ptrajx.hd5'))
 
     def load(self):
+        """Load a saved model"""
         try:
-            self.value = load_model("model_value.hd5")
-            self.ptraju = load_model("model_ptraju.hd5")
-            self.ptrajx = load_model("model_ptrajx.hd5")
+            self.value = load_model(opj(DATA_DIR, 'model_value.hd5'))
+            self.ptraju = load_model(opj(DATA_DIR, 'model_ptraju.hd5'))
+            self.ptrajx = load_model(opj(DATA_DIR, 'model_ptrajx.hd5'))
         except Exception:
             print()
+            print("!! No weights saved in ", DATA_DIR)
             print()
-            print("No weights saved")
 
 
 class Dataset:
+    """
+    Data structure used to train the neural networks. Consist of node
+    pairs associated with states/controls trajectories and value. Built using
+    the prm graph edges resampled so that all trajectories have the same
+    number of control points.
+    """
     def __init__(self, graph):
         self.graph = graph
         self.indexes = []
@@ -160,7 +168,7 @@ class Dataset:
         trajxs = []  # trajs state
         trajus = []  # trajs state
 
-        # TODO: LENT!
+        # TODO: This implementation is slow!
         print('Load dataset ')
         # for every edge trajectory
         nb_edges = len(self.graph.edges)
