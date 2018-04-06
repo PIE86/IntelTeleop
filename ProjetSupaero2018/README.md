@@ -1,3 +1,8 @@
+# MemoryEnhancedPredictiveControl
+It is an application of research undergone at LAAS (Toulouse), by Nicolas Mansard other researchers,
+about the control of a system using an optimal control solver warm started by an estimator (neural network). 
+The goal was to implement a demonstrator of the algorithm on a car model using ROS and Gazebo.
+
 # Installation
 This project was tested with
 * Ubuntu 16.04
@@ -94,3 +99,16 @@ If roslaunch does not find demo_launch package, try to first execute
 # Git
 When doing a pull request, choose "develop" as the target branch and PAY ATTENTION to
 choose right repo for develop (default is Diane's repo)
+
+# Authors
+Médéric Fourmy
+William Jussiau
+Guillermo Prieto
+Martin Renou
+Jan Zeman
+
+# References
+Nicolas Mansard, Andrea Del Prete, Mathieu Geisert, Steve Tonneau, Olivier Stasse. Using a Memory
+of Motion to Efficiently Warm-Start a Nonlinear Predictive Controller. Rapport LAAS n° 17347. 2017.
+<hal-01591373>
+https://hal.archives-ouvertes.fr/hal-01591373/document
