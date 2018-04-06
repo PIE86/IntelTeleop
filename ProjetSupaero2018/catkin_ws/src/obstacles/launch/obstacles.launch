@@ -1,0 +1,3 @@
+<launch>  
+  <node pkg="obstacles" name="read_obstacles" type="read_obstacles_server.py"/>
+</launch>

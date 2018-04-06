@@ -4,11 +4,19 @@ import rospy
 from obstacles.srv import CheckConnection
 import sys
 
+'''
+DEPRECATED -- was used to init PRM in J1
+Client: ask to check if segment (p1, p2) intersects an obstacle
+'''
+
 SERVICE_NAME = 'check_connection'
 
 
 def check_connection_client(x1, y1, x2, y2):
-
+    """
+    Return if connection (segment) between (x1, y1) & (x2, y2) is valid
+    A connection is valid iff it does not intersect an obstacle
+    """
     rospy.wait_for_service(SERVICE_NAME)
     try:
         get_if_valid = rospy.ServiceProxy(SERVICE_NAME, CheckConnection)

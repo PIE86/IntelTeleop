@@ -1,5 +1,14 @@
 <launch>
   <!-- Controller, roadmap and model -->
+  <node pkg="display" name="script_gazebo_model" type="add_gazebo_model_path.sh"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find display)/worlds/basic_car_world.world"/>
+    <arg name="verbose" value="true"/>
+  </include>
+  <node pkg="obstacles" name="read_obstacles" type="read_obstacles_server.py"/>
+  <node pkg="display" name="init_world" type="init_world.py"/>
+
+
   <node pkg="opt_control" type="acado_opt_control" name="NameOptControl"/>
   <node pkg="roadmap" type="controller.py" name="NameIrepa"/>
 

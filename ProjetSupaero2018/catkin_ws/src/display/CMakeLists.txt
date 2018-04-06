@@ -10,8 +10,6 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  std_msgs
-  geometry_msgs
   gazebo_ros
   obstacles
 )
@@ -39,7 +37,7 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES geometry_msgs)
+generate_messages(DEPENDENCIES)
 
 catkin_package(
    CATKIN_DEPENDS
@@ -69,6 +67,10 @@ target_link_libraries(state_feedback ${GAZEBO_LIBRARIES})
 add_dependencies(car_control  
 			${${PROJECT_NAME}_EXPORTED_TARGETS} 
 			display_generate_messages_cpp)
+			
+add_dependencies(state_feedback  
+			${${PROJECT_NAME}_EXPORTED_TARGETS} 
+			display_generate_messages_cpp)		
 
 ###########
 ## Build ##

@@ -4,15 +4,23 @@ import matplotlib.pyplot as plt
 from cmath import sqrt
 from os import path
 
+'''
+Collection of utility functions related to obstacles
+'''
+
 
 def read_obstacles_function(obstacles_file):
-    """ Reads obstacles from provided file
     """
-    " An obstacle has fields (x,y,R) defining its spatial extent"
-    """ The obstacles files should be located somewhere near
-    the following location : './resources/obstacles.obs' """
+    Read obstacles from provided file
+    :param obstacles_file: file to get obstacles from
+    :return: a list of obstacles and the size of an obstacle in the list
+    """
+    """
+    An obstacle has fields (x,y,R) defining its spatial extent
+    The obstacles files should be located somewhere near
+    the following location : ./resources/obstacles.obs
 
-    "Next : add fields vx, vy for moving obstacles"
+    TODO: for moving obstacles, add fields vx, vy"""
 
     # parse xml file and get root element
     tree = et.parse(obstacles_file)
@@ -40,12 +48,15 @@ def read_obstacles_function(obstacles_file):
 
 
 def check_validity(x, y, obstacles_list, obstacles_size):
-    """ Checks whether point (x,y) lies in an obstacles
     """
-
-    " x, y : coordinates of the point"
-    " obstacles : a list containing the obstacles as a line (x,y,R,x,y,R...)"
-    " size : the size of each obstacle. Might be used to resize [obstacles]"
+    Checks whether point (x,y) lies in an obstacles
+    :param x: x-axis position of the point
+    :param y: y-axis position of the point
+    :param obstacles_list: 1D-list of obstacles (x,y,R,x,y,R,...)
+    :param obstacles_size: size of an obstacle in the list (usually 3). Might
+    be used to resize obstacles_list as a np.array
+    :return:
+    """
     """ For each obstacle in [obstacles], the function will check that the
     distance between (x,y) and the center of the obstacle is greater
     than the radius of said obstacle"""
@@ -64,7 +75,8 @@ def check_validity(x, y, obstacles_list, obstacles_size):
 
 
 def check_validity_connection(x1, y1, x2, y2, obstacles_list, obstacles_size):
-    """ Checks whether points (x1,y1) and (x2,y2) might be linked by
+    """
+    Checks whether points (x1,y1) and (x2,y2) might be linked by
     a straight line that would not be interrupted by an obstacle
     """
 
@@ -92,7 +104,8 @@ def check_validity_connection(x1, y1, x2, y2, obstacles_list, obstacles_size):
 
 
 def plot_obstacles(obstacles_list, obstacles_size, x_vec=None, y_vec=None):
-    """ Plots given obstacles and points on map
+    """
+    Plots given obstacles and points on map
     """
     " obstacles_list : list of (x,y,R,x,y,R...) of given size "
     " x_vec, y_vec : lists of points to be plotted "
@@ -135,9 +148,9 @@ def plot_obstacles(obstacles_list, obstacles_size, x_vec=None, y_vec=None):
 
 
 def list_to_array(vec, size):
-    """ Convert list to array using parameter size
     """
-
+    Convert list to array using parameter size
+    """
     """ Provided that length(vec)/size is an integer, transforms the given list
     into a numpy array"""
     n = int(len(vec) / size)
