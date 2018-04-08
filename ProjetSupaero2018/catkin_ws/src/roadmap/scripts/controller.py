@@ -49,7 +49,7 @@ STOP_RADIUS = 0.4
 UPDATE_TIME_THRES = 0.8
 
 # True to use warm-start the solver with the estimator
-ESTIMATOR_INIT = False
+ESTIMATOR_INIT = True
 # For test purposes: if true, the first control to be sent is calculated
 # else the first is sent
 SHIFT = True
