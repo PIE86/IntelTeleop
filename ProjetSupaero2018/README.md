@@ -1,16 +1,48 @@
+# MemoryEnhancedPredictiveControl
+It is an application of research undergone at LAAS (Toulouse), by Nicolas Mansard other researchers,
+about the control of a system using an optimal control solver warm started by an estimator (neural network). 
+The goal was to implement a demonstrator of the algorithm on a car model using ROS and Gazebo.
+
 # Installation
-## Requirements
 This project was tested with
 * Ubuntu 16.04
 * ROS Kinetic, Lunar
 * python 3.6
 * python libraries versions as in `requirements.txt`
 
-## ROS
-TODO
+## Project download
+git clone https://github.com/PIE86/MemoryEnhancedPredictiveControl.git  
 
-##ACADO
-TODO
+## ROS Kinetic
+(full install) is required. See http://wiki.ros.org/ROS/Installation  
+For example for Ubuntu, that would be:  
+
+```
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+sudo apt-get update
+sudo apt-get install ros-kinetic-desktop-full
+```
+
+## ACADO Toolkit
+
+```
+sudo apt-get install gcc g++ cmake git gnuplot doxygen graphviz
+
+git clone https://github.com/acado/acado.git -b stable ACADOtoolkit && cd ACADOtoolkit
+git reset --hard 88c441b6bedee039ef8cb81d34fcd9377fb6d138
+mkdir build && cd build
+cmake .. && make
+sudo make install
+```
+
+Add the models directory to your Gazebo model path
+```
+export GAZEBO_MODEL_PATH=$(rospack find display)/models:$GAZEBO_MODEL_PATH
+```
+
+You might want to add this line to your bashrc, after sourcing the ROS environment.
+You can also specify the full path. In the future, we hope that we will be able to do otherwise (without being constraining for the user)
 
 ## Setting up your python environment
 For this project, python 3.6 was tested  
@@ -33,7 +65,7 @@ Add these lines at the end of your .bashrc:
 Depending on your installation, `virtualenvwrapper.sh` might not be in
 `~/.local/bin/`. Make sure it is the right path and if not change your path accordingly.
 
-Now create an environment:  `mkvirtualenv irepa`  
+Now create an environment: `mkvirtualenv irepa`  
 Activate your environment: `workon irepa`
 
 ### Install python packages
@@ -49,29 +81,34 @@ In ProjetSupaero2018/catkin_ws run
 In ProjetSupaero2018/catkin_ws run  
 `source devel/setup.bash`
 
-## launch demo
+## launch demos
+For all launches, if you do not need logs in your shell, remove --screen at the
+end of the commands. jalon2 version of the project has default network weights that will be overrided when a new training is undergone.   
+### Online Simulation
+Open gazebo and launch the simulation. Start and end states can be changed in
+src/display/scripts/init_world.py
+`roslaunch demo_launch jalon2_online.launch --screen`
+
+### IREPA training
+`roslaunch demo_launch jalon2_irepa_train.launch --screen`
+
 If roslaunch does not find demo_launch package, try to first execute  
 `roscd demo_launch`  
 
-### Jalon 1
-TODO
-`roslaunch demo_launch jalon1_demo.launch`
 
-
-### Jalon 2
-#### Online Simulation
-DESCRIPTION  
-`roslaunch demo_launch jalon2_online.launch`
-
-
-?????????????????
-### add the models directory to your Gazebo model path
-export GAZEBO_MODEL_PATH=$(rospack find display)/models:$GAZEBO_MODEL_PATH
-
-You might want to add this line to your bashrc, after sourcing the ROS environment. You can also specify the full path. In the future, we hope that we will be able to do otherwise (without being constraining for the user)
-
-
-# Developpers advices
-### Git
+# Git
 When doing a pull request, choose "develop" as the target branch and PAY ATTENTION to
 choose right repo for develop (default is Diane's repo)
+
+# Authors
+Médéric Fourmy
+William Jussiau
+Guillermo Prieto
+Martin Renou
+Jan Zeman
+
+# References
+Nicolas Mansard, Andrea Del Prete, Mathieu Geisert, Steve Tonneau, Olivier Stasse. Using a Memory
+of Motion to Efficiently Warm-Start a Nonlinear Predictive Controller. Rapport LAAS n° 17347. 2017.
+<hal-01591373>
+https://hal.archives-ouvertes.fr/hal-01591373/document
